@@ -42,3 +42,11 @@ after mapping or enrichment changes.
 | Retention policy | Legal/compliance decision required |
 | Brand and competitor dictionary | Business-owner input required |
 | Alert recipients | User decision required |
+
+## Implemented provider foundation
+
+The YouTube Data API v3 polling adapter is implemented under
+`src/social_intelligence/connectors/` with a paused Databricks job in
+`resources/youtube_ingestion.job.yml`. It is fixture-tested and credential-free
+in source control. See [YOUTUBE_CONNECTOR.md](YOUTUBE_CONNECTOR.md) for the
+activation and policy checklist.

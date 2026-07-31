@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "id": "reply-001",
+      "snippet": {
+        "authorChannelId": {
+          "value": "commenter-002"
+        },
+        "parentId": "comment-001",
+        "textOriginal": "I tried it too.",
+        "likeCount": 2,
+        "publishedAt": "2026-07-31T11:05:00Z",
+        "updatedAt": "2026-07-31T11:05:00Z"
+      }
+    }
+  ]
+}

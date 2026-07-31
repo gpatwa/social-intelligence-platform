@@ -52,6 +52,11 @@ src/social_intelligence/scoring.py     Locally testable scoring functions
 tests/                                 Contract and scoring unit tests
 ```
 
+The repository also includes a quota-aware YouTube Data API v3 adapter,
+provider fixtures, checkpoint and retry primitives, and a separate paused
+Databricks ingestion job. See the
+[YouTube connector guide](docs/YOUTUBE_CONNECTOR.md).
+
 ## Prerequisites
 
 - A Databricks workspace with Unity Catalog enabled.
@@ -145,6 +150,15 @@ Keep the canonical event envelope and replace only the generator task:
 6. Use approved APIs and implement rate-limit, deletion, and retention handling required by each provider.
 
 For higher volume, separate post content from engagement snapshots and use a streaming source such as Kafka. For production NLP, replace the rule-based sentiment and topic mappings with governed batch inference, while retaining model version and confidence columns.
+
+### YouTube pilot
+
+`social_intelligence_youtube_ingestion` is an hourly polling job whose schedule
+is paused by default. It reads its API key from a Databricks secret reference,
+loads active keyword and channel rules from the control plane, persists quota
+reservations and rule cursors, lands immutable envelopes, and refreshes the
+existing analytics pipeline. Comments and replies are opt-in because they
+increase quota use and privacy obligations.
 
 ## Metric notes
 
