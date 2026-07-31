@@ -1,0 +1,61 @@
+resources:
+  jobs:
+    social_intelligence_mvp:
+      name: social-intelligence-mvp-${bundle.target}
+      description: Builds the Social Intelligence MVP Bronze, Silver, and Gold data products.
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: initialize_platform
+          notebook_task:
+            notebook_path: ../notebooks/00_initialize_platform.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              tenant_id: ${var.tenant_id}
+
+        - task_key: generate_demo_data
+          depends_on:
+            - task_key: initialize_platform
+          notebook_task:
+            notebook_path: ../notebooks/01_generate_demo_data.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              lookback_hours: ${var.lookback_hours}
+              tenant_id: ${var.tenant_id}
+
+        - task_key: build_analytics
+          depends_on:
+            - task_key: generate_demo_data
+          notebook_task:
+            notebook_path: ../notebooks/02_build_analytics.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: validate_product
+          depends_on:
+            - task_key: model_governance
+          notebook_task:
+            notebook_path: ../notebooks/03_validate_product.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: model_governance
+          depends_on:
+            - task_key: build_analytics
+          notebook_task:
+            notebook_path: ../notebooks/04_model_governance.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+      schedule:
+        quartz_cron_expression: 0 30 7 * * ?
+        timezone_id: America/Los_Angeles
+        pause_status: UNPAUSED
+
+      tags:
+        product: social-intelligence
+        environment: ${bundle.target}

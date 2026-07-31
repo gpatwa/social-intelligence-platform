@@ -1,0 +1,5 @@
+{
+  "pause_status": "UNPAUSED",
+  "quartz_cron_schedule": "0 5 8 * * ?",
+  "timezone_id": "America/Los_Angeles"
+}

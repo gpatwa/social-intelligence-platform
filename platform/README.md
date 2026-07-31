@@ -1,0 +1,155 @@
+# Social Intelligence MVP on Databricks
+
+This project is a deployable Databricks Asset Bundle that demonstrates an
+end-to-end social intelligence product. It uses three logical planes—control,
+data, and experience—on an event-driven lakehouse. It creates realistic demo
+events, ingests them through Auto Loader, enriches and standardizes them, and
+produces trend, challenge, brand, health, signal, and executive KPI tables.
+
+## What the MVP answers
+
+- Which topics are accelerating unusually quickly?
+- Which hashtags or participation patterns look like viral challenges?
+- How is brand sentiment changing?
+- Which platforms, creators, and regions are driving a trend?
+- Are the source data and derived metrics fresh and complete?
+
+The demo deliberately includes:
+
+- a fast-growing `#GlowUpChallenge` participation trend;
+- a late negative spike around a fictional Acme battery issue;
+- stable baseline topics that should not be mistaken for emerging trends.
+
+## Architecture
+
+```text
+Control: source registry / collection rules / event contracts
+                                  |
+Data: API envelope -> immutable raw events -> dead letter or canonical posts
+                                  -> Silver -> tenant-scoped Gold metrics
+                                  |
+Experience: unified signal feed -> dashboard / alerts / review / future API
+```
+
+The planes are logical boundaries in the MVP. They should become independently
+deployed services only when isolation, scale, regional residency, or team
+ownership requires it. See [the architecture decision](docs/ARCHITECTURE.md).
+
+## Repository layout
+
+```text
+databricks.yml                         Asset Bundle entry point
+resources/social_intelligence.job.yml Serverless workflow definition
+notebooks/00_initialize_platform.py    Control metadata and shared storage
+notebooks/01_generate_demo_data.py     Demo connector emitting event envelopes
+notebooks/02_build_analytics.py        Auto Loader and Bronze/Silver/Gold logic
+notebooks/03_validate_product.py       Data and product acceptance checks
+notebooks/04_model_governance.py       Tenant-scoped review and quality workflow
+sql/dashboard_queries.sql              Dashboard datasets and alert queries
+src/social_intelligence/contracts.py   Versioned event-envelope contract
+schemas/social-event-envelope-v1.json  Machine-readable connector contract
+src/social_intelligence/scoring.py     Locally testable scoring functions
+tests/                                 Contract and scoring unit tests
+```
+
+## Prerequisites
+
+- A Databricks workspace with Unity Catalog enabled.
+- Permission to create a schema and a managed volume in the selected catalog.
+- Databricks CLI 0.218 or newer, authenticated to the target workspace.
+- Serverless workflows enabled. If serverless is unavailable, add a `job_cluster_key` and job cluster definition to the workflow resource.
+
+## Local validation
+
+```bash
+cd social-intelligence-mvp
+python3 -m unittest discover -s tests -v
+```
+
+## Deploy and run
+
+Using Databricks Free Edition? Start with [FREE_EDITION.md](FREE_EDITION.md) and
+the generated `social-intelligence-free-edition.zip` notebook archive.
+
+The default schema is unique to the bundle target. Override the catalog or schema if needed.
+
+```bash
+databricks bundle validate
+databricks bundle deploy -t dev
+databricks bundle run social_intelligence_mvp -t dev
+```
+
+For a production-style target:
+
+```bash
+databricks bundle deploy -t prod \
+  --var="catalog=main" \
+  --var="schema=social_intelligence_prod"
+databricks bundle run social_intelligence_mvp -t prod
+```
+
+The validation task prints the fully qualified Gold table names and fails the workflow if core acceptance checks do not pass.
+
+## Generate portable alert payloads
+
+Alert configuration in this repository contains no workspace IDs or personal
+email addresses. Supply deployment-specific values through the environment:
+
+```bash
+export DATABRICKS_WAREHOUSE_ID="<warehouse-id>"
+export DATABRICKS_PARENT_PATH="/Users/<workspace-user>"
+export SOCIAL_INTELLIGENCE_ALERT_EMAIL="<alert-owner@example.com>"
+export SOCIAL_INTELLIGENCE_CATALOG="dev"
+export SOCIAL_INTELLIGENCE_SCHEMA="social_intelligence_dev"
+python3 scripts/build_alert_payloads.py ./generated-alerts
+```
+
+`SOCIAL_INTELLIGENCE_ALERT_EMAIL` is optional. Configure an approved
+notification destination before enabling production alerts.
+
+## Build an AI/BI dashboard
+
+Open `sql/dashboard_queries.sql` in Databricks SQL and create datasets from the supplied queries. A useful first dashboard has five pages:
+
+1. **Executive pulse** — post volume, reach, engagement, sentiment, active topics.
+2. **Emerging trends** — trend score, velocity z-score, acceleration, creator breadth.
+3. **Challenges** — participation score, unique creators, geographic and platform spread.
+4. **Brand health** — daily sentiment, negative rate, engagement and mention changes.
+5. **Operations** — freshness, invalid rows, duplicates and pipeline status.
+
+Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The queries marked `ALERT` return a row only when the relevant threshold is breached and can be attached to Databricks SQL alerts.
+
+## Operating the product
+
+- [Demo validation results](docs/DEMO_VALIDATION.md)
+- [Architecture decision and evolution triggers](docs/ARCHITECTURE.md)
+- [Signal ownership and response model](docs/OPERATING_MODEL.md)
+- [Real-source integration contract](docs/REAL_SOURCE_INTEGRATION.md)
+- [Production readiness gates](docs/PRODUCTION_READINESS.md)
+
+The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a
+human-review queue (`gold_model_review_queue`) and an initially empty
+`silver_human_labels` table for evaluating future topic, sentiment, and risk
+models against reviewer labels.
+
+## Replace demo data with a real source
+
+Keep the canonical event envelope and replace only the generator task:
+
+1. Register the source in `control_source_registry`.
+2. Land versioned event envelopes in the managed volume, or change the Auto
+   Loader path to external cloud storage.
+3. Preserve the raw provider payload, logical idempotency key, and timestamps.
+4. Map platform-specific payloads into the canonical Silver columns.
+5. Snapshot engagement counts because likes, views, and shares change after publication.
+6. Use approved APIs and implement rate-limit, deletion, and retention handling required by each provider.
+
+For higher volume, separate post content from engagement snapshots and use a streaming source such as Kafka. For production NLP, replace the rule-based sentiment and topic mappings with governed batch inference, while retaining model version and confidence columns.
+
+## Metric notes
+
+- Cross-platform counts are shown separately because platform definitions differ.
+- `engagement_rate` uses views as the denominator in this demo.
+- Trend scores are comparative signals, not probabilities.
+- The challenge score rewards participant breadth and spread, not merely raw mentions.
+- Social activity should be described as correlated with business outcomes unless causal measurement is in place.
