@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
+async function listDirectoryIfPresent(url) {
+  try {
+    return await readdir(url);
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+}
+
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
@@ -63,7 +74,9 @@ test("removes the disposable starter preview", async () => {
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.deepEqual(
-    await readdir(new URL("../app/_sites-preview", import.meta.url)),
+    await listDirectoryIfPresent(
+      new URL("../app/_sites-preview", import.meta.url),
+    ),
     [],
   );
 });

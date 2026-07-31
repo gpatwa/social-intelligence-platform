@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.local/schemas/social-event-envelope-v1.json",
+  "title": "Social Intelligence Event Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "schema_version",
+    "tenant_id",
+    "source_id",
+    "platform",
+    "event_type",
+    "source_object_id",
+    "occurred_at",
+    "collected_at",
+    "idempotency_key",
+    "correlation_id",
+    "payload",
+    "attributes"
+  ],
+  "properties": {
+    "event_id": {"type": "string", "minLength": 1},
+    "schema_version": {"const": "1.0"},
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,62}$"
+    },
+    "source_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "platform": {"type": "string", "minLength": 1, "maxLength": 64},
+    "event_type": {
+      "enum": [
+        "social.post.observed",
+        "social.post.updated",
+        "social.post.deleted",
+        "social.engagement.observed"
+      ]
+    },
+    "source_object_id": {"type": "string", "minLength": 1},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "collected_at": {"type": "string", "format": "date-time"},
+    "idempotency_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "correlation_id": {"type": "string", "minLength": 1},
+    "payload": {
+      "type": "string",
+      "contentMediaType": "application/json"
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    }
+  }
+}
