@@ -256,6 +256,7 @@ class YouTubeConnector:
         events: dict[str, SocialEventEnvelope] = {}
         cursors = dict(checkpoint.cursors)
         searched_video_ids: set[str] = set()
+        stats_enrichment_failures = 0
         active_rules = [rule for rule in rules if rule.enabled]
 
         for rule in active_rules:
@@ -270,7 +271,12 @@ class YouTubeConnector:
                 for item in rule_videos
             ]
             searched_video_ids.update(rule_video_ids)
-            for item in self._video_details(client, rule_videos):
+            video_details, stats_enrichment_failed = self._video_details(
+                client,
+                rule_videos,
+            )
+            stats_enrichment_failures += int(stats_enrichment_failed)
+            for item in video_details:
                 event = self._video_event(item, rule, started_at)
                 events[event.idempotency_key] = event
 
@@ -304,6 +310,7 @@ class YouTubeConnector:
                 "active_rules": len(active_rules),
                 "videos_discovered": len(searched_video_ids),
                 "events_emitted": len(events),
+                "stats_enrichment_failures": stats_enrichment_failures,
                 "search_calls": ledger.search_calls,
                 "core_units": ledger.core_units,
             },
@@ -369,7 +376,7 @@ class YouTubeConnector:
         self,
         client: YouTubeApiClient,
         search_items: Sequence[Mapping[str, Any]],
-    ) -> list[Mapping[str, Any]]:
+    ) -> tuple[list[Mapping[str, Any]], bool]:
         search_by_id = {
             str(item.get("id", {}).get("videoId", "")).strip(): item
             for item in search_items
@@ -377,19 +384,26 @@ class YouTubeConnector:
         }
         video_ids = list(search_by_id)
         results: list[Mapping[str, Any]] = []
+        enrichment_failed = False
         for start in range(0, len(video_ids), 50):
             chunk = video_ids[start : start + 50]
             if not chunk:
                 continue
-            response = client.list(
-                "videos",
-                {
-                    "part": "statistics",
-                    "id": ",".join(chunk),
-                    "fields": "items(id,statistics)",
-                },
-                bucket="core",
-            )
+            try:
+                response = client.list(
+                    "videos",
+                    {
+                        "part": "statistics",
+                        "id": ",".join(chunk),
+                        "fields": "items(id,statistics)",
+                    },
+                    bucket="core",
+                )
+            except YouTubeApiError as error:
+                if error.reason != "quotaExceeded":
+                    raise
+                response = {"items": []}
+                enrichment_failed = True
             stats_by_id = {
                 str(item.get("id", "")).strip(): item.get("statistics", {})
                 for item in response.get("items", [])
@@ -403,7 +417,7 @@ class YouTubeConnector:
                         "statistics": stats_by_id.get(video_id, {}),
                     }
                 )
-        return results
+        return results, enrichment_failed
 
     def _comment_events(
         self,
