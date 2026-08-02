@@ -86,15 +86,17 @@ See [the platform guide](platform/README.md) for deployment instructions and
 
 ## Real-source integration
 
-The next product milestone is to replace the deterministic generator with one
-approved social source while preserving the existing event contract. The
-connector must implement rate-limit handling, retries, idempotency, immutable
-raw payloads, engagement snapshots, deletion propagation, and source-health
-reconciliation.
+The repository includes the first real-source adapter for YouTube Data API v3.
+It implements rate-limit accounting, persisted checkpoints, bounded retries,
+idempotency, immutable raw payloads, video engagement snapshots, optional
+comments, and a separate paused Databricks ingestion workflow. Activation still
+requires an approved API key, collection rules, and retention policy.
 
 See the
 [real-source integration contract](platform/docs/REAL_SOURCE_INTEGRATION.md)
 and [production readiness gates](platform/docs/PRODUCTION_READINESS.md).
+YouTube-specific setup is documented in the
+[connector guide](platform/docs/YOUTUBE_CONNECTOR.md).
 
 ## Production boundary
 
@@ -103,4 +105,3 @@ analytics. Production use requires an appropriate paid workspace, Unity
 Catalog governance, separate environments, managed credentials, operational
 SLAs, retention and deletion controls, labeled model evaluation data, and
 named alert owners.
-

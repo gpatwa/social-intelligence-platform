@@ -4,6 +4,14 @@ bundle:
 include:
   - resources/*.yml
 
+artifacts:
+  connector_wheel:
+    type: whl
+    path: .
+    build: python3 -m pip wheel . --no-deps -w dist
+    files:
+      - source: ./dist/*.whl
+
 variables:
   catalog:
     description: Unity Catalog catalog used by the MVP
@@ -17,6 +25,33 @@ variables:
   tenant_id:
     description: Tenant partition used by the demo source and serving tables
     default: demo
+  youtube_source_id:
+    description: Control-plane identifier for the YouTube connector
+    default: youtube-api-v3
+  youtube_secret_scope:
+    description: Databricks secret scope containing the YouTube API key
+    default: social-intelligence
+  youtube_secret_key:
+    description: Secret key containing the YouTube Data API v3 credential
+    default: youtube-api-key
+  youtube_search_expression:
+    description: YouTube keyword expression; use pipe characters for OR terms
+    default: Acme|GlowUpChallenge
+  youtube_channel_ids:
+    description: Optional comma-separated YouTube channel IDs
+    default: ""
+  youtube_region_code:
+    description: ISO 3166-1 alpha-2 discovery region
+    default: US
+  youtube_relevance_language:
+    description: YouTube relevance language
+    default: en
+  youtube_collect_comments:
+    description: Whether the pilot collects top-level comment threads
+    default: "false"
+  youtube_collect_replies:
+    description: Whether the pilot follows comment threads for replies
+    default: "false"
 
 workspace:
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

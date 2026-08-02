@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "id": "thread-001",
+      "snippet": {
+        "videoId": "video-001",
+        "totalReplyCount": 1,
+        "topLevelComment": {
+          "id": "comment-001",
+          "snippet": {
+            "authorChannelId": {
+              "value": "commenter-001"
+            },
+            "textOriginal": "This challenge looks great #TryThis",
+            "likeCount": 7,
+            "publishedAt": "2026-07-31T11:00:00Z",
+            "updatedAt": "2026-07-31T11:00:00Z"
+          }
+        }
+      }
+    }
+  ]
+}
