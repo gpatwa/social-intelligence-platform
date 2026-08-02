@@ -1,0 +1,46 @@
+name: YouTube collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Avoid the start-of-hour congestion documented for scheduled workflows.
+    - cron: "17 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: youtube-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_YOUTUBE_COLLECTOR == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install connector package
+        run: python -m pip install ./platform
+      - name: Collect and land YouTube events
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          DATABRICKS_CATALOG: ${{ vars.DATABRICKS_CATALOG || 'dev' }}
+          DATABRICKS_SCHEMA: ${{ vars.DATABRICKS_SCHEMA || 'social_intelligence_dev' }}
+          SOCIAL_TENANT_ID: ${{ vars.SOCIAL_TENANT_ID || 'demo' }}
+          YOUTUBE_SOURCE_ID: ${{ vars.YOUTUBE_SOURCE_ID || 'youtube-api-v3' }}
+          YOUTUBE_SEARCH_EXPRESSION: ${{ vars.YOUTUBE_SEARCH_EXPRESSION || 'Acme|GlowUpChallenge' }}
+          YOUTUBE_CHANNEL_IDS: ${{ vars.YOUTUBE_CHANNEL_IDS }}
+          YOUTUBE_REGION_CODE: ${{ vars.YOUTUBE_REGION_CODE || 'US' }}
+          YOUTUBE_RELEVANCE_LANGUAGE: ${{ vars.YOUTUBE_RELEVANCE_LANGUAGE || 'en' }}
+          YOUTUBE_LOOKBACK_HOURS: ${{ vars.YOUTUBE_LOOKBACK_HOURS || '6' }}
+          YOUTUBE_MAX_SEARCH_PAGES_PER_RULE: ${{ vars.YOUTUBE_MAX_SEARCH_PAGES_PER_RULE || '1' }}
+          YOUTUBE_COLLECT_COMMENTS: ${{ vars.YOUTUBE_COLLECT_COMMENTS || 'false' }}
+          YOUTUBE_COLLECT_REPLIES: ${{ vars.YOUTUBE_COLLECT_REPLIES || 'false' }}
+        run: python -m social_intelligence.connectors.external_youtube

@@ -48,6 +48,24 @@ databricks bundle deploy -t dev --profile social-intelligence-free
 databricks bundle run social_intelligence_mvp -t dev --profile social-intelligence-free
 ```
 
+## Collect live YouTube data
+
+Use the repository's GitHub Actions collector for live API access. It runs
+outside Databricks, lands immutable files through the Files API, and keeps
+checkpoints and quota accounting in the managed volume. Follow
+[the external collector runbook](docs/EXTERNAL_COLLECTOR.md).
+
+After the first collector batch lands, refresh the real-source tables with:
+
+```bash
+databricks bundle run social_intelligence_external_ingestion -t dev \
+  --profile social-intelligence-free
+```
+
+Both the GitHub schedule and the external-ingestion job start disabled. This
+prevents missing credentials or an unvalidated query from consuming API and
+Free Edition quotas immediately after deployment.
+
 ## Create the dashboard
 
 Start the workspace's serverless SQL warehouse and open the SQL editor. Copy
