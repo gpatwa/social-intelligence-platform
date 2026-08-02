@@ -1,3 +1,5 @@
+import { PipelineStatusPanel } from "./pipeline-status";
+
 const dashboardUrl =
   "https://dbc-b8672746-8e43.cloud.databricks.com/dashboardsv3/01f17ce244971d80b97f3c0aa6b033ef/published?o=7474657828954669";
 const githubUrl = "https://github.com/gpatwa/social-intelligence-platform";
@@ -71,6 +73,7 @@ export default function Home() {
         <nav aria-label="Primary navigation">
           <a href="#product">Product</a>
           <a href="#architecture">Architecture</a>
+          <a href="#status">Live status</a>
           <a href="#readiness">Readiness</a>
         </nav>
         <a className="nav-cta" href={githubUrl} target="_blank" rel="noreferrer">
@@ -180,7 +183,7 @@ export default function Home() {
             <b>0</b> rejected events
           </span>
           <span>
-            <b>33</b> automated tests
+            <b>37</b> automated tests
           </span>
           <span>
             <b>5/5</b> Databricks stages passing
@@ -200,6 +203,8 @@ export default function Home() {
         </p>
         <a href="#readiness">See the production gates ↓</a>
       </aside>
+
+      <PipelineStatusPanel dashboardUrl={dashboardUrl} />
 
       <section className="section product-section" id="product">
         <div className="section-heading">

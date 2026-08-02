@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 import json
+import os
+import tempfile
 import unittest
 
 from social_intelligence.connectors.base import ConnectorBatch
@@ -162,6 +164,35 @@ class ExternalYouTubeCollectorTests(unittest.TestCase):
 
         self.assertEqual([item[0] for item in operations[:3]], ["directory"] * 3)
         self.assertEqual(operations[3][0], "download")
+
+    def test_writes_sanitized_status_projection_for_site_ingestion(self):
+        files = MemoryFiles()
+
+        def factory(config, quota_observer):
+            return FakeConnector(quota_observer, self.event)
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "pipeline-status.json")
+            config = ExternalYouTubeConfig(
+                databricks_host=self.config.databricks_host,
+                databricks_token=self.config.databricks_token,
+                youtube_api_key=self.config.youtube_api_key,
+                search_expression=self.config.search_expression,
+                status_output_path=path,
+            )
+            ExternalYouTubeCollector(
+                config,
+                files,
+                connector_factory=factory,
+                clock=lambda: NOW,
+            ).run()
+
+            with open(path, encoding="utf-8") as status_file:
+                status = json.load(status_file)
+
+        self.assertEqual(status["status"], "SUCCESS")
+        self.assertEqual(status["events_emitted"], 1)
+        self.assertNotIn("databricks_token", status)
 
 
 if __name__ == "__main__":
