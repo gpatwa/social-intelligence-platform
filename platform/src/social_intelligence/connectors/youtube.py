@@ -339,7 +339,7 @@ class YouTubeConnector:
             "safeSearch": self.config.safe_search,
             "fields": (
                 "nextPageToken,items(id/videoId,snippet(channelId,channelTitle,"
-                "title,description,publishedAt,defaultLanguage,defaultAudioLanguage))"
+                "title,description,publishedAt))"
             ),
         }
         if rule.rule_type == "keyword":
