@@ -260,13 +260,17 @@ class YouTubeConnector:
 
         for rule in active_rules:
             published_after = self._published_after(rule, checkpoint, started_at)
-            rule_video_ids = self._search_video_ids(
+            rule_videos = self._search_videos(
                 client,
                 rule,
                 published_after,
             )
+            rule_video_ids = [
+                str(item.get("id", {}).get("videoId", "")).strip()
+                for item in rule_videos
+            ]
             searched_video_ids.update(rule_video_ids)
-            for item in self._video_details(client, rule_video_ids):
+            for item in self._video_details(client, rule_videos):
                 event = self._video_event(item, rule, started_at)
                 events[event.idempotency_key] = event
 
@@ -318,12 +322,12 @@ class YouTubeConnector:
             watermark = started_at - timedelta(hours=self.config.lookback_hours)
         return watermark - timedelta(minutes=self.config.overlap_minutes)
 
-    def _search_video_ids(
+    def _search_videos(
         self,
         client: YouTubeApiClient,
         rule: CollectionRule,
         published_after: datetime,
-    ) -> list[str]:
+    ) -> list[Mapping[str, Any]]:
         params = {
             "part": "snippet",
             "type": "video",
@@ -333,7 +337,10 @@ class YouTubeConnector:
             "regionCode": self.config.region_code,
             "relevanceLanguage": self.config.relevance_language,
             "safeSearch": self.config.safe_search,
-            "fields": "nextPageToken,items(id/videoId)",
+            "fields": (
+                "nextPageToken,items(id/videoId,snippet(channelId,channelTitle,"
+                "title,description,publishedAt,defaultLanguage,defaultAudioLanguage))"
+            ),
         }
         if rule.rule_type == "keyword":
             params["q"] = rule.expression
@@ -342,7 +349,7 @@ class YouTubeConnector:
         else:
             raise ValueError(f"Unsupported YouTube rule type: {rule.rule_type}")
 
-        ids: dict[str, None] = {}
+        videos: dict[str, Mapping[str, Any]] = {}
         page_token: str | None = None
         for _ in range(self.config.max_search_pages_per_rule):
             request_params = dict(params)
@@ -352,17 +359,23 @@ class YouTubeConnector:
             for item in response.get("items", []):
                 video_id = str(item.get("id", {}).get("videoId", "")).strip()
                 if video_id:
-                    ids.setdefault(video_id, None)
+                    videos.setdefault(video_id, item)
             page_token = str(response.get("nextPageToken", "")).strip() or None
             if not page_token:
                 break
-        return list(ids)
+        return list(videos.values())
 
     def _video_details(
         self,
         client: YouTubeApiClient,
-        video_ids: Sequence[str],
+        search_items: Sequence[Mapping[str, Any]],
     ) -> list[Mapping[str, Any]]:
+        search_by_id = {
+            str(item.get("id", {}).get("videoId", "")).strip(): item
+            for item in search_items
+            if str(item.get("id", {}).get("videoId", "")).strip()
+        }
+        video_ids = list(search_by_id)
         results: list[Mapping[str, Any]] = []
         for start in range(0, len(video_ids), 50):
             chunk = video_ids[start : start + 50]
@@ -371,17 +384,25 @@ class YouTubeConnector:
             response = client.list(
                 "videos",
                 {
-                    "part": "snippet,statistics,status",
+                    "part": "statistics",
                     "id": ",".join(chunk),
-                    "fields": (
-                        "items(id,snippet(channelId,channelTitle,title,description,"
-                        "publishedAt,defaultLanguage,defaultAudioLanguage,tags),"
-                        "statistics,status/privacyStatus)"
-                    ),
+                    "fields": "items(id,statistics)",
                 },
                 bucket="core",
             )
-            results.extend(response.get("items", []))
+            stats_by_id = {
+                str(item.get("id", "")).strip(): item.get("statistics", {})
+                for item in response.get("items", [])
+            }
+            for video_id in chunk:
+                search_item = search_by_id[video_id]
+                results.append(
+                    {
+                        "id": video_id,
+                        "snippet": search_item.get("snippet", {}),
+                        "statistics": stats_by_id.get(video_id, {}),
+                    }
+                )
         return results
 
     def _comment_events(
