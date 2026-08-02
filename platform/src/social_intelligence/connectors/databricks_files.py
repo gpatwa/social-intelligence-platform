@@ -75,14 +75,32 @@ class DatabricksFilesClient:
         except URLError as error:
             raise DatabricksFilesError(None, "upload", path) from error
 
-    def _url(self, path: str) -> str:
+    def create_directory(self, path: str) -> None:
+        """Create a directory and missing parents using idempotent mkdir semantics."""
+        request = Request(
+            self._url(path, resource="directories"),
+            data=b"",
+            method="PUT",
+            headers=self._headers("application/octet-stream"),
+        )
+        try:
+            with self.opener(request, timeout=self.timeout_seconds) as response:
+                response.read()
+        except HTTPError as error:
+            raise DatabricksFilesError(error.code, "create directory", path) from error
+        except URLError as error:
+            raise DatabricksFilesError(None, "create directory", path) from error
+
+    def _url(self, path: str, *, resource: str = "files") -> str:
         normalized_path = path.strip()
         if not normalized_path.startswith("/Volumes/"):
             raise ValueError("Files API path must start with /Volumes/")
         if any(part in {"", ".", ".."} for part in normalized_path.split("/")[1:]):
             raise ValueError("Files API path contains an unsafe segment")
+        if resource not in {"files", "directories"}:
+            raise ValueError(f"Unsupported Files API resource: {resource}")
         encoded_path = quote(normalized_path.lstrip("/"), safe="/")
-        return f"{self.host}/api/2.0/fs/files/{encoded_path}"
+        return f"{self.host}/api/2.0/fs/{resource}/{encoded_path}"
 
     def _headers(self, content_type: str) -> dict[str, str]:
         return {

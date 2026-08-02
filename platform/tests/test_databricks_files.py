@@ -62,6 +62,24 @@ class DatabricksFilesClientTests(unittest.TestCase):
         self.assertTrue(request.full_url.endswith("?overwrite=true"))
         self.assertEqual(request.data, b"payload")
 
+    def test_create_directory_uses_directory_endpoint(self):
+        requests = []
+
+        def opener(request, timeout):
+            requests.append(request)
+            return FakeResponse()
+
+        client = DatabricksFilesClient(
+            "https://dbc.example.com",
+            "secret-token",
+            opener=opener,
+        )
+        client.create_directory("/Volumes/dev/schema/volume/checkpoints/youtube")
+
+        request = requests[0]
+        self.assertEqual(request.get_method(), "PUT")
+        self.assertIn("/api/2.0/fs/directories/Volumes/", request.full_url)
+
     def test_missing_download_returns_none(self):
         def opener(request, timeout):
             raise HTTPError(request.full_url, 404, "missing", {}, io.BytesIO())
