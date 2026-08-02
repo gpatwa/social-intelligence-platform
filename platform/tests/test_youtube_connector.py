@@ -80,6 +80,11 @@ class YouTubeConnectorTests(unittest.TestCase):
         )
         self.assertEqual(batch.checkpoint.quota["search_calls"], 1)
         self.assertEqual(batch.checkpoint.quota["core_units"], 3)
+        search_call = next(call for call in transport.calls if call[0] == "search")
+        video_call = next(call for call in transport.calls if call[0] == "videos")
+        self.assertIn("snippet", search_call[1]["fields"])
+        self.assertEqual(video_call[1]["part"], "statistics")
+        self.assertEqual(video_call[1]["fields"], "items(id,statistics)")
 
     def test_duplicate_video_across_rules_emits_one_logical_event(self):
         transport = FixtureTransport()

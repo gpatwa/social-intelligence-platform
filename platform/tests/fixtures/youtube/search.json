@@ -3,6 +3,14 @@
     {
       "id": {
         "videoId": "video-001"
+      },
+      "snippet": {
+        "channelId": "channel-001",
+        "channelTitle": "Acme Lab",
+        "title": "Testing the #GlowUpChallenge",
+        "description": "A useful Acme transformation tutorial.",
+        "publishedAt": "2026-07-31T10:30:00Z",
+        "defaultLanguage": "en"
       }
     }
   ]
