@@ -487,6 +487,44 @@ nav a:hover {
   margin-bottom: 3px;
 }
 
+.operational-note {
+  align-items: center;
+  background: #edf7e6;
+  border-bottom: 1px solid rgba(83, 122, 54, 0.2);
+  display: grid;
+  gap: 28px;
+  grid-template-columns: 210px 1fr auto;
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: 18px 56px;
+}
+
+.operational-note > div {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.operational-note strong,
+.operational-note a {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.operational-note p {
+  color: #52634a;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.operational-note a {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .section {
   margin: 0 auto;
   max-width: 1440px;
@@ -889,12 +927,17 @@ footer > a {
   }
 
   .proof-strip,
+  .operational-note,
   .section {
     padding-left: 30px;
     padding-right: 30px;
   }
 
   .proof-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .operational-note {
     grid-template-columns: 1fr;
   }
 
@@ -988,6 +1031,11 @@ footer > a {
 
   .proof-strip {
     padding: 30px 20px;
+  }
+
+  .operational-note {
+    gap: 14px;
+    padding: 24px 20px;
   }
 
   .proof-metrics {

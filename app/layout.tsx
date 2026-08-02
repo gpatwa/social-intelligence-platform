@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Social Intelligence — See the signal before the story";
+const title = "Social Intelligence — YouTube signals to Databricks decisions";
 const description =
-  "A governed social intelligence platform for emerging trends, participation challenges, brand risk, and trusted source health.";
+  "A live, governed social intelligence pipeline for YouTube discovery, emerging trends, participation challenges, and trusted analytics on Databricks.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: "Social Intelligence trend and brand-risk analytics",
+          alt: "Social Intelligence — YouTube signals, Databricks decisions",
         },
       ],
     },
