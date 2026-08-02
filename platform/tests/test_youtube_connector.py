@@ -120,6 +120,28 @@ class YouTubeConnectorTests(unittest.TestCase):
         )
         self.assertEqual([event.source_object_id for event in batch.events], ["video-001"])
 
+    def test_quota_limited_stats_falls_back_to_search_metadata(self):
+        transport = FixtureTransport()
+
+        def stats_quota_exhausted(resource, params):
+            if resource == "videos":
+                raise YouTubeApiError(403, "quotaExceeded", "quota unavailable")
+            return transport(resource, params)
+
+        batch = self.connector(
+            stats_quota_exhausted,
+            collect_comments=False,
+            collect_replies=False,
+        ).collect(
+            [CollectionRule("brand-acme", "keyword", "Acme")],
+            ConnectorCheckpoint.empty(NOW),
+        )
+
+        self.assertEqual([event.source_object_id for event in batch.events], ["video-001"])
+        self.assertEqual(batch.events[0].payload["views"], 0)
+        self.assertEqual(batch.statistics["stats_enrichment_failures"], 1)
+        self.assertEqual(batch.checkpoint.quota["core_units"], 1)
+
     def test_transient_search_failure_retries_and_consumes_each_attempt(self):
         transport = FixtureTransport()
         attempts = 0
