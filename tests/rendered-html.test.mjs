@@ -61,7 +61,7 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /Experience plane/);
   assert.match(
     html,
-    /https:\/\/social-intelligence\.example\/og\.png/,
+    /https:\/\/social-intelligence\.example\/og-live\.png/,
   );
 });
 
