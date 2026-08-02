@@ -92,11 +92,18 @@ idempotency, immutable raw payloads, video engagement snapshots, optional
 comments, and a separate paused Databricks ingestion workflow. Activation still
 requires an approved API key, collection rules, and retention policy.
 
+Databricks Free Edition uses the guarded external GitHub Actions collector to
+call YouTube and land immutable batches through the Databricks Files API. Its
+schedule remains disabled until repository secrets and pilot queries are
+validated.
+
 See the
 [real-source integration contract](platform/docs/REAL_SOURCE_INTEGRATION.md)
 and [production readiness gates](platform/docs/PRODUCTION_READINESS.md).
 YouTube-specific setup is documented in the
 [connector guide](platform/docs/YOUTUBE_CONNECTOR.md).
+The external-worker setup is in the
+[Free Edition collector runbook](platform/docs/EXTERNAL_COLLECTOR.md).
 
 ## Production boundary
 

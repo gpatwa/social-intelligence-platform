@@ -45,6 +45,8 @@ notebooks/01_generate_demo_data.py     Demo connector emitting event envelopes
 notebooks/02_build_analytics.py        Auto Loader and Bronze/Silver/Gold logic
 notebooks/03_validate_product.py       Data and product acceptance checks
 notebooks/04_model_governance.py       Tenant-scoped review and quality workflow
+notebooks/07_ingest_connector_metrics.py External collector run and quota metrics
+notebooks/08_validate_external_ingestion.py Real-source acceptance gates
 sql/dashboard_queries.sql              Dashboard datasets and alert queries
 src/social_intelligence/contracts.py   Versioned event-envelope contract
 schemas/social-event-envelope-v1.json  Machine-readable connector contract
@@ -56,6 +58,12 @@ The repository also includes a quota-aware YouTube Data API v3 adapter,
 provider fixtures, checkpoint and retry primitives, and a separate paused
 Databricks ingestion job. See the
 [YouTube connector guide](docs/YOUTUBE_CONNECTOR.md).
+
+For Databricks Free Edition, use the
+[external GitHub Actions collector](docs/EXTERNAL_COLLECTOR.md). It lands
+events, durable checkpoints, and quota/run metrics through the Databricks Files
+API; the paused `social_intelligence_external_ingestion` job then refreshes the
+Bronze, Silver, Gold, and operational tables.
 
 ## Prerequisites
 
@@ -159,6 +167,10 @@ loads active keyword and channel rules from the control plane, persists quota
 reservations and rule cursors, lands immutable envelopes, and refreshes the
 existing analytics pipeline. Comments and replies are opt-in because they
 increase quota use and privacy obligations.
+
+The recommended Free Edition alternative is the `YouTube collector` GitHub
+Actions workflow plus the `social_intelligence_external_ingestion` Databricks
+job. Do not enable both collection runtimes for the same source.
 
 ## Metric notes
 

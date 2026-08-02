@@ -10,6 +10,11 @@ The initial adapter is a bounded polling connector. YouTube channel push
 notifications are a later optimization for known-channel uploads; topic and
 keyword discovery still require polling.
 
+For Databricks Free Edition, the recommended runtime is the external GitHub
+Actions worker documented in [EXTERNAL_COLLECTOR.md](EXTERNAL_COLLECTOR.md).
+This guide also retains the paused Databricks-native collection path for a
+future workspace with approved outbound API access.
+
 ## Collection flow
 
 ```text
@@ -80,14 +85,17 @@ databricks bundle deploy -t dev \
 The API key is retrieved at runtime with `dbutils.secrets.get` and is never
 returned by the connector's sanitized errors.
 
-The bundle builds the connector package as a Python wheel and attaches it only
-to the ingestion task. This keeps notebook execution reproducible and avoids
-runtime source-path manipulation.
+The bundle builds the connector package as a Python wheel and installs it in a
+serverless job environment used only by the ingestion task. This keeps notebook
+execution reproducible, avoids runtime source-path manipulation, and satisfies
+Free Edition's serverless dependency model. Increment the package version when
+the wheel changes so the serverless environment does not reuse a stale cache.
 
 ## Activate the job
 
 The `social_intelligence_youtube_ingestion` job is deployed with its schedule
-paused. After credential setup:
+paused. It is an alternative to the external worker, not a companion job. After
+credential setup:
 
 1. Review the keyword expression and optional comma-separated channel IDs.
 2. Keep comments disabled for the first quota and privacy validation run.
@@ -95,6 +103,9 @@ paused. After credential setup:
 4. Verify raw events, checkpoint state, dead-letter rows, and source health.
 5. Reconcile discovered videos against the YouTube UI for the pilot window.
 6. Enable the hourly schedule only after the first run meets acceptance gates.
+
+Do not enable this job when the GitHub Actions collector is enabled for the
+same tenant and source. Both runtimes intentionally share a durable checkpoint.
 
 Manual execution:
 

@@ -21,6 +21,10 @@ if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,62}", tenant_id):
 ns = f"`{catalog}`.`{schema}`"
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {ns}")
 spark.sql(f"CREATE VOLUME IF NOT EXISTS {ns}.`raw_social`")
+for directory in ("events", "checkpoints", "operations"):
+    dbutils.fs.mkdirs(
+        f"/Volumes/{catalog}/{schema}/raw_social/{directory}"
+    )
 
 # These tables are the logical control plane. They describe desired collection
 # behavior; connector workers consume them but social payloads never flow here.

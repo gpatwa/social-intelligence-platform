@@ -1,8 +1,8 @@
 resources:
   jobs:
-    social_intelligence_youtube_ingestion:
-      name: social-intelligence-youtube-ingestion-${bundle.target}
-      description: Collects quota-bounded public YouTube data into the shared event envelope.
+    social_intelligence_external_ingestion:
+      name: social-intelligence-external-ingestion-${bundle.target}
+      description: Ingests externally collected social events and refreshes governed analytics.
       max_concurrent_runs: 1
       tasks:
         - task_key: initialize_platform
@@ -23,54 +23,48 @@ resources:
               schema: ${var.schema}
               tenant_id: ${var.tenant_id}
               source_id: ${var.youtube_source_id}
-              secret_scope: ${var.youtube_secret_scope}
-              secret_key: ${var.youtube_secret_key}
+              secret_scope: external-github-actions
+              secret_key: youtube-api-key
               search_expression: ${var.youtube_search_expression}
               channel_ids: ${var.youtube_channel_ids}
               poll_interval_seconds: "3600"
               owner: data-platform
 
-        - task_key: ingest_youtube
+        - task_key: ingest_connector_metrics
           depends_on:
             - task_key: configure_youtube_source
-          environment_key: connector
           notebook_task:
-            notebook_path: ../notebooks/06_ingest_youtube.py
+            notebook_path: ../notebooks/07_ingest_connector_metrics.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
-              tenant_id: ${var.tenant_id}
-              source_id: ${var.youtube_source_id}
-              secret_scope: ${var.youtube_secret_scope}
-              secret_key: ${var.youtube_secret_key}
-              region_code: ${var.youtube_region_code}
-              relevance_language: ${var.youtube_relevance_language}
-              lookback_hours: "6"
-              max_search_pages_per_rule: "1"
-              collect_comments: ${var.youtube_collect_comments}
-              collect_replies: ${var.youtube_collect_replies}
+
         - task_key: refresh_analytics
           depends_on:
-            - task_key: ingest_youtube
+            - task_key: ingest_connector_metrics
           notebook_task:
             notebook_path: ../notebooks/02_build_analytics.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}
 
-      environments:
-        - environment_key: connector
-          spec:
-            environment_version: "2"
-            dependencies:
-              - ../dist/*.whl
+        - task_key: validate_external_ingestion
+          depends_on:
+            - task_key: refresh_analytics
+          notebook_task:
+            notebook_path: ../notebooks/08_validate_external_ingestion.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              tenant_id: ${var.tenant_id}
+              source_id: ${var.youtube_source_id}
 
       schedule:
-        quartz_cron_expression: 0 0 * * * ?
+        quartz_cron_expression: 0 47 * * * ?
         timezone_id: America/Los_Angeles
         pause_status: PAUSED
 
       tags:
         product: social-intelligence
-        platform: youtube
+        runtime: external-collector
         environment: ${bundle.target}
