@@ -111,6 +111,8 @@ is not used as a live-source acceptance test.
 ## Failure and replay semantics
 
 - Quota reservations are uploaded before every provider request completes.
+- The worker idempotently creates missing Files API directories before reading
+  its checkpoint, so a new source can start from an empty volume hierarchy.
 - Event files are unique and immutable.
 - Cursors advance only after the event file upload succeeds.
 - A crash after event upload safely replays the overlap window.

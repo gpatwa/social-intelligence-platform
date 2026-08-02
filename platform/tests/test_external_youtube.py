@@ -18,6 +18,7 @@ class MemoryFiles:
     def __init__(self):
         self.files = {}
         self.uploads = []
+        self.directories = []
 
     def download(self, path):
         return self.files.get(path)
@@ -25,6 +26,9 @@ class MemoryFiles:
     def upload(self, path, content):
         self.files[path] = content
         self.uploads.append(path)
+
+    def create_directory(self, path):
+        self.directories.append(path)
 
 
 class FakeConnector:
@@ -131,6 +135,33 @@ class ExternalYouTubeCollectorTests(unittest.TestCase):
         self.assertEqual(json.loads(records[0])["source_object_id"], "video-1")
         checkpoint = json.loads(files.files[self.config.checkpoint_path])
         self.assertEqual(checkpoint["metadata"]["runtime"], "external_files_api")
+
+    def test_creates_required_directories_before_checkpoint_download(self):
+        operations = []
+
+        class OrderedFiles(MemoryFiles):
+            def create_directory(self, path):
+                operations.append(("directory", path))
+                super().create_directory(path)
+
+            def download(self, path):
+                operations.append(("download", path))
+                return super().download(path)
+
+        files = OrderedFiles()
+
+        def factory(config, quota_observer):
+            return FakeConnector(quota_observer, self.event)
+
+        ExternalYouTubeCollector(
+            self.config,
+            files,
+            connector_factory=factory,
+            clock=lambda: NOW,
+        ).run()
+
+        self.assertEqual([item[0] for item in operations[:3]], ["directory"] * 3)
+        self.assertEqual(operations[3][0], "download")
 
 
 if __name__ == "__main__":

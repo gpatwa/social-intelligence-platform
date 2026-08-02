@@ -202,6 +202,7 @@ class ExternalYouTubeCollector:
     def run(self) -> Mapping[str, object]:
         started_at = self.clock().astimezone(timezone.utc)
         run_id = f"{started_at:%Y%m%dT%H%M%S}-{uuid4().hex}"
+        self._ensure_directories()
         checkpoint = self._load_checkpoint()
 
         def persist_quota(quota: Mapping[str, int | str]) -> None:
@@ -264,6 +265,16 @@ class ExternalYouTubeCollector:
             except Exception:
                 pass
             raise
+
+    def _ensure_directories(self) -> None:
+        for path in (
+            f"{self.config.volume_root}/events",
+            f"{self.config.volume_root}/checkpoints/youtube/"
+            f"{self.config.tenant_id}",
+            f"{self.config.volume_root}/operations/youtube/"
+            f"{self.config.tenant_id}/{self.config.source_id}",
+        ):
+            self.files.create_directory(path)
 
     def _load_checkpoint(self) -> ConnectorCheckpoint:
         payload = self.files.download(self.config.checkpoint_path)
