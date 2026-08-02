@@ -47,13 +47,15 @@ test("server-renders the Social Intelligence landing page", async () => {
   const html = await response.text();
   assert.match(
     html,
-    /<title>Social Intelligence — See the signal before the story<\/title>/i,
+    /<title>Social Intelligence — YouTube signals to Databricks decisions<\/title>/i,
   );
   assert.match(html, /See the signal/);
   assert.match(html, /before it becomes the story\./);
-  assert.match(html, /<b>943<\/b> replayable events/);
+  assert.match(html, /<b>12<\/b> real events landed/);
   assert.match(html, /<b>0<\/b> rejected events/);
-  assert.match(html, /<b>7<\/b> unified signals/);
+  assert.match(html, /<b>33<\/b> automated tests/);
+  assert.match(html, /Discovery data is live/);
+  assert.match(html, /Google quota/);
   assert.match(html, /Control plane/);
   assert.match(html, /Data plane/);
   assert.match(html, /Experience plane/);

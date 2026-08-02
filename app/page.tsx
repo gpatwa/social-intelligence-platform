@@ -1,34 +1,37 @@
 const dashboardUrl =
   "https://dbc-b8672746-8e43.cloud.databricks.com/dashboardsv3/01f17ce244971d80b97f3c0aa6b033ef/published?o=7474657828954669";
+const githubUrl = "https://github.com/gpatwa/social-intelligence-platform";
+const pipelineRunUrl =
+  "https://github.com/gpatwa/social-intelligence-platform/actions/runs/30737199706";
 
 const capabilities = [
   {
     index: "01",
     title: "Emerging trends",
-    copy: "Spot topics accelerating beyond their normal baseline—with velocity, breadth, and supporting evidence.",
-    metric: "52.54",
-    label: "top trend score",
+    copy: "Track topics and creators as they accelerate, with every signal linked back to replayable source evidence.",
+    metric: "Hourly",
+    label: "scheduled discovery",
   },
   {
     index: "02",
     title: "Challenge intelligence",
     copy: "Measure participation growth, creator diversity, geographic spread, and persistence—not just hashtag volume.",
-    metric: "56.64",
-    label: "challenge score",
+    metric: "12",
+    label: "live events validated",
   },
   {
     index: "03",
-    title: "Brand risk",
-    copy: "Surface negative conversation and high-risk mentions early enough for communications and support teams to act.",
-    metric: "89.41",
-    label: "risk signal",
+    title: "Operational trust",
+    copy: "Monitor collection, checkpoints, quota use, rejected records, and enrichment health alongside the insight.",
+    metric: "5 / 5",
+    label: "pipeline stages passing",
   },
   {
     index: "04",
-    title: "Source health",
-    copy: "Know whether the signal can be trusted with freshness, rejection, duplication, and delivery health built in.",
-    metric: "3 / 3",
-    label: "sources healthy",
+    title: "Connector-ready",
+    copy: "Add Instagram, X, Reddit, or approved providers behind one versioned, tenant-aware event contract.",
+    metric: "v1",
+    label: "canonical event contract",
   },
 ];
 
@@ -70,8 +73,8 @@ export default function Home() {
           <a href="#architecture">Architecture</a>
           <a href="#readiness">Readiness</a>
         </nav>
-        <a className="nav-cta" href="#pilot">
-          Explore the pilot <span aria-hidden="true">↗</span>
+        <a className="nav-cta" href={githubUrl} target="_blank" rel="noreferrer">
+          View the source <span aria-hidden="true">↗</span>
         </a>
       </header>
 
@@ -79,16 +82,16 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="live-dot" />
-            Working MVP · Databricks-powered
+            Live MVP · YouTube → Databricks
           </div>
           <h1>
             See the signal
             <span>before it becomes the story.</span>
           </h1>
           <p className="hero-lede">
-            A governed social intelligence platform for detecting emerging
-            trends, participation challenges, and brand risk—before raw
-            conversation turns into business impact.
+            A governed social intelligence platform that collects real social
+            signals, preserves the evidence, and turns momentum into measurable
+            trends, challenges, and brand intelligence.
           </p>
           <div className="hero-actions">
             <a
@@ -97,33 +100,38 @@ export default function Home() {
               target="_blank"
               rel="noreferrer"
             >
-              Open the live dashboard <span aria-hidden="true">↗</span>
+              Open the analytics workspace <span aria-hidden="true">↗</span>
             </a>
-            <a className="button button-secondary" href="#architecture">
-              See how it works
+            <a
+              className="button button-secondary"
+              href={githubUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Inspect the platform
             </a>
           </div>
           <p className="access-note">
-            The working demo opens in Databricks and may require workspace
-            access.
+            Live YouTube discovery is running now. Databricks may require
+            workspace access.
           </p>
         </div>
 
         <div className="signal-console" aria-label="Product signal preview">
           <div className="console-topbar">
-            <span>Signal feed / current window</span>
-            <span className="console-live">Live model</span>
+            <span>Pipeline / latest validated run</span>
+            <span className="console-live">Operational</span>
           </div>
           <div className="console-main">
             <div className="console-feature">
               <div className="feature-label">
-                <span>Emerging signal</span>
-                <strong>High confidence</strong>
+                <span>Source · YouTube Data API v3</span>
+                <strong>Discovery live</strong>
               </div>
-              <h2>Glow up challenge</h2>
+              <h2>Social events are landing.</h2>
               <p>
-                Creator participation is accelerating across three monitored
-                sources.
+                GitHub Actions collects public YouTube results. Databricks
+                validates, deduplicates, scores, and serves the analytics layer.
               </p>
               <div className="trend-chart" aria-hidden="true">
                 {[24, 31, 28, 42, 49, 61, 73, 91].map((height, index) => (
@@ -134,59 +142,73 @@ export default function Home() {
                 ))}
               </div>
               <div className="chart-axis">
-                <span>−24h</span>
-                <span>Now</span>
+                <span>Collect · :17</span>
+                <span>Process · :47</span>
               </div>
             </div>
             <div className="score-stack">
               <article className="score-card accent-green">
-                <span>Trend score</span>
-                <strong>52.54</strong>
-                <small>↑ accelerating</small>
+                <span>Events landed</span>
+                <strong>12</strong>
+                <small>real source data</small>
               </article>
               <article className="score-card accent-coral">
-                <span>Brand risk</span>
-                <strong>89.41</strong>
-                <small>critical signal</small>
+                <span>Workflow health</span>
+                <strong>5/5</strong>
+                <small>stages passing</small>
               </article>
             </div>
           </div>
           <div className="console-footer">
             <div>
               <span className="health-dot" />
-              3 sources healthy
+              YouTube source live
             </div>
-            <div>943 canonical events</div>
+            <div>Hourly schedule</div>
             <div>0 rejected</div>
           </div>
         </div>
       </section>
 
       <section className="proof-strip" aria-label="Validated MVP metrics">
-        <p>Validated in the working MVP</p>
+        <p>Latest live validation</p>
         <div className="proof-metrics">
           <span>
-            <b>943</b> replayable events
+            <b>12</b> real events landed
           </span>
           <span>
             <b>0</b> rejected events
           </span>
           <span>
-            <b>7</b> unified signals
+            <b>33</b> automated tests
           </span>
           <span>
-            <b>5/5</b> workflow stages passing
+            <b>5/5</b> Databricks stages passing
           </span>
         </div>
       </section>
 
+      <aside className="operational-note" aria-label="Live data status">
+        <div>
+          <span className="health-dot" />
+          <strong>Discovery data is live</strong>
+        </div>
+        <p>
+          Titles, descriptions, channels, and publish times are flowing now.
+          Engagement counters stay at zero when Google blocks statistics
+          enrichment under the project&apos;s current quota.
+        </p>
+        <a href="#readiness">See the production gates ↓</a>
+      </aside>
+
       <section className="section product-section" id="product">
         <div className="section-heading">
           <p className="section-kicker">Product intelligence</p>
-          <h2>From noisy conversation to an explainable signal.</h2>
+          <h2>From public conversation to an explainable signal.</h2>
           <p>
-            The product scores what is changing, why it matters, and whether the
-            underlying data is healthy enough to trust.
+            The platform separates collection from analytics, so teams can see
+            what is changing, why it matters, and whether the data is healthy
+            enough to trust.
           </p>
         </div>
         <div className="capability-grid">
@@ -252,10 +274,10 @@ export default function Home() {
             </div>
             <ul>
               <li>Trend and challenge detection</li>
-              <li>Brand-risk monitoring</li>
-              <li>Explainable scoring and evidence</li>
-              <li>Source-health and quality metrics</li>
-              <li>Tenant-scoped dashboards and alerts</li>
+              <li>Live YouTube discovery ingestion</li>
+              <li>Durable checkpoints and replayable events</li>
+              <li>Quota controls, retries, and source health</li>
+              <li>Scheduled Databricks analytics workflow</li>
             </ul>
           </article>
           <article className="readiness-card path">
@@ -264,11 +286,11 @@ export default function Home() {
               <b>Next gates</b>
             </div>
             <ul>
-              <li>Approved real-source connector</li>
-              <li>Paid cloud workspace and object storage</li>
-              <li>Application identity and secured API</li>
+              <li>Google quota for engagement enrichment</li>
+              <li>Additional approved social connectors</li>
+              <li>Service identity and managed secrets</li>
               <li>Provider deletion and retention workflows</li>
-              <li>Reconciliation, incident response, and DR</li>
+              <li>Production storage, reconciliation, and DR</li>
             </ul>
           </article>
         </div>
@@ -276,24 +298,25 @@ export default function Home() {
 
       <section className="pilot-section" id="pilot">
         <div>
-          <p className="section-kicker">Start with one signal</p>
-          <h2>Prove value with one approved source and one real decision.</h2>
+          <p className="section-kicker">The first source is live</p>
+          <h2>Start with YouTube. Expand behind one contract.</h2>
           <p>
-            A focused pilot connects a defined source, calibrates signal quality,
-            and measures whether the insight changed an outcome.
+            The operating path is proven from external collection through
+            Databricks analytics. The next source can reuse the same controls,
+            checkpoints, and event envelope.
           </p>
         </div>
         <div className="pilot-actions">
           <a
             className="button button-light"
-            href={dashboardUrl}
+            href={pipelineRunUrl}
             target="_blank"
             rel="noreferrer"
           >
-            Explore the working demo <span aria-hidden="true">↗</span>
+            View the successful run <span aria-hidden="true">↗</span>
           </a>
-          <a className="text-link" href="#readiness">
-            Review rollout gates <span aria-hidden="true">↓</span>
+          <a className="text-link" href={githubUrl} target="_blank" rel="noreferrer">
+            Explore the public repository <span aria-hidden="true">↗</span>
           </a>
         </div>
       </section>
@@ -308,8 +331,8 @@ export default function Home() {
           <b>Social Intelligence</b>
         </div>
         <p>
-          Working MVP on Databricks. Current metrics use deterministic
-          demonstration data.
+          Live YouTube discovery on Databricks Free Edition. Engagement counts
+          remain in degraded mode until Google enables generic query quota.
         </p>
         <a href="#top">Back to top ↑</a>
       </footer>
