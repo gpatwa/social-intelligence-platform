@@ -62,7 +62,7 @@ resources:
       schedule:
         quartz_cron_expression: 0 47 * * * ?
         timezone_id: America/Los_Angeles
-        pause_status: PAUSED
+        pause_status: UNPAUSED
 
       tags:
         product: social-intelligence
