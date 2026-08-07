@@ -39,6 +39,12 @@ async function render() {
   );
 }
 
+async function loadWorker() {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-api`);
+  return (await import(workerUrl.href)).default;
+}
+
 test("server-renders the Social Intelligence landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);
@@ -53,8 +59,10 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /before it becomes the story\./);
   assert.match(html, /<b>12<\/b> real events landed/);
   assert.match(html, /<b>0<\/b> rejected events/);
-  assert.match(html, /<b>33<\/b> automated tests/);
+  assert.match(html, /<b>37<\/b> automated tests/);
   assert.match(html, /Discovery data is live/);
+  assert.match(html, /Pipeline status, without the guesswork/);
+  assert.match(html, /Databricks · gold_connector_operations/);
   assert.match(html, /Google quota/);
   assert.match(html, /Control plane/);
   assert.match(html, /Data plane/);
@@ -81,4 +89,29 @@ test("removes the disposable starter preview", async () => {
     ),
     [],
   );
+});
+
+test("fails closed when the public metrics store is unavailable", async () => {
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://social-intelligence.example/api/pipeline-status"),
+    {
+      ASSETS: {
+        fetch: async () => new Response("Not found", { status: 404 }),
+      },
+    },
+    {
+      waitUntil() {},
+      passThroughOnException() {},
+    },
+  );
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    available: false,
+    source: "Databricks · gold_connector_operations",
+    status: "PENDING",
+    operationalStatus: "AWAITING_TELEMETRY",
+    message: "Metrics store is not configured",
+  });
 });

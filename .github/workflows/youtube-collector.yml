@@ -43,4 +43,21 @@ jobs:
           YOUTUBE_MAX_SEARCH_PAGES_PER_RULE: ${{ vars.YOUTUBE_MAX_SEARCH_PAGES_PER_RULE || '1' }}
           YOUTUBE_COLLECT_COMMENTS: ${{ vars.YOUTUBE_COLLECT_COMMENTS || 'false' }}
           YOUTUBE_COLLECT_REPLIES: ${{ vars.YOUTUBE_COLLECT_REPLIES || 'false' }}
+          PIPELINE_STATUS_OUTPUT: ${{ runner.temp }}/pipeline-status.json
         run: python -m social_intelligence.connectors.external_youtube
+      - name: Publish sanitized Databricks pipeline metric
+        if: ${{ always() && vars.PIPELINE_STATUS_URL != '' }}
+        env:
+          PIPELINE_STATUS_URL: ${{ vars.PIPELINE_STATUS_URL }}
+          PIPELINE_STATUS_INGEST_KEY: ${{ secrets.PIPELINE_STATUS_INGEST_KEY }}
+        run: |
+          if [[ ! -f "${RUNNER_TEMP}/pipeline-status.json" ]]; then
+            echo "No pipeline status projection was produced."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${PIPELINE_STATUS_INGEST_KEY}" \
+            --header "Content-Type: application/json" \
+            --data-binary "@${RUNNER_TEMP}/pipeline-status.json" \
+            "${PIPELINE_STATUS_URL}"

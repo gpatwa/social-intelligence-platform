@@ -70,6 +70,7 @@ class ExternalYouTubeConfig:
     max_search_pages_per_rule: int = 1
     collect_comments: bool = False
     collect_replies: bool = False
+    status_output_path: str = ""
 
     def __post_init__(self) -> None:
         for name, value in (("catalog", self.catalog), ("schema", self.schema)):
@@ -126,6 +127,7 @@ class ExternalYouTubeConfig:
             ),
             collect_comments=_boolean(values, "YOUTUBE_COLLECT_COMMENTS", False),
             collect_replies=_boolean(values, "YOUTUBE_COLLECT_REPLIES", False),
+            status_output_path=values.get("PIPELINE_STATUS_OUTPUT", "").strip(),
         )
 
     @property
@@ -252,6 +254,7 @@ class ExternalYouTubeCollector:
                 event_path=event_path,
             )
             self._save_metric(run_id, metric)
+            self._write_status_projection(metric)
             return metric
         except Exception as error:
             metric = self._metric(
@@ -264,6 +267,7 @@ class ExternalYouTubeCollector:
                 self._save_metric(run_id, metric)
             except Exception:
                 pass
+            self._write_status_projection(metric)
             raise
 
     def _ensure_directories(self) -> None:
@@ -300,6 +304,15 @@ class ExternalYouTubeCollector:
             path,
             (json.dumps(metric, sort_keys=True) + "\n").encode("utf-8"),
         )
+
+    def _write_status_projection(self, metric: Mapping[str, object]) -> None:
+        if not self.config.status_output_path:
+            return
+        output_path = os.path.abspath(self.config.status_output_path)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as output:
+            json.dump(dict(metric), output, sort_keys=True)
+            output.write("\n")
 
     def _metric(
         self,

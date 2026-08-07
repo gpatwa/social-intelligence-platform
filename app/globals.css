@@ -513,6 +513,190 @@ nav a:hover {
   text-transform: uppercase;
 }
 
+.pipeline-status-section {
+  background: var(--ink);
+  color: white;
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: 96px 56px 54px;
+}
+
+.pipeline-status-heading {
+  align-items: end;
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+}
+
+.pipeline-status-heading .section-kicker {
+  color: var(--green);
+  margin: 0 0 20px;
+}
+
+.pipeline-status-heading h2 {
+  font-size: clamp(38px, 4.7vw, 67px);
+  font-weight: 520;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  margin: 0;
+  max-width: 760px;
+}
+
+.status-badge {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex: 0 0 auto;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  gap: 9px;
+  letter-spacing: 0.08em;
+  padding: 11px 13px;
+  text-transform: uppercase;
+}
+
+.status-badge span,
+.stage-dot {
+  background: var(--coral);
+  border-radius: 50%;
+  height: 7px;
+  width: 7px;
+}
+
+.status-badge.healthy span,
+.stage-dot.good {
+  background: var(--green);
+}
+
+.status-badge.loading span {
+  background: var(--steel);
+}
+
+.status-badge.stale span {
+  background: #ffd268;
+}
+
+.status-command-center {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: grid;
+  gap: 44px;
+  grid-template-columns: minmax(250px, 0.72fr) minmax(560px, 1.28fr);
+  margin-top: 54px;
+  padding: 34px 0;
+}
+
+.status-summary {
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  padding-right: 44px;
+}
+
+.status-source,
+.status-summary a,
+.status-metric-grid span,
+.status-metric-grid small,
+.status-stage small {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 8px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.status-source {
+  color: var(--green);
+}
+
+.status-summary > strong {
+  display: block;
+  font-size: 27px;
+  font-weight: 520;
+  letter-spacing: -0.04em;
+  margin-top: 36px;
+}
+
+.status-summary p {
+  color: #9cabb6;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 12px 0 34px;
+  max-width: 420px;
+}
+
+.status-summary a {
+  color: white;
+  font-weight: 650;
+}
+
+.status-metric-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.status-metric-grid article {
+  background: #101f2d;
+  border-top: 3px solid var(--green);
+  display: grid;
+  min-height: 172px;
+  padding: 18px;
+}
+
+.status-metric-grid article:nth-child(3),
+.status-metric-grid article:nth-child(4) {
+  border-top-color: var(--coral);
+}
+
+.status-metric-grid span,
+.status-metric-grid small {
+  color: #8899a6;
+}
+
+.status-metric-grid strong {
+  align-self: center;
+  font-size: 35px;
+  font-weight: 520;
+  letter-spacing: -0.05em;
+}
+
+.status-metric-grid small {
+  align-self: end;
+  line-height: 1.45;
+}
+
+.status-flow {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(7, auto);
+  justify-content: space-between;
+  padding-top: 28px;
+}
+
+.status-flow > i {
+  color: #546979;
+  font-style: normal;
+}
+
+.status-stage {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.status-stage > div {
+  display: grid;
+  gap: 4px;
+}
+
+.status-stage strong {
+  font-size: 12px;
+  font-weight: 560;
+}
+
+.status-stage small {
+  color: #7d919f;
+}
+
 .operational-note p {
   color: #52634a;
   font-size: 11px;
@@ -928,7 +1112,8 @@ footer > a {
 
   .proof-strip,
   .operational-note,
-  .section {
+  .section,
+  .pipeline-status-section {
     padding-left: 30px;
     padding-right: 30px;
   }
@@ -939,6 +1124,29 @@ footer > a {
 
   .operational-note {
     grid-template-columns: 1fr;
+  }
+
+  .status-command-center {
+    grid-template-columns: 1fr;
+  }
+
+  .status-summary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-right: 0;
+    padding: 0 0 32px;
+  }
+
+  .status-metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .status-flow {
+    gap: 14px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .status-flow > i {
+    display: none;
   }
 
   .section-heading {
@@ -1036,6 +1244,31 @@ footer > a {
   .operational-note {
     gap: 14px;
     padding: 24px 20px;
+  }
+
+  .pipeline-status-section {
+    padding: 72px 20px 40px;
+  }
+
+  .pipeline-status-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .status-command-center {
+    margin-top: 40px;
+  }
+
+  .status-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-metric-grid article {
+    min-height: 145px;
+  }
+
+  .status-flow {
+    grid-template-columns: 1fr;
   }
 
   .proof-metrics {

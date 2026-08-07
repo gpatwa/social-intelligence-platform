@@ -51,6 +51,7 @@ Do not place the values in repository variables or source code.
 | `DATABRICKS_HOST` | Workspace URL, for example `https://dbc-...cloud.databricks.com` |
 | `DATABRICKS_TOKEN` | Databricks credential with Files API access to the target volume |
 | `YOUTUBE_API_KEY` | Google API key restricted to YouTube Data API v3 |
+| `PIPELINE_STATUS_INGEST_KEY` | Shared secret used only to publish a sanitized run metric to the landing page |
 
 Use a dedicated short-lived Databricks credential when Free Edition supports
 it. Rotate the credential immediately if it appears in workflow output.
@@ -73,6 +74,7 @@ Set repository Actions variables for non-secret configuration:
 | `YOUTUBE_MAX_SEARCH_PAGES_PER_RULE` | `1` |
 | `YOUTUBE_COLLECT_COMMENTS` | `false` |
 | `YOUTUBE_COLLECT_REPLIES` | `false` |
+| `PIPELINE_STATUS_URL` | Public landing-page endpoint, ending in `/api/pipeline-status` |
 
 Leave `ENABLE_YOUTUBE_COLLECTOR` unset during setup. Run the workflow manually,
 inspect the batch, checkpoint, run metric, and Databricks tables, then set it to
@@ -103,6 +105,12 @@ gold_signal_feed
 Acceptance gates are: no dead-letter rows, no unexplained duplicates, a fresh
 successful collector run, positive quota headroom, and reconciliation of
 sampled videos against the YouTube user interface.
+
+After each collector attempt, the workflow publishes the same run metric that
+lands in `gold_connector_operations` to a separate public-safe status store.
+The endpoint accepts only the versioned operational fields used by the landing
+page; Databricks credentials, event payloads, checkpoints, and internal volume
+paths are never returned to the browser.
 
 The external job uses source-specific validation. The deterministic demo
 validator intentionally checks fictional challenge and brand-risk scenarios and
