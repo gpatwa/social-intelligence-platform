@@ -52,6 +52,18 @@ variables:
   youtube_collect_replies:
     description: Whether the pilot follows comment threads for replies
     default: "false"
+  x_source_id:
+    description: Control-plane identifier for the X recent-search connector
+    default: x-api-v2
+  x_search_expression:
+    description: X Search Posts query expression; leave empty when using only hashtag or account rules
+    default: ""
+  x_hashtags:
+    description: Optional comma-separated X hashtags, without requiring a leading hash
+    default: ""
+  x_account_handles:
+    description: Optional comma-separated X account handles, with or without leading at signs
+    default: ""
 
 workspace:
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

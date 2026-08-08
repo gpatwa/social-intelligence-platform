@@ -1,0 +1,43 @@
+name: X collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "29 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: x-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_X_COLLECTOR == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install connector package
+        run: python -m pip install ./platform
+      - name: Collect and land X posts
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          DATABRICKS_CATALOG: ${{ vars.DATABRICKS_CATALOG || 'dev' }}
+          DATABRICKS_SCHEMA: ${{ vars.DATABRICKS_SCHEMA || 'social_intelligence_dev' }}
+          SOCIAL_TENANT_ID: ${{ vars.SOCIAL_TENANT_ID || 'demo' }}
+          X_SOURCE_ID: ${{ vars.X_SOURCE_ID || 'x-api-v2' }}
+          X_SEARCH_EXPRESSION: ${{ vars.X_SEARCH_EXPRESSION }}
+          X_HASHTAGS: ${{ vars.X_HASHTAGS }}
+          X_ACCOUNT_HANDLES: ${{ vars.X_ACCOUNT_HANDLES }}
+          X_LOOKBACK_HOURS: ${{ vars.X_LOOKBACK_HOURS || '6' }}
+          X_MAX_SEARCH_PAGES_PER_RULE: ${{ vars.X_MAX_SEARCH_PAGES_PER_RULE || '1' }}
+          X_MAX_REQUESTS_PER_RUN: ${{ vars.X_MAX_REQUESTS_PER_RUN || '100' }}
+        run: python -m social_intelligence.connectors.external_x

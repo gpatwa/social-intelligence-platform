@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "id": "1888000000000000001",
+      "text": "Acme launches the #GlowUpChallenge today!",
+      "author_id": "12345",
+      "created_at": "2026-08-08T11:55:00.000Z",
+      "lang": "en",
+      "public_metrics": {
+        "like_count": 42,
+        "reply_count": 7,
+        "retweet_count": 9,
+        "quote_count": 2,
+        "bookmark_count": 3,
+        "impression_count": 12000
+      },
+      "entities": {"hashtags": [{"tag": "GlowUpChallenge"}]}
+    }
+  ],
+  "meta": {"result_count": 1}
+}

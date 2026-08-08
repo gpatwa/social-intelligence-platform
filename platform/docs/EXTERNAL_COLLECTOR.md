@@ -1,9 +1,10 @@
 # External collector for Databricks Free Edition
 
 Databricks Free Edition remains the lakehouse and analytics plane. A scheduled
-GitHub Actions workflow calls the YouTube Data API, writes immutable newline-
-delimited JSON batches through the Databricks Files API, and stores its cursor
-and quota ledger in the same Unity Catalog volume.
+GitHub Actions workflows call approved provider APIs, write immutable newline-
+delimited JSON batches through the Databricks Files API, and store each source's
+cursor and quota ledger in the same Unity Catalog volume. YouTube and X use the
+same control-plane contract and delivery semantics.
 
 ```text
 GitHub Actions -> YouTube Data API -> SocialEventEnvelope NDJSON
@@ -51,6 +52,7 @@ Do not place the values in repository variables or source code.
 | `DATABRICKS_HOST` | Workspace URL, for example `https://dbc-...cloud.databricks.com` |
 | `DATABRICKS_TOKEN` | Databricks credential with Files API access to the target volume |
 | `YOUTUBE_API_KEY` | Google API key restricted to YouTube Data API v3 |
+| `X_BEARER_TOKEN` | Bearer credential for the approved X API project |
 | `PIPELINE_STATUS_INGEST_KEY` | Shared secret used only to publish a sanitized run metric to the landing page |
 
 Use a dedicated short-lived Databricks credential when Free Edition supports
@@ -75,6 +77,8 @@ Set repository Actions variables for non-secret configuration:
 | `YOUTUBE_COLLECT_COMMENTS` | `false` |
 | `YOUTUBE_COLLECT_REPLIES` | `false` |
 | `PIPELINE_STATUS_URL` | Public landing-page endpoint, ending in `/api/pipeline-status` |
+
+For X-specific setup and the allowed query modes, see [X connector](X_CONNECTOR.md).
 
 Leave `ENABLE_YOUTUBE_COLLECTOR` unset during setup. Run the workflow manually,
 inspect the batch, checkpoint, run metric, and Databricks tables, then set it to

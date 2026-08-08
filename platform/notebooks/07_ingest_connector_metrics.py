@@ -34,15 +34,35 @@ metric_schema = T.StructType(
         T.StructField("status", T.StringType()),
         T.StructField("active_rules", T.LongType()),
         T.StructField("videos_discovered", T.LongType()),
+        T.StructField("posts_discovered", T.LongType()),
         T.StructField("events_emitted", T.LongType()),
         T.StructField("search_calls_used", T.LongType()),
         T.StructField("search_calls_remaining", T.LongType()),
         T.StructField("core_units_used", T.LongType()),
         T.StructField("core_units_remaining", T.LongType()),
+        T.StructField("requests_used", T.LongType()),
+        T.StructField("requests_remaining", T.LongType()),
         T.StructField("event_path", T.StringType()),
         T.StructField("error_type", T.StringType()),
     ]
 )
+
+# Existing Free Edition workspaces may already have the YouTube-only shape.
+# Evolve the governed operational table before Auto Loader writes X metrics so a
+# connector rollout does not depend on destructive table recreation.
+metrics_table = f"{catalog}.{schema}.bronze_connector_runs"
+if not spark.catalog.tableExists(metrics_table):
+    spark.createDataFrame([], metric_schema).write.format("delta").saveAsTable(metrics_table)
+else:
+    existing_columns = {
+        field.name.lower() for field in spark.table(metrics_table).schema.fields
+    }
+    for column_name in ("posts_discovered", "requests_used", "requests_remaining"):
+        if column_name not in existing_columns:
+            spark.sql(
+                f"ALTER TABLE {namespace}.`bronze_connector_runs` "
+                f"ADD COLUMNS (`{column_name}` BIGINT)"
+            )
 
 metric_stream = (
     spark.readStream.format("cloudFiles")
@@ -55,7 +75,7 @@ query = (
     .writeStream.option("checkpointLocation", checkpoint_path)
     .option("mergeSchema", "false")
     .trigger(availableNow=True)
-    .toTable(f"{catalog}.{schema}.bronze_connector_runs")
+    .toTable(metrics_table)
 )
 query.awaitTermination()
 
@@ -89,11 +109,15 @@ spark.sql(
       status,
       active_rules,
       videos_discovered,
+      posts_discovered,
+      COALESCE(posts_discovered, videos_discovered, 0) AS source_objects_discovered,
       events_emitted,
       search_calls_used,
       search_calls_remaining,
       core_units_used,
       core_units_remaining,
+      requests_used,
+      requests_remaining,
       event_path,
       error_type,
       failed_runs_last_24,
@@ -103,6 +127,7 @@ spark.sql(
         WHEN TIMESTAMPDIFF(MINUTE, completed_at, CURRENT_TIMESTAMP()) > 180
           THEN 'STALE'
         WHEN search_calls_remaining <= 5 OR core_units_remaining <= 500
+          OR requests_remaining <= 5
           THEN 'QUOTA_GUARD'
         ELSE 'HEALTHY'
       END AS operational_status,

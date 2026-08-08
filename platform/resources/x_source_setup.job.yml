@@ -1,0 +1,35 @@
+resources:
+  jobs:
+    social_intelligence_x_source_setup:
+      name: social-intelligence-x-source-setup-${bundle.target}
+      description: Registers governed X recent-search source intent for the external collector.
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: initialize_platform
+          notebook_task:
+            notebook_path: ../notebooks/00_initialize_platform.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              tenant_id: ${var.tenant_id}
+        - task_key: configure_x_source
+          depends_on:
+            - task_key: initialize_platform
+          notebook_task:
+            notebook_path: ../notebooks/09_configure_x_source.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              tenant_id: ${var.tenant_id}
+              source_id: ${var.x_source_id}
+              secret_scope: external-github-actions
+              secret_key: x-bearer-token
+              search_expression: ${var.x_search_expression}
+              hashtags: ${var.x_hashtags}
+              account_handles: ${var.x_account_handles}
+              poll_interval_seconds: "3600"
+              owner: data-platform
+      tags:
+        product: social-intelligence
+        connector: x
+        environment: ${bundle.target}
