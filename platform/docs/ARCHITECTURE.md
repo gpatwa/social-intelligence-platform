@@ -24,8 +24,8 @@ Approved social API / licensed provider
     -> queue and immutable cloud-object landing
     -> bronze_social_events
        -> rejected: bronze_dead_letter_events
-       -> accepted and idempotent: bronze_social_posts
-    -> silver_social_posts
+       -> accepted post observations: bronze_social_posts -> silver_social_posts
+       -> accepted trend observations: bronze_social_trends -> gold_trending_topics
     -> tenant-scoped Gold metrics
     -> gold_signal_feed / gold_source_health
     -> dashboard, alerts, review queue, and APIs

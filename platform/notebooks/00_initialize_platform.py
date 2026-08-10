@@ -133,7 +133,8 @@ spark.sql(
         ('1.0', 'social.post.observed', 'BACKWARD', 'SOURCE_SHAPED_JSON', true, CURRENT_TIMESTAMP()),
         ('1.0', 'social.post.updated', 'BACKWARD', 'SOURCE_SHAPED_JSON', true, CURRENT_TIMESTAMP()),
         ('1.0', 'social.post.deleted', 'BACKWARD', 'SOURCE_SHAPED_JSON', true, CURRENT_TIMESTAMP()),
-        ('1.0', 'social.engagement.observed', 'BACKWARD', 'SOURCE_SHAPED_JSON', true, CURRENT_TIMESTAMP())
+        ('1.0', 'social.engagement.observed', 'BACKWARD', 'SOURCE_SHAPED_JSON', true, CURRENT_TIMESTAMP()),
+        ('1.0', 'social.trend.observed', 'BACKWARD', 'SOURCE_SHAPED_JSON', true, CURRENT_TIMESTAMP())
       AS contract(schema_version, event_type, compatibility_mode, payload_policy, active, registered_at)
     ) AS incoming
     ON target.schema_version = incoming.schema_version AND target.event_type = incoming.event_type

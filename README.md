@@ -86,16 +86,17 @@ See [the platform guide](platform/README.md) for deployment instructions and
 
 ## Real-source integration
 
-The repository includes the first real-source adapter for YouTube Data API v3.
-It implements rate-limit accounting, persisted checkpoints, bounded retries,
-idempotency, immutable raw payloads, video engagement snapshots, optional
-comments, and a separate paused Databricks ingestion workflow. Activation still
-requires an approved API key, collection rules, and retention policy.
+The repository includes real-source adapters for YouTube Data API v3 and X API
+v2 Recent Search plus location-scoped Trends by WOEID. Both use the same versioned envelope, persisted checkpoints,
+bounded retries, idempotent delivery, immutable raw payloads, and external
+Databricks Files ingestion. The X connector adds keyword, hashtag, account,
+and San Francisco trend discovery with public engagement snapshots. Activation still requires provider
+approval, credentials, collection rules, and a retention policy.
 
 Databricks Free Edition uses the guarded external GitHub Actions collector to
 call YouTube and land immutable batches through the Databricks Files API. Its
-schedule remains disabled until repository secrets and pilot queries are
-validated.
+workflows also support X; both schedules remain disabled until repository
+secrets and pilot queries are validated.
 
 See the
 [real-source integration contract](platform/docs/REAL_SOURCE_INTEGRATION.md)
@@ -103,7 +104,8 @@ and [production readiness gates](platform/docs/PRODUCTION_READINESS.md).
 YouTube-specific setup is documented in the
 [connector guide](platform/docs/YOUTUBE_CONNECTOR.md).
 The external-worker setup is in the
-[Free Edition collector runbook](platform/docs/EXTERNAL_COLLECTOR.md).
+[Free Edition collector runbook](platform/docs/EXTERNAL_COLLECTOR.md), with
+[X-specific setup](platform/docs/X_CONNECTOR.md).
 
 ## Production boundary
 

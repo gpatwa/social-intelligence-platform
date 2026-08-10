@@ -22,6 +22,7 @@ SUPPORTED_EVENT_TYPES = frozenset(
         "social.post.updated",
         "social.post.deleted",
         "social.engagement.observed",
+        "social.trend.observed",
     }
 )
 

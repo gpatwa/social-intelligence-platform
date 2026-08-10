@@ -14,7 +14,35 @@ from social_intelligence.contracts import SocialEventEnvelope
 from social_intelligence.connectors.checkpoint import ConnectorCheckpoint
 
 
-SUPPORTED_RULE_TYPES = frozenset({"keyword", "channel"})
+# These are intentionally provider-neutral. A connector advertises the subset it
+# accepts through ``ConnectorCapabilities`` rather than overloading a YouTube
+# concept such as ``channel`` for every platform.
+SUPPORTED_RULE_TYPES = frozenset(
+    {"keyword", "channel", "hashtag", "account", "community", "trend"}
+)
+
+
+@dataclass(frozen=True)
+class ConnectorCapabilities:
+    """Explicit provider features used by control-plane validation and UI."""
+
+    platform: str
+    supported_rule_types: frozenset[str]
+    supports_public_search: bool = False
+    supports_account_collection: bool = False
+    supports_engagement_metrics: bool = False
+    supports_webhooks: bool = False
+    supports_delete_events: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.platform.strip():
+            raise ValueError("connector platform is required")
+        unsupported = self.supported_rule_types - SUPPORTED_RULE_TYPES
+        if unsupported:
+            raise ValueError(
+                "Unsupported connector rule types: "
+                + ", ".join(sorted(unsupported))
+            )
 
 
 @dataclass(frozen=True)
