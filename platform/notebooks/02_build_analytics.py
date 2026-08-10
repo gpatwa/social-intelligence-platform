@@ -116,6 +116,18 @@ post_payload_schema = """
   >
 """
 
+trend_payload_schema = """
+  STRUCT<
+    platform: STRING,
+    trend_name: STRING,
+    tweet_count: BIGINT,
+    woeid: BIGINT,
+    location: STRING,
+    observed_at: TIMESTAMP,
+    source_payload: STRING
+  >
+"""
+
 # Idempotency is enforced at the mapping boundary. Raw deliveries remain
 # immutable, while downstream analytics see one logical event per key.
 spark.sql(
@@ -164,6 +176,89 @@ spark.sql(
       ingested_at
     FROM parsed
     WHERE post.post_id IS NOT NULL
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE OR REPLACE TABLE {ns}.`bronze_social_trends`
+    COMMENT 'Valid location-scoped trend observations mapped from raw event envelopes'
+    AS
+    WITH accepted AS (
+      SELECT
+        events.*,
+        ROW_NUMBER() OVER (
+          PARTITION BY events.tenant_id, events.idempotency_key
+          ORDER BY events.collected_at DESC, events.ingested_at DESC, events.event_id DESC
+        ) AS delivery_rank
+      FROM {ns}.`bronze_social_events` events
+      INNER JOIN {ns}.`control_event_contracts` contracts
+        ON events.schema_version = contracts.schema_version
+       AND events.event_type = contracts.event_type
+       AND contracts.active
+      INNER JOIN {ns}.`control_source_registry` sources
+        ON events.tenant_id = sources.tenant_id
+       AND events.source_id = sources.source_id
+       AND sources.enabled
+      WHERE events.event_type = 'social.trend.observed'
+        AND events.event_id IS NOT NULL
+        AND events.idempotency_key IS NOT NULL
+        AND events.payload IS NOT NULL
+    ), parsed AS (
+      SELECT *, FROM_JSON(payload, '{trend_payload_schema}') AS trend
+      FROM accepted
+      WHERE delivery_rank = 1
+    )
+    SELECT
+      event_id,
+      schema_version,
+      tenant_id,
+      source_id,
+      event_type,
+      source_object_id,
+      idempotency_key,
+      correlation_id,
+      occurred_at,
+      collected_at,
+      trend.*,
+      CAST(attributes['trend_rank'] AS INT) AS trend_rank,
+      payload AS raw_event_payload,
+      attributes AS event_attributes,
+      ingested_at
+    FROM parsed
+    WHERE trend.trend_name IS NOT NULL
+      AND trend.woeid IS NOT NULL
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE OR REPLACE TABLE {ns}.`gold_trending_topics`
+    COMMENT 'Latest observed X trends for each configured location'
+    AS
+    WITH snapshots AS (
+      SELECT
+        *,
+        MAX(observed_at) OVER (
+          PARTITION BY tenant_id, source_id, platform, woeid
+        ) AS latest_observed_at
+      FROM {ns}.`bronze_social_trends`
+    )
+    SELECT
+      tenant_id,
+      source_id,
+      platform,
+      woeid,
+      location,
+      trend_name,
+      tweet_count,
+      trend_rank,
+      observed_at,
+      collected_at,
+      source_payload,
+      CURRENT_TIMESTAMP() AS refreshed_at
+    FROM snapshots
+    WHERE observed_at = latest_observed_at
     """
 )
 
@@ -553,7 +648,9 @@ for table_name in (
     "bronze_social_events",
     "bronze_dead_letter_events",
     "bronze_social_posts",
+    "bronze_social_trends",
     "silver_social_posts",
+    "gold_trending_topics",
     "gold_topic_hourly",
     "gold_trend_hourly",
     "gold_trend_snapshot",

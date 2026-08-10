@@ -35,6 +35,7 @@ metric_schema = T.StructType(
         T.StructField("active_rules", T.LongType()),
         T.StructField("videos_discovered", T.LongType()),
         T.StructField("posts_discovered", T.LongType()),
+        T.StructField("trends_discovered", T.LongType()),
         T.StructField("events_emitted", T.LongType()),
         T.StructField("search_calls_used", T.LongType()),
         T.StructField("search_calls_remaining", T.LongType()),
@@ -57,7 +58,12 @@ else:
     existing_columns = {
         field.name.lower() for field in spark.table(metrics_table).schema.fields
     }
-    for column_name in ("posts_discovered", "requests_used", "requests_remaining"):
+    for column_name in (
+        "posts_discovered",
+        "trends_discovered",
+        "requests_used",
+        "requests_remaining",
+    ):
         if column_name not in existing_columns:
             spark.sql(
                 f"ALTER TABLE {namespace}.`bronze_connector_runs` "
@@ -110,7 +116,9 @@ spark.sql(
       active_rules,
       videos_discovered,
       posts_discovered,
-      COALESCE(posts_discovered, videos_discovered, 0) AS source_objects_discovered,
+      trends_discovered,
+      COALESCE(videos_discovered, 0) + COALESCE(posts_discovered, 0)
+        + COALESCE(trends_discovered, 0) AS source_objects_discovered,
       events_emitted,
       search_calls_used,
       search_calls_remaining,

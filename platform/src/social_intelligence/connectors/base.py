@@ -18,7 +18,7 @@ from social_intelligence.connectors.checkpoint import ConnectorCheckpoint
 # accepts through ``ConnectorCapabilities`` rather than overloading a YouTube
 # concept such as ``channel`` for every platform.
 SUPPORTED_RULE_TYPES = frozenset(
-    {"keyword", "channel", "hashtag", "account", "community"}
+    {"keyword", "channel", "hashtag", "account", "community", "trend"}
 )
 
 

@@ -76,6 +76,9 @@ Set repository Actions variables for non-secret configuration:
 | `YOUTUBE_MAX_SEARCH_PAGES_PER_RULE` | `1` |
 | `YOUTUBE_COLLECT_COMMENTS` | `false` |
 | `YOUTUBE_COLLECT_REPLIES` | `false` |
+| `X_TRENDS_WOEID` | `2487956` (San Francisco pilot) |
+| `X_TRENDS_LOCATION` | `San Francisco` |
+| `X_MAX_TRENDS_PER_RUN` | `20` |
 | `PIPELINE_STATUS_URL` | Public landing-page endpoint, ending in `/api/pipeline-status` |
 
 For X-specific setup and the allowed query modes, see [X connector](X_CONNECTOR.md).
@@ -100,6 +103,7 @@ Validate these tables before unpausing its `:47` hourly schedule:
 ```text
 bronze_connector_runs
 gold_connector_operations
+gold_trending_topics
 bronze_social_events
 bronze_dead_letter_events
 gold_source_health

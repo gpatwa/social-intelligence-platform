@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "trend_name": "Civic Center",
+      "tweet_count": 120
+    },
+    {
+      "trend_name": "#Fogust",
+      "tweet_count": 920
+    },
+    {
+      "trend_name": "Bay to Breakers",
+      "tweet_count": 500
+    }
+  ]
+}

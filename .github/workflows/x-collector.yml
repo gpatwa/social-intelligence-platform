@@ -37,7 +37,10 @@ jobs:
           X_SEARCH_EXPRESSION: ${{ vars.X_SEARCH_EXPRESSION }}
           X_HASHTAGS: ${{ vars.X_HASHTAGS }}
           X_ACCOUNT_HANDLES: ${{ vars.X_ACCOUNT_HANDLES }}
+          X_TRENDS_WOEID: ${{ vars.X_TRENDS_WOEID || '2487956' }}
+          X_TRENDS_LOCATION: ${{ vars.X_TRENDS_LOCATION || 'San Francisco' }}
+          X_MAX_TRENDS_PER_RUN: ${{ vars.X_MAX_TRENDS_PER_RUN || '20' }}
           X_LOOKBACK_HOURS: ${{ vars.X_LOOKBACK_HOURS || '6' }}
           X_MAX_SEARCH_PAGES_PER_RULE: ${{ vars.X_MAX_SEARCH_PAGES_PER_RULE || '1' }}
-          X_MAX_REQUESTS_PER_RUN: ${{ vars.X_MAX_REQUESTS_PER_RUN || '100' }}
+          X_MAX_REQUESTS_PER_RUN: ${{ vars.X_MAX_REQUESTS_PER_RUN || '10' }}
         run: python -m social_intelligence.connectors.external_x

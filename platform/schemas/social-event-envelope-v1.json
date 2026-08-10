@@ -33,7 +33,8 @@
         "social.post.observed",
         "social.post.updated",
         "social.post.deleted",
-        "social.engagement.observed"
+        "social.engagement.observed",
+        "social.trend.observed"
       ]
     },
     "source_object_id": {"type": "string", "minLength": 1},

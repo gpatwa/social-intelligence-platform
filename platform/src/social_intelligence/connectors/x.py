@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from hashlib import sha256
 import json
 import re
 from typing import Any, Callable, Mapping, Sequence
@@ -30,7 +31,7 @@ from social_intelligence.contracts import SocialEventEnvelope
 X_API_ROOT = "https://api.x.com/2"
 X_CAPABILITIES = ConnectorCapabilities(
     platform="x",
-    supported_rule_types=frozenset({"keyword", "hashtag", "account"}),
+    supported_rule_types=frozenset({"keyword", "hashtag", "account", "trend"}),
     supports_public_search=True,
     supports_account_collection=True,
     supports_engagement_metrics=True,
@@ -118,6 +119,22 @@ class XApiClient:
         self.requests_used = 0
 
     def recent_search(self, params: Mapping[str, str]) -> Mapping[str, Any]:
+        return self._request("tweets/search/recent", params)
+
+    def trends_by_woeid(self, *, woeid: int, max_trends: int) -> Mapping[str, Any]:
+        if woeid <= 0:
+            raise ValueError("woeid must be positive")
+        if not 1 <= max_trends <= 20:
+            raise ValueError("max_trends must be between 1 and 20")
+        return self._request(
+            f"trends/by/woeid/{woeid}",
+            {
+                "max_trends": str(max_trends),
+                "trend.fields": "trend_name,tweet_count",
+            },
+        )
+
+    def _request(self, path: str, params: Mapping[str, str]) -> Mapping[str, Any]:
         def operation() -> Mapping[str, Any]:
             if self.requests_used >= self._max_requests_per_run:
                 raise XApiError(429, "localQuotaGuard", "per-run request budget reached")
@@ -125,7 +142,7 @@ class XApiClient:
             if self._on_request is not None:
                 self._on_request(self.requests_used)
             try:
-                return self._transport("tweets/search/recent", params)
+                return self._transport(path, params)
             except XApiError:
                 raise
             except Exception as error:
@@ -175,6 +192,9 @@ class XConnectorConfig:
     max_search_pages_per_rule: int = 1
     max_results_per_page: int = 100
     max_requests_per_run: int = 100
+    trends_woeid: int | None = None
+    trends_location: str = ""
+    max_trends_per_run: int = 20
 
     def __post_init__(self) -> None:
         if not self.tenant_id.strip() or not self.source_id.strip():
@@ -189,6 +209,14 @@ class XConnectorConfig:
             raise ValueError("max_results_per_page must be between 10 and 100")
         if not 1 <= self.max_requests_per_run <= 450:
             raise ValueError("max_requests_per_run must be between 1 and 450")
+        if self.trends_woeid is not None and self.trends_woeid <= 0:
+            raise ValueError("trends_woeid must be positive")
+        if self.trends_woeid is not None and not self.trends_location.strip():
+            raise ValueError("trends_location is required when trends_woeid is configured")
+        if len(self.trends_location) > 100 or any(ord(char) < 32 for char in self.trends_location):
+            raise ValueError("trends_location must be a printable value no longer than 100 characters")
+        if not 1 <= self.max_trends_per_run <= 20:
+            raise ValueError("max_trends_per_run must be between 1 and 20")
 
 
 class XConnector:
@@ -242,9 +270,14 @@ class XConnector:
         events: dict[str, SocialEventEnvelope] = {}
         cursors = dict(checkpoint.cursors)
         active_rules = [rule for rule in rules if rule.enabled]
+        trend_rules = [rule for rule in active_rules if rule.rule_type == "trend"]
+        post_rules = [rule for rule in active_rules if rule.rule_type != "trend"]
+        if trend_rules and self.config.trends_woeid is None:
+            raise ValueError("X trend rules require trends_woeid connector configuration")
         discovered_ids: set[str] = set()
+        trend_events: list[SocialEventEnvelope] = []
 
-        for rule in active_rules:
+        for rule in post_rules:
             posts = self._search_posts(client, rule, checkpoint, started_at)
             for post in posts:
                 event = self._post_event(post, rule, started_at)
@@ -254,6 +287,11 @@ class XConnector:
             # after every page was read, while event-file landing remains the
             # responsibility of the external runtime.
             cursors[rule.rule_id] = _format_timestamp(started_at)
+
+        if self.config.trends_woeid is not None:
+            trend_events = self._collect_trends(client, started_at)
+            if trend_rules:
+                cursors[trend_rules[0].rule_id] = _format_timestamp(started_at)
 
         quota.update(
             {
@@ -266,20 +304,24 @@ class XConnector:
             quota=quota,
             metadata={
                 **dict(checkpoint.metadata),
-                "connector": "x_api_v2_recent_search",
+                "connector": "x_api_v2",
                 "source_id": self.config.source_id,
                 "last_batch_event_count": len(events),
                 "last_batch_post_count": len(discovered_ids),
+                "last_batch_trend_count": len(trend_events),
+                "trends_woeid": self.config.trends_woeid or "",
+                "trends_location": self.config.trends_location,
             },
             updated_at=started_at,
         )
         return ConnectorBatch(
-            events=tuple(events.values()),
+            events=tuple(events.values()) + tuple(trend_events),
             checkpoint=next_checkpoint,
             statistics={
                 "active_rules": len(active_rules),
                 "posts_discovered": len(discovered_ids),
-                "events_emitted": len(events),
+                "trends_discovered": len(trend_events),
+                "events_emitted": len(events) + len(trend_events),
                 "requests_used": client.requests_used,
                 "requests_remaining": self.config.max_requests_per_run - client.requests_used,
             },
@@ -322,6 +364,67 @@ class XConnector:
                     f"X search for {rule.rule_id} exceeded max_search_pages_per_rule"
                 )
         return list(posts.values())
+
+    def _collect_trends(
+        self,
+        client: XApiClient,
+        collected_at: datetime,
+    ) -> list[SocialEventEnvelope]:
+        if self.config.trends_woeid is None:
+            return []
+        response = client.trends_by_woeid(
+            woeid=self.config.trends_woeid,
+            max_trends=self.config.max_trends_per_run,
+        )
+        trends = [
+            item
+            for item in response.get("data", [])
+            if str(item.get("trend_name", "")).strip()
+        ]
+        trends.sort(
+            key=lambda item: (
+                -_integer(item.get("tweet_count")),
+                str(item.get("trend_name", "")).casefold(),
+            )
+        )
+        events: list[SocialEventEnvelope] = []
+        for rank, item in enumerate(trends[: self.config.max_trends_per_run], start=1):
+            trend_name = str(item["trend_name"]).strip()
+            source_object_id = (
+                f"trend:{self.config.trends_woeid}:"
+                f"{sha256(trend_name.casefold().encode()).hexdigest()[:20]}"
+            )
+            payload = {
+                "platform": "x",
+                "trend_name": trend_name,
+                "tweet_count": _integer(item.get("tweet_count")),
+                "woeid": self.config.trends_woeid,
+                "location": self.config.trends_location,
+                "observed_at": _format_timestamp(collected_at),
+                "source_payload": json.dumps(item, sort_keys=True, default=str),
+            }
+            events.append(
+                SocialEventEnvelope.create(
+                    tenant_id=self.config.tenant_id,
+                    source_id=self.config.source_id,
+                    platform="x",
+                    event_type="social.trend.observed",
+                    source_object_id=source_object_id,
+                    occurred_at=collected_at,
+                    collected_at=collected_at,
+                    correlation_id=str(uuid4()),
+                    payload=payload,
+                    attributes={
+                        "connector_type": "x_api_v2_trends_by_woeid",
+                        "delivery_mode": "polling",
+                        "resource_type": "trend",
+                        "trend_woeid": str(self.config.trends_woeid),
+                        "trend_location": self.config.trends_location,
+                        "trend_rank": str(rank),
+                    },
+                )
+            )
+        return events
 
     def _watermark(
         self,

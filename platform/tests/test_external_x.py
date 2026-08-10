@@ -63,6 +63,17 @@ class ExternalXCollectorTests(unittest.TestCase):
         self.assertEqual([rule.rule_type for rule in rules], ["hashtag", "account"])
         self.assertEqual(rules, config.collection_rules())
 
+    def test_configuration_supports_a_trends_only_source(self):
+        config = ExternalXConfig(
+            databricks_host="https://dbc.example.com",
+            databricks_token="token",
+            x_bearer_token="bearer-token",
+            trends_woeid=2487956,
+            trends_location="San Francisco",
+        )
+        self.assertEqual(config.collection_rules()[0].rule_type, "trend")
+        self.assertEqual(config.collection_rules()[0].expression, "woeid:2487956")
+
     def test_lands_events_before_checkpoint_and_records_x_metrics(self):
         files = MemoryFiles()
 
@@ -75,7 +86,12 @@ class ExternalXCollectorTests(unittest.TestCase):
                         quota={"x_requests_used": 2, "x_requests_limit": 10},
                         updated_at=NOW,
                     ),
-                    statistics={"active_rules": 1, "posts_discovered": 1, "events_emitted": 1},
+                    statistics={
+                        "active_rules": 1,
+                        "posts_discovered": 1,
+                        "trends_discovered": 0,
+                        "events_emitted": 1,
+                    },
                 )
 
         self_event = self.event
@@ -93,6 +109,7 @@ class ExternalXCollectorTests(unittest.TestCase):
         ]
         self.assertLess(files.uploads.index(event_path), checkpoint_indexes[-1])
         self.assertEqual(metric["posts_discovered"], 1)
+        self.assertEqual(metric["trends_discovered"], 0)
         self.assertEqual(metric["requests_remaining"], 8)
         self.assertEqual(json.loads(files.files[event_path]) ["source_object_id"], "post-1")
 

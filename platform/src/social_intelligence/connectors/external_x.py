@@ -63,6 +63,9 @@ class ExternalXConfig:
     search_expression: str = ""
     hashtags: tuple[str, ...] = ()
     account_handles: tuple[str, ...] = ()
+    trends_woeid: int | None = None
+    trends_location: str = ""
+    max_trends_per_run: int = 20
     lookback_hours: int = 6
     max_search_pages_per_rule: int = 1
     max_requests_per_run: int = 100
@@ -74,9 +77,14 @@ class ExternalXConfig:
         for name, value in (("tenant_id", self.tenant_id), ("source_id", self.source_id)):
             if not SAFE_ID_PATTERN.fullmatch(value):
                 raise ValueError(f"Unsafe {name}: {value!r}")
-        if not self.search_expression.strip() and not self.hashtags and not self.account_handles:
+        if (
+            not self.search_expression.strip()
+            and not self.hashtags
+            and not self.account_handles
+            and self.trends_woeid is None
+        ):
             raise ValueError(
-                "X_SEARCH_EXPRESSION, X_HASHTAGS, or X_ACCOUNT_HANDLES is required"
+                "one X search rule or X_TRENDS_WOEID is required"
             )
         if not 1 <= self.lookback_hours <= 168:
             raise ValueError("X_LOOKBACK_HOURS must be between 1 and 168")
@@ -84,6 +92,14 @@ class ExternalXConfig:
             raise ValueError("X_MAX_SEARCH_PAGES_PER_RULE must be between 1 and 10")
         if not 1 <= self.max_requests_per_run <= 450:
             raise ValueError("X_MAX_REQUESTS_PER_RUN must be between 1 and 450")
+        if self.trends_woeid is not None and self.trends_woeid <= 0:
+            raise ValueError("X_TRENDS_WOEID must be positive")
+        if self.trends_woeid is not None and not self.trends_location.strip():
+            raise ValueError("X_TRENDS_LOCATION is required with X_TRENDS_WOEID")
+        if len(self.trends_location) > 100 or any(ord(char) < 32 for char in self.trends_location):
+            raise ValueError("X_TRENDS_LOCATION must be printable and at most 100 characters")
+        if not 1 <= self.max_trends_per_run <= 20:
+            raise ValueError("X_MAX_TRENDS_PER_RUN must be between 1 and 20")
         for hashtag in self.hashtags:
             if not HASHTAG_PATTERN.fullmatch(hashtag):
                 raise ValueError(f"Unsafe X hashtag: {hashtag!r}")
@@ -100,6 +116,11 @@ class ExternalXConfig:
         split = lambda name: tuple(
             value.strip() for value in values.get(name, "").split(",") if value.strip()
         )
+        trends_woeid_raw = values.get("X_TRENDS_WOEID", "").strip()
+        try:
+            trends_woeid = int(trends_woeid_raw) if trends_woeid_raw else None
+        except ValueError as error:
+            raise ValueError("X_TRENDS_WOEID must be an integer") from error
         return cls(
             databricks_host=_required(values, "DATABRICKS_HOST"),
             databricks_token=_required(values, "DATABRICKS_TOKEN"),
@@ -111,6 +132,9 @@ class ExternalXConfig:
             search_expression=values.get("X_SEARCH_EXPRESSION", "").strip(),
             hashtags=split("X_HASHTAGS"),
             account_handles=split("X_ACCOUNT_HANDLES"),
+            trends_woeid=trends_woeid,
+            trends_location=values.get("X_TRENDS_LOCATION", "").strip(),
+            max_trends_per_run=_integer(values, "X_MAX_TRENDS_PER_RUN", 20),
             lookback_hours=_integer(values, "X_LOOKBACK_HOURS", 6),
             max_search_pages_per_rule=_integer(values, "X_MAX_SEARCH_PAGES_PER_RULE", 1),
             max_requests_per_run=_integer(values, "X_MAX_REQUESTS_PER_RUN", 100),
@@ -130,6 +154,8 @@ class ExternalXConfig:
             requested.append(("keyword", self.search_expression.strip()))
         requested.extend(("hashtag", value) for value in self.hashtags)
         requested.extend(("account", value) for value in self.account_handles)
+        if self.trends_woeid is not None:
+            requested.append(("trend", f"woeid:{self.trends_woeid}"))
         return tuple(
             CollectionRule(
                 rule_id=f"x-{rule_type}-{sha256(expression.encode()).hexdigest()[:12]}",
@@ -157,6 +183,9 @@ def _default_connector(
             lookback_hours=config.lookback_hours,
             max_search_pages_per_rule=config.max_search_pages_per_rule,
             max_requests_per_run=config.max_requests_per_run,
+            trends_woeid=config.trends_woeid,
+            trends_location=config.trends_location,
+            max_trends_per_run=config.max_trends_per_run,
         ),
         quota_observer=quota_observer,
     )
@@ -304,6 +333,7 @@ class ExternalXCollector:
             "status": status,
             "active_rules": int(stats.get("active_rules", 0)),
             "posts_discovered": int(stats.get("posts_discovered", 0)),
+            "trends_discovered": int(stats.get("trends_discovered", 0)),
             "events_emitted": int(stats.get("events_emitted", 0)),
             "requests_used": requests_used,
             "requests_remaining": max(0, request_limit - requests_used),

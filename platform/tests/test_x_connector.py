@@ -19,6 +19,7 @@ from social_intelligence.connectors.x import (
 
 NOW = datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "x" / "recent_search.json"
+TRENDS_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "x" / "trends_san_francisco.json"
 
 
 class FixtureTransport:
@@ -122,6 +123,36 @@ class XConnectorTests(unittest.TestCase):
                 ConnectorCheckpoint.empty(NOW),
             )
         self.assertEqual(len(transport.calls), 1)
+
+    def test_collects_ranked_san_francisco_trends_without_expanding_to_post_search(self):
+        trends = json.loads(TRENDS_FIXTURE.read_text())
+
+        def transport(path, params):
+            self.assertEqual(path, "trends/by/woeid/2487956")
+            self.assertEqual(params["max_trends"], "20")
+            self.assertEqual(params["trend.fields"], "trend_name,tweet_count")
+            return trends
+
+        batch = self.connector(
+            transport,
+            trends_woeid=2487956,
+            trends_location="San Francisco",
+        ).collect(
+            [CollectionRule("sf-trends", "trend", "woeid:2487956")],
+            ConnectorCheckpoint.empty(NOW),
+        )
+
+        self.assertEqual(batch.statistics["posts_discovered"], 0)
+        self.assertEqual(batch.statistics["trends_discovered"], 3)
+        self.assertEqual(batch.statistics["requests_used"], 1)
+        self.assertEqual([event.payload["trend_name"] for event in batch.events], [
+            "#Fogust",
+            "Bay to Breakers",
+            "Civic Center",
+        ])
+        self.assertTrue(all(event.event_type == "social.trend.observed" for event in batch.events))
+        self.assertEqual(batch.events[0].attributes["trend_rank"], "1")
+        self.assertEqual(batch.events[0].attributes["trend_location"], "San Francisco")
 
 
 if __name__ == "__main__":

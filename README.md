@@ -87,10 +87,10 @@ See [the platform guide](platform/README.md) for deployment instructions and
 ## Real-source integration
 
 The repository includes real-source adapters for YouTube Data API v3 and X API
-v2 Recent Search. Both use the same versioned envelope, persisted checkpoints,
+v2 Recent Search plus location-scoped Trends by WOEID. Both use the same versioned envelope, persisted checkpoints,
 bounded retries, idempotent delivery, immutable raw payloads, and external
-Databricks Files ingestion. The X connector adds keyword, hashtag, and account
-rules with public engagement snapshots. Activation still requires provider
+Databricks Files ingestion. The X connector adds keyword, hashtag, account,
+and San Francisco trend discovery with public engagement snapshots. Activation still requires provider
 approval, credentials, collection rules, and a retention policy.
 
 Databricks Free Edition uses the guarded external GitHub Actions collector to

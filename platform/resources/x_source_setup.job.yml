@@ -27,6 +27,9 @@ resources:
               search_expression: ${var.x_search_expression}
               hashtags: ${var.x_hashtags}
               account_handles: ${var.x_account_handles}
+              trends_woeid: ${var.x_trends_woeid}
+              trends_location: ${var.x_trends_location}
+              max_trends_per_run: ${var.x_max_trends_per_run}
               poll_interval_seconds: "3600"
               owner: data-platform
       tags:

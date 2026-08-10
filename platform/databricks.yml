@@ -64,6 +64,15 @@ variables:
   x_account_handles:
     description: Optional comma-separated X account handles, with or without leading at signs
     default: ""
+  x_trends_woeid:
+    description: X Trends by WOEID market identifier
+    default: "2487956"
+  x_trends_location:
+    description: Human-readable market name for the configured X trends WOEID
+    default: San Francisco
+  x_max_trends_per_run:
+    description: Maximum X trends persisted from the configured market per run
+    default: "20"
 
 workspace:
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
