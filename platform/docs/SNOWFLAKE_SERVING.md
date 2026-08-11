@@ -10,7 +10,7 @@ Approved social APIs -> Databricks Bronze/Silver/Gold -> Snowflake ANALYTICS -> 
 The publisher copies Gold marts only. It never copies raw API payloads,
 provider credentials, or the Bronze event envelope into Snowflake.
 
-## One-time key-pair setup
+## Development key-pair bridge
 
 Run the following on a trusted workstation. Do not commit either key or paste
 the private key into chat.
@@ -40,6 +40,12 @@ The secret must be a base64-encoded PEM; it is decoded only in the publishing
 job. Do not store it as a GitHub secret because the publisher runs in
 Databricks.
 
+This is the temporary Free Edition path. The staff-level deployment model is
+defined in [`infra/snowflake`](../../infra/snowflake): Terraform owns objects,
+roles, grants, dedicated warehouses, and resource monitors; CI performs a
+reviewed plan/apply; and production moves the deployment identity to workload
+identity federation instead of a static key.
+
 ## Deploy and manually validate
 
 Set the account identifier (normally `org-account`, not the Snowsight URL) in
@@ -49,12 +55,14 @@ the deployment target, then deploy:
 databricks bundle deploy -t dev \
   --var snowflake_account='<org-account>'
 
-databricks bundle run social_intelligence_snowflake_publish -t dev \
-  --var snowflake_account='<org-account>'
+databricks bundle run social_intelligence_external_ingestion -t dev \
+  --var snowflake_account='<org-account>' \
+  --var snowflake_publish_enabled=true
 ```
 
-The job remains paused on purpose. Complete one manual run and validate these
-queries before enabling its hourly schedule:
+The publish task is skipped by default and only runs after the validated Gold
+tasks when `snowflake_publish_enabled=true`. Complete one manual run and
+validate these queries before enabling it in the deployment environment:
 
 ```sql
 USE ROLE SOCIAL_INTELLIGENCE_BA;

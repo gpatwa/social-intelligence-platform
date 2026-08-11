@@ -1,0 +1,118 @@
+name: Data platform deploy
+
+on:
+  pull_request:
+    paths:
+      - "infra/snowflake/**"
+      - "platform/**"
+      - ".github/workflows/data-platform-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Databricks bundle target and matching GitHub environment
+        required: true
+        type: choice
+        options: [dev, prod]
+      apply_snowflake:
+        description: Apply the reviewed Snowflake Terraform plan
+        required: true
+        type: boolean
+        default: false
+      adopt_existing_bootstrap:
+        description: Import the pre-IaC dev database, schemas, and roles before planning
+        required: true
+        type: boolean
+        default: false
+      deploy_databricks:
+        description: Deploy the Databricks bundle after the plan succeeds
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # Reserved for the production WIF/OIDC migration.
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.4"
+      - name: Format check
+        run: terraform -chdir=infra/snowflake fmt -check -recursive
+      - name: Initialize providers without state backend
+        run: terraform -chdir=infra/snowflake init -backend=false
+      - name: Validate desired state
+        run: terraform -chdir=infra/snowflake validate
+      - uses: databricks/setup-cli@main
+      - name: Validate Databricks bundle
+        run: databricks bundle validate -t dev
+        working-directory: platform
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target }}
+    concurrency:
+      group: data-platform-${{ inputs.target }}
+      cancel-in-progress: false
+    env:
+      SNOWFLAKE_ORGANIZATION_NAME: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
+      SNOWFLAKE_ACCOUNT_NAME: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
+      SNOWFLAKE_USER: ${{ vars.SNOWFLAKE_USER }}
+      SNOWFLAKE_ROLE: ${{ vars.SNOWFLAKE_ROLE || 'ACCOUNTADMIN' }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}
+      TF_BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
+      TF_VAR_organization_name: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
+      TF_VAR_account_name: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
+      TF_VAR_deployer_user: ${{ vars.SNOWFLAKE_USER }}
+      TF_VAR_deployer_role: ${{ vars.SNOWFLAKE_ROLE || 'ACCOUNTADMIN' }}
+      TF_VAR_publisher_user: SVC_SOCIAL_INTELLIGENCE
+      TF_VAR_ba_parent_role: ${{ vars.SNOWFLAKE_BA_PARENT_ROLE }}
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.4"
+      - name: Initialize Snowflake state
+        run: |
+          printf '%s' "$TF_BACKEND_CONFIG" > infra/snowflake/backend.hcl
+          terraform -chdir=infra/snowflake init -backend-config=backend.hcl
+          rm infra/snowflake/backend.hcl
+      - name: Adopt pre-IaC bootstrap objects
+        if: ${{ inputs.adopt_existing_bootstrap }}
+        run: |
+          import_if_unmanaged() {
+            address="$1"
+            identifier="$2"
+            if ! terraform -chdir=infra/snowflake state list | grep -Fxq "$address"; then
+              terraform -chdir=infra/snowflake import "$address" "$identifier"
+            fi
+          }
+          import_if_unmanaged snowflake_account_role.publisher '"SOCIAL_INTELLIGENCE_PUBLISHER"'
+          import_if_unmanaged snowflake_account_role.ba '"SOCIAL_INTELLIGENCE_BA"'
+          import_if_unmanaged snowflake_database.social_intelligence '"SOCIAL_INTELLIGENCE"'
+          import_if_unmanaged snowflake_schema.raw '"SOCIAL_INTELLIGENCE"."RAW"'
+          import_if_unmanaged snowflake_schema.analytics '"SOCIAL_INTELLIGENCE"."ANALYTICS"'
+      - name: Plan Snowflake control plane
+        run: terraform -chdir=infra/snowflake plan -out=tfplan
+      - name: Apply approved Snowflake plan
+        if: ${{ inputs.apply_snowflake }}
+        run: terraform -chdir=infra/snowflake apply -auto-approve tfplan
+      - uses: databricks/setup-cli@main
+        if: ${{ inputs.deploy_databricks }}
+      - name: Deploy Databricks bundle
+        if: ${{ inputs.deploy_databricks }}
+        run: |
+          databricks bundle deploy -t "${{ inputs.target }}" \
+            --var "snowflake_account=${{ vars.SNOWFLAKE_ACCOUNT_IDENTIFIER }}" \
+            --var "snowflake_warehouse=SOCIAL_INTELLIGENCE_LOAD_WH" \
+            --var "snowflake_publish_enabled=${{ vars.ENABLE_SNOWFLAKE_PUBLISH || 'false' }}"
+        working-directory: platform

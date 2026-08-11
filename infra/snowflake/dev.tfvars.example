@@ -1,0 +1,6 @@
+organization_name = "zcpwqmj"
+account_name      = "hd11049"
+deployer_user     = "TERRAFORM_SOCIAL_INTELLIGENCE"
+
+# Set this to the existing SSO/SCIM account role for analysts when available.
+ba_parent_role = ""

@@ -95,8 +95,8 @@ variables:
     description: Snowflake schema exposed to business analysts
     default: ANALYTICS
   snowflake_warehouse:
-    description: Snowflake warehouse used by the publisher and SQL users
-    default: SOCIAL_INTELLIGENCE_WH
+    description: Dedicated Snowflake warehouse used by the publisher
+    default: SOCIAL_INTELLIGENCE_LOAD_WH
   snowflake_role:
     description: Least-privilege Snowflake publisher role
     default: SOCIAL_INTELLIGENCE_PUBLISHER
@@ -106,6 +106,9 @@ variables:
   snowflake_private_key_secret_key:
     description: Base64-encoded PEM private key stored in the configured secret scope
     default: snowflake-private-key-base64
+  snowflake_publish_enabled:
+    description: Whether validated Gold marts may be published to Snowflake
+    default: "false"
 
 workspace:
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

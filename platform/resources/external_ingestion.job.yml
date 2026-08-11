@@ -59,6 +59,36 @@ resources:
               tenant_id: ${var.tenant_id}
               source_id: ${var.youtube_source_id}
 
+        - task_key: should_publish_snowflake
+          depends_on:
+            - task_key: validate_external_ingestion
+          condition_task:
+            op: EQUAL_TO
+            left: ${var.snowflake_publish_enabled}
+            right: "true"
+
+        - task_key: publish_snowflake
+          depends_on:
+            - task_key: should_publish_snowflake
+              outcome: "true"
+          notebook_task:
+            notebook_path: ../notebooks/11_publish_snowflake.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              snowflake_account: ${var.snowflake_account}
+              snowflake_user: ${var.snowflake_user}
+              snowflake_database: ${var.snowflake_database}
+              snowflake_raw_schema: ${var.snowflake_raw_schema}
+              snowflake_analytics_schema: ${var.snowflake_analytics_schema}
+              snowflake_warehouse: ${var.snowflake_warehouse}
+              snowflake_role: ${var.snowflake_role}
+              secret_scope: ${var.snowflake_secret_scope}
+              private_key_secret_key: ${var.snowflake_private_key_secret_key}
+          libraries:
+            - pypi:
+                package: "snowflake-connector-python[pandas]>=3.12,<5"
+
       schedule:
         quartz_cron_expression: 0 47 * * * ?
         timezone_id: America/Los_Angeles
