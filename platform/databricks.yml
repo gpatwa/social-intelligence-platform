@@ -73,6 +73,12 @@ variables:
   x_max_trends_per_run:
     description: Maximum X trends persisted from the configured market per run
     default: "20"
+  instagram_source_id:
+    description: Control-plane identifier for the Page-linked Instagram Graph API connector
+    default: instagram-graph-api
+  instagram_hashtags:
+    description: Optional comma-separated Instagram hashtags for permitted recent-media discovery
+    default: ""
 
 workspace:
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

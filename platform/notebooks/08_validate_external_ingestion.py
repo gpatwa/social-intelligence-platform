@@ -45,10 +45,16 @@ checks = spark.sql(
       UNION ALL
       SELECT
         'quota_headroom_is_positive',
-        COUNT_IF(search_calls_remaining > 0 AND core_units_remaining > 0) = 1,
+        COUNT_IF(
+          CASE
+            WHEN requests_remaining IS NOT NULL THEN requests_remaining > 0
+            ELSE search_calls_remaining > 0 AND core_units_remaining > 0
+          END
+        ) = 1,
         CONCAT_WS(', ',
           CONCAT('search_remaining=', COALESCE(MAX(search_calls_remaining), -1)),
-          CONCAT('core_remaining=', COALESCE(MAX(core_units_remaining), -1))
+          CONCAT('core_remaining=', COALESCE(MAX(core_units_remaining), -1)),
+          CONCAT('requests_remaining=', COALESCE(MAX(requests_remaining), -1))
         )
       FROM {namespace}.`gold_connector_operations`
       WHERE tenant_id = '{tenant_id}' AND source_id = '{source_id}'

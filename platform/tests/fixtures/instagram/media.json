@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "id": "17900000000000001",
+      "caption": "The #SignalStack challenge is taking off. #DataCommunity",
+      "media_type": "REELS",
+      "media_product_type": "REELS",
+      "timestamp": "2026-08-08T11:55:00+0000",
+      "like_count": 52,
+      "comments_count": 8,
+      "video_views": 1200,
+      "permalink": "https://www.instagram.com/reel/example/"
+    }
+  ],
+  "paging": {
+    "cursors": {}
+  }
+}

@@ -54,11 +54,13 @@ src/social_intelligence/scoring.py     Locally testable scoring functions
 tests/                                 Contract and scoring unit tests
 ```
 
-The repository includes quota-aware YouTube Data API v3 and X API v2 Recent
-Search adapters, provider fixtures, checkpoint and retry primitives, and
-separate governed source-registration jobs. See the
+The repository includes quota-aware YouTube Data API v3, X API v2 Recent
+Search, and Page-linked Instagram Graph API adapters, provider fixtures,
+checkpoint and retry primitives, and separate governed source-registration
+jobs. See the
 [YouTube connector guide](docs/YOUTUBE_CONNECTOR.md) and
-[X connector guide](docs/X_CONNECTOR.md).
+[X connector guide](docs/X_CONNECTOR.md) and
+[Instagram connector guide](docs/INSTAGRAM_CONNECTOR.md).
 
 For Databricks Free Edition, use the
 [external GitHub Actions collector](docs/EXTERNAL_COLLECTOR.md). It lands
