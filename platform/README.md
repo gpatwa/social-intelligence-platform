@@ -141,6 +141,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [Architecture decision and evolution triggers](docs/ARCHITECTURE.md)
 - [Signal ownership and response model](docs/OPERATING_MODEL.md)
 - [Real-source integration contract](docs/REAL_SOURCE_INTEGRATION.md)
+- [Snowflake BA and SQL serving](docs/SNOWFLAKE_SERVING.md)
 - [Production readiness gates](docs/PRODUCTION_READINESS.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a

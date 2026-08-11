@@ -1,0 +1,38 @@
+resources:
+  jobs:
+    social_intelligence_snowflake_publish:
+      name: social-intelligence-snowflake-publish-${bundle.target}
+      description: Publishes governed Gold marts from Databricks to Snowflake for BA SQL access.
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: publish_gold_marts
+          notebook_task:
+            notebook_path: ../notebooks/11_publish_snowflake.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              snowflake_account: ${var.snowflake_account}
+              snowflake_user: ${var.snowflake_user}
+              snowflake_database: ${var.snowflake_database}
+              snowflake_raw_schema: ${var.snowflake_raw_schema}
+              snowflake_analytics_schema: ${var.snowflake_analytics_schema}
+              snowflake_warehouse: ${var.snowflake_warehouse}
+              snowflake_role: ${var.snowflake_role}
+              secret_scope: ${var.snowflake_secret_scope}
+              private_key_secret_key: ${var.snowflake_private_key_secret_key}
+          libraries:
+            - pypi:
+                package: "snowflake-connector-python[pandas]>=3.12,<5"
+
+      # Deliberately paused until the key-pair secret and a successful manual
+      # reconciliation are complete. Do not enable this on Free Edition unless
+      # workspace egress and package installation have been verified.
+      schedule:
+        quartz_cron_expression: 0 13 * * * ?
+        timezone_id: America/Los_Angeles
+        pause_status: PAUSED
+
+      tags:
+        product: social-intelligence
+        runtime: snowflake-serving
+        environment: ${bundle.target}
