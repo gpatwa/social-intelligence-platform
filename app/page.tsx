@@ -3,6 +3,8 @@ import { PipelineStatusPanel } from "./pipeline-status";
 const dashboardUrl =
   "https://dbc-b8672746-8e43.cloud.databricks.com/dashboardsv3/01f17ce244971d80b97f3c0aa6b033ef/published?o=7474657828954669";
 const githubUrl = "https://github.com/gpatwa/social-intelligence-platform";
+const baQueryPackUrl =
+  "https://github.com/gpatwa/social-intelligence-platform/blob/main/platform/sql/snowflake_ba_starter_queries.sql";
 const pipelineRunUrl =
   "https://github.com/gpatwa/social-intelligence-platform/actions/runs/30737199706";
 
@@ -23,17 +25,17 @@ const capabilities = [
   },
   {
     index: "03",
-    title: "Operational trust",
-    copy: "Monitor collection, checkpoints, quota use, rejected records, and enrichment health alongside the insight.",
-    metric: "5 / 5",
-    label: "pipeline stages passing",
+    title: "BA-ready serving",
+    copy: "Validated Databricks Gold marts publish to Snowflake ANALYTICS, where SQL users get a clean, read-only decision surface.",
+    metric: "6",
+    label: "curated marts published",
   },
   {
     index: "04",
-    title: "Multi-source by design",
-    copy: "Each approved provider lands behind the same versioned, tenant-aware contract—without coupling analytics to a single social API.",
-    metric: "4",
-    label: "connector paths defined",
+    title: "Operational trust",
+    copy: "Monitor collection, checkpoints, quota use, rejected records, and enrichment health alongside the insight.",
+    metric: "51",
+    label: "automated checks passing",
   },
 ];
 
@@ -106,6 +108,7 @@ export default function Home() {
         <nav aria-label="Primary navigation">
           <a href="#product">Product</a>
           <a href="#architecture">Architecture</a>
+          <a href="#serving">Serving</a>
           <a href="#status">Live status</a>
           <a href="#readiness">Readiness</a>
         </nav>
@@ -118,7 +121,7 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="live-dot" />
-            Live MVP · Social signals → Databricks
+            Live MVP · Social signals → Databricks → Snowflake
           </div>
           <h1>
             See the signal
@@ -127,7 +130,7 @@ export default function Home() {
           <p className="hero-lede">
             A governed social intelligence platform that collects real social
             signals, preserves the evidence, and turns momentum into measurable
-            trends, challenges, and brand intelligence.
+            trends, challenges, brand intelligence, and analyst-ready SQL.
           </p>
           <div className="hero-actions">
             <a
@@ -148,8 +151,8 @@ export default function Home() {
             </a>
           </div>
           <p className="access-note">
-            YouTube and X collection are live. Databricks may require workspace
-            access.
+            YouTube and X collection are live. The curated serving layer is
+            available in Snowflake for authorized analysts.
           </p>
         </div>
 
@@ -161,13 +164,13 @@ export default function Home() {
           <div className="console-main">
             <div className="console-feature">
               <div className="feature-label">
-                <span>Sources · YouTube + X</span>
-                <strong>Collection live</strong>
+                <span>Databricks Gold → Snowflake</span>
+                <strong>Guarded hourly publish</strong>
               </div>
-              <h2>Social events are landing.</h2>
+              <h2>Validated signals are ready for SQL.</h2>
               <p>
-                Approved provider APIs collect public signals. Databricks
-                validates, deduplicates, scores, and serves one analytics layer.
+                Approved provider APIs land evidence in Databricks. Only
+                validated Gold marts flow to the analyst-facing serving layer.
               </p>
               <div className="trend-chart" aria-hidden="true">
                 {[24, 31, 28, 42, 49, 61, 73, 91].map((height, index) => (
@@ -184,40 +187,40 @@ export default function Home() {
             </div>
             <div className="score-stack">
               <article className="score-card accent-green">
-                <span>Events landed</span>
-                <strong>12</strong>
-                <small>real source data</small>
+                <span>BA marts</span>
+                <strong>6</strong>
+                <small>published to ANALYTICS</small>
               </article>
               <article className="score-card accent-coral">
-                <span>Workflow health</span>
-                <strong>5/5</strong>
-                <small>stages passing</small>
+                <span>Quality checks</span>
+                <strong>51</strong>
+                <small>automated validations</small>
               </article>
             </div>
           </div>
           <div className="console-footer">
             <div>
               <span className="health-dot" />
-              Two source paths live
+              Two sources · one governed serving path
             </div>
-            <div>Hourly schedule</div>
-            <div>0 rejected</div>
+            <div>Hourly publish</div>
+            <div>Gold-only access</div>
           </div>
         </div>
       </section>
 
       <section className="proof-strip" aria-label="Validated MVP metrics">
-        <p>Latest live validation</p>
+        <p>Latest verified delivery</p>
         <div className="proof-metrics">
           <span>
-            <b>12</b> real events landed
+            <b>6</b> BA-facing marts
           </span>
           <span>
-            <b>0</b> rejected events
+            <b>1</b> guarded hourly path
           </span>
           <span><b>51</b> automated tests</span>
           <span>
-            <b>5/5</b> Databricks stages passing
+            <b>100%</b> verified end-to-end run
           </span>
         </div>
       </section>
@@ -225,16 +228,53 @@ export default function Home() {
       <aside className="operational-note" aria-label="Live data status">
         <div>
           <span className="health-dot" />
-          <strong>Discovery data is live</strong>
+          <strong>Discovery and serving are live</strong>
         </div>
         <p>
-          YouTube and X source records are flowing now. Google engagement
-          enrichment remains degraded until its generic-query quota is enabled.
+          Approved provider events are validated in Databricks before curated
+          Gold marts refresh Snowflake ANALYTICS on the hourly schedule.
         </p>
-        <a href="#readiness">See the production gates ↓</a>
+        <a href="#serving">See the analyst serving layer ↓</a>
       </aside>
 
       <PipelineStatusPanel dashboardUrl={dashboardUrl} />
+
+      <section className="section serving-section" id="serving">
+        <div className="serving-intro">
+          <p className="section-kicker">Analyst serving layer</p>
+          <h2>Databricks governs the signal. Snowflake makes it usable.</h2>
+          <p>
+            The pipeline publishes only validated Gold marts into a dedicated
+            read-only analytics schema. Analysts get familiar SQL without raw
+            payloads, provider credentials, or unverified events.
+          </p>
+          <div className="serving-actions">
+            <a className="button button-primary" href={baQueryPackUrl} target="_blank" rel="noreferrer">
+              Open BA query pack <span aria-hidden="true">↗</span>
+            </a>
+            <a className="text-link" href={dashboardUrl} target="_blank" rel="noreferrer">
+              Open governed metrics <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+        <div className="serving-stack" aria-label="Snowflake serving flow">
+          <article>
+            <span>01</span>
+            <strong>Validate</strong>
+            <p>Gold quality gates must pass before any external publish.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>Publish</strong>
+            <p>Dedicated key-pair publisher uses an auto-resuming load warehouse.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <strong>Analyze</strong>
+            <p>BA users query six curated marts with a read-only role.</p>
+          </article>
+        </div>
+      </section>
 
       <section className="section product-section" id="product">
         <div className="section-heading">
@@ -339,6 +379,7 @@ export default function Home() {
               <li>Durable checkpoints and replayable events</li>
               <li>Quota controls, retries, and source health</li>
               <li>Scheduled Databricks analytics workflow</li>
+              <li>Guarded Snowflake serving for BA SQL</li>
             </ul>
           </article>
           <article className="readiness-card path">
@@ -349,7 +390,7 @@ export default function Home() {
             <ul>
               <li>Google quota for engagement enrichment</li>
           <li>Meta authorization and Reddit API approval</li>
-              <li>Service identity and managed secrets</li>
+              <li>Production workload identity and managed secrets</li>
               <li>Provider deletion and retention workflows</li>
               <li>Production storage, reconciliation, and DR</li>
             </ul>
@@ -363,8 +404,9 @@ export default function Home() {
           <h2>Start with approved sources. Expand behind one contract.</h2>
           <p>
             The operating path is proven from external collection through
-            Databricks analytics. The next source can reuse the same controls,
-            checkpoints, and event envelope.
+            Databricks analytics through Snowflake serving. The next source can
+            reuse the same controls, checkpoints, event envelope, and delivery
+            path.
           </p>
         </div>
         <div className="pilot-actions">
@@ -376,8 +418,8 @@ export default function Home() {
           >
             View the successful run <span aria-hidden="true">↗</span>
           </a>
-          <a className="text-link" href={githubUrl} target="_blank" rel="noreferrer">
-            Explore the public repository <span aria-hidden="true">↗</span>
+          <a className="text-link" href={baQueryPackUrl} target="_blank" rel="noreferrer">
+            Use the BA query pack <span aria-hidden="true">↗</span>
           </a>
         </div>
       </section>
@@ -392,8 +434,9 @@ export default function Home() {
           <b>Social Intelligence</b>
         </div>
         <p>
-          Live YouTube and X collection on Databricks Free Edition. Instagram is
-          authorization-ready; Reddit remains approval-pending.
+          Live YouTube and X collection, governed Databricks analytics, and
+          Snowflake BA serving. Instagram is authorization-ready; Reddit remains
+          approval-pending.
         </p>
         <a href="#top">Back to top ↑</a>
       </footer>

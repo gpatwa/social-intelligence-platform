@@ -811,6 +811,80 @@ nav a:hover {
   text-transform: uppercase;
 }
 
+.serving-section {
+  background: #e8f2df;
+  border-top: 1px solid rgba(83, 122, 54, 0.2);
+  display: grid;
+  gap: 72px;
+  grid-template-columns: minmax(300px, 0.94fr) minmax(460px, 1.06fr);
+}
+
+.serving-intro .section-kicker {
+  margin: 0 0 24px;
+}
+
+.serving-intro h2 {
+  font-size: clamp(38px, 4.7vw, 67px);
+  font-weight: 520;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  margin: 0;
+  max-width: 660px;
+}
+
+.serving-intro > p:last-of-type {
+  color: #52634a;
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 27px 0 0;
+  max-width: 580px;
+}
+
+.serving-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 36px;
+}
+
+.serving-stack {
+  border-left: 1px solid rgba(8, 19, 31, 0.18);
+  display: grid;
+}
+
+.serving-stack article {
+  border-bottom: 1px solid rgba(8, 19, 31, 0.18);
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 36px minmax(120px, 0.6fr) minmax(190px, 1.4fr);
+  padding: 24px 0 24px 28px;
+}
+
+.serving-stack article:first-child {
+  border-top: 1px solid rgba(8, 19, 31, 0.18);
+}
+
+.serving-stack span {
+  color: #658b48;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.serving-stack strong {
+  font-size: 20px;
+  font-weight: 560;
+  letter-spacing: -0.04em;
+}
+
+.serving-stack p {
+  color: #52634a;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+}
+
 .architecture-section {
   background: var(--ink);
   color: white;
@@ -1232,6 +1306,10 @@ footer > a {
     padding-right: 30px;
   }
 
+  .serving-section {
+    grid-template-columns: 1fr;
+  }
+
   .readiness-grid {
     margin-left: 0;
   }
@@ -1373,6 +1451,20 @@ footer > a {
   .architecture-section {
     gap: 62px;
     padding: 88px 20px;
+  }
+
+  .serving-section {
+    gap: 50px;
+  }
+
+  .serving-stack article {
+    gap: 12px;
+    grid-template-columns: 30px 1fr;
+    padding-left: 18px;
+  }
+
+  .serving-stack p {
+    grid-column: 2;
   }
 
   .plane-card {
