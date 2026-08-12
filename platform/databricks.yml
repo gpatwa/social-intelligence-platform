@@ -73,6 +73,42 @@ variables:
   x_max_trends_per_run:
     description: Maximum X trends persisted from the configured market per run
     default: "20"
+  instagram_source_id:
+    description: Control-plane identifier for the Page-linked Instagram Graph API connector
+    default: instagram-graph-api
+  instagram_hashtags:
+    description: Optional comma-separated Instagram hashtags for permitted recent-media discovery
+    default: ""
+  snowflake_account:
+    description: Snowflake account identifier, for example org-account
+    default: ""
+  snowflake_user:
+    description: Dedicated Snowflake service user for the Databricks publisher
+    default: SVC_SOCIAL_INTELLIGENCE
+  snowflake_database:
+    description: Snowflake database containing the BA-facing social intelligence marts
+    default: SOCIAL_INTELLIGENCE
+  snowflake_raw_schema:
+    description: Snowflake schema reserved for publisher staging objects
+    default: RAW
+  snowflake_analytics_schema:
+    description: Snowflake schema exposed to business analysts
+    default: ANALYTICS
+  snowflake_warehouse:
+    description: Dedicated Snowflake warehouse used by the publisher
+    default: SOCIAL_INTELLIGENCE_LOAD_WH
+  snowflake_role:
+    description: Least-privilege Snowflake publisher role
+    default: SOCIAL_INTELLIGENCE_PUBLISHER
+  snowflake_secret_scope:
+    description: Databricks secret scope containing the Snowflake private key
+    default: social-intelligence
+  snowflake_private_key_secret_key:
+    description: Base64-encoded PEM private key stored in the configured secret scope
+    default: snowflake-private-key-base64
+  snowflake_publish_enabled:
+    description: Whether validated Gold marts may be published to Snowflake
+    default: "false"
 
 workspace:
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

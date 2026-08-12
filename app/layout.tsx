@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Social Intelligence — YouTube signals to Databricks decisions";
+const title = "Social Intelligence — governed social signals to Databricks decisions";
 const description =
-  "A live, governed social intelligence pipeline for YouTube discovery, emerging trends, participation challenges, and trusted analytics on Databricks.";
+  "A governed social intelligence platform for approved multi-source discovery, emerging trends, participation challenges, and trusted analytics on Databricks.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-live.png`;
+  const socialImage = `${origin}/og-connectors.png`;
 
   return {
     metadataBase: new URL(origin),
@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: "Social Intelligence — YouTube signals, Databricks decisions",
+          alt: "Social Intelligence — governed social signals, Databricks decisions",
         },
       ],
     },

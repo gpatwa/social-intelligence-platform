@@ -30,10 +30,43 @@ const capabilities = [
   },
   {
     index: "04",
-    title: "Connector-ready",
-    copy: "Add Instagram, X, Reddit, or approved providers behind one versioned, tenant-aware event contract.",
-    metric: "v1",
-    label: "canonical event contract",
+    title: "Multi-source by design",
+    copy: "Each approved provider lands behind the same versioned, tenant-aware contract—without coupling analytics to a single social API.",
+    metric: "4",
+    label: "connector paths defined",
+  },
+];
+
+const connectorRoadmap = [
+  {
+    name: "YouTube",
+    status: "Live",
+    tone: "live",
+    detail: "Discovery events are flowing into the governed Databricks pipeline.",
+  },
+  {
+    name: "X",
+    status: "Live",
+    tone: "live",
+    detail: "San Francisco trend snapshots and targeted recent-search monitoring are operational.",
+  },
+  {
+    name: "Instagram",
+    status: "Ready to authorize",
+    tone: "ready",
+    detail: "Graph API collector, checkpoints, and governed source registration are ready pending Meta account linkage.",
+  },
+  {
+    name: "Reddit",
+    status: "Approval pending",
+    tone: "pending",
+    detail: "Held behind Reddit Data API access approval; no scraping or credential workarounds.",
+  },
+  {
+    name: "Bluesky",
+    status: "Next",
+    tone: "next",
+    detail: "The next candidate for open public-conversation trend signals.",
   },
 ];
 
@@ -85,7 +118,7 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="live-dot" />
-            Live MVP · YouTube → Databricks
+            Live MVP · Social signals → Databricks
           </div>
           <h1>
             See the signal
@@ -115,8 +148,8 @@ export default function Home() {
             </a>
           </div>
           <p className="access-note">
-            Live YouTube discovery is running now. Databricks may require
-            workspace access.
+            YouTube and X collection are live. Databricks may require workspace
+            access.
           </p>
         </div>
 
@@ -128,13 +161,13 @@ export default function Home() {
           <div className="console-main">
             <div className="console-feature">
               <div className="feature-label">
-                <span>Source · YouTube Data API v3</span>
-                <strong>Discovery live</strong>
+                <span>Sources · YouTube + X</span>
+                <strong>Collection live</strong>
               </div>
               <h2>Social events are landing.</h2>
               <p>
-                GitHub Actions collects public YouTube results. Databricks
-                validates, deduplicates, scores, and serves the analytics layer.
+                Approved provider APIs collect public signals. Databricks
+                validates, deduplicates, scores, and serves one analytics layer.
               </p>
               <div className="trend-chart" aria-hidden="true">
                 {[24, 31, 28, 42, 49, 61, 73, 91].map((height, index) => (
@@ -165,7 +198,7 @@ export default function Home() {
           <div className="console-footer">
             <div>
               <span className="health-dot" />
-              YouTube source live
+              Two source paths live
             </div>
             <div>Hourly schedule</div>
             <div>0 rejected</div>
@@ -182,9 +215,7 @@ export default function Home() {
           <span>
             <b>0</b> rejected events
           </span>
-          <span>
-            <b>37</b> automated tests
-          </span>
+          <span><b>51</b> automated tests</span>
           <span>
             <b>5/5</b> Databricks stages passing
           </span>
@@ -197,9 +228,8 @@ export default function Home() {
           <strong>Discovery data is live</strong>
         </div>
         <p>
-          Titles, descriptions, channels, and publish times are flowing now.
-          Engagement counters stay at zero when Google blocks statistics
-          enrichment under the project&apos;s current quota.
+          YouTube and X source records are flowing now. Google engagement
+          enrichment remains degraded until its generic-query quota is enabled.
         </p>
         <a href="#readiness">See the production gates ↓</a>
       </aside>
@@ -226,6 +256,32 @@ export default function Home() {
                 <strong>{capability.metric}</strong>
                 <span>{capability.label}</span>
               </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section connector-section" id="connectors">
+        <div className="section-heading">
+          <p className="section-kicker">Connector roadmap</p>
+          <h2>One governed path for every approved source.</h2>
+          <p>
+            New sources must use approved APIs, durable checkpoints, request
+            controls, and the same replayable event contract before they reach
+            product metrics.
+          </p>
+        </div>
+        <div className="connector-grid">
+          {connectorRoadmap.map((connector) => (
+            <article className="connector-card" key={connector.name}>
+              <div>
+                <h3>{connector.name}</h3>
+                <span className={`connector-status ${connector.tone}`}>
+                  <i aria-hidden="true" />
+                  {connector.status}
+                </span>
+              </div>
+              <p>{connector.detail}</p>
             </article>
           ))}
         </div>
@@ -292,7 +348,7 @@ export default function Home() {
             </div>
             <ul>
               <li>Google quota for engagement enrichment</li>
-              <li>Additional approved social connectors</li>
+          <li>Meta authorization and Reddit API approval</li>
               <li>Service identity and managed secrets</li>
               <li>Provider deletion and retention workflows</li>
               <li>Production storage, reconciliation, and DR</li>
@@ -303,8 +359,8 @@ export default function Home() {
 
       <section className="pilot-section" id="pilot">
         <div>
-          <p className="section-kicker">The first source is live</p>
-          <h2>Start with YouTube. Expand behind one contract.</h2>
+          <p className="section-kicker">The operating path is proven</p>
+          <h2>Start with approved sources. Expand behind one contract.</h2>
           <p>
             The operating path is proven from external collection through
             Databricks analytics. The next source can reuse the same controls,
@@ -336,8 +392,8 @@ export default function Home() {
           <b>Social Intelligence</b>
         </div>
         <p>
-          Live YouTube discovery on Databricks Free Edition. Engagement counts
-          remain in degraded mode until Google enables generic query quota.
+          Live YouTube and X collection on Databricks Free Edition. Instagram is
+          authorization-ready; Reddit remains approval-pending.
         </p>
         <a href="#top">Back to top ↑</a>
       </footer>

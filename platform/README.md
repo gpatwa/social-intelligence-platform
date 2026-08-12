@@ -54,11 +54,13 @@ src/social_intelligence/scoring.py     Locally testable scoring functions
 tests/                                 Contract and scoring unit tests
 ```
 
-The repository includes quota-aware YouTube Data API v3 and X API v2 Recent
-Search adapters, provider fixtures, checkpoint and retry primitives, and
-separate governed source-registration jobs. See the
+The repository includes quota-aware YouTube Data API v3, X API v2 Recent
+Search, and Page-linked Instagram Graph API adapters, provider fixtures,
+checkpoint and retry primitives, and separate governed source-registration
+jobs. See the
 [YouTube connector guide](docs/YOUTUBE_CONNECTOR.md) and
-[X connector guide](docs/X_CONNECTOR.md).
+[X connector guide](docs/X_CONNECTOR.md) and
+[Instagram connector guide](docs/INSTAGRAM_CONNECTOR.md).
 
 For Databricks Free Edition, use the
 [external GitHub Actions collector](docs/EXTERNAL_COLLECTOR.md). It lands
@@ -139,6 +141,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [Architecture decision and evolution triggers](docs/ARCHITECTURE.md)
 - [Signal ownership and response model](docs/OPERATING_MODEL.md)
 - [Real-source integration contract](docs/REAL_SOURCE_INTEGRATION.md)
+- [Snowflake BA and SQL serving](docs/SNOWFLAKE_SERVING.md)
 - [Production readiness gates](docs/PRODUCTION_READINESS.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a

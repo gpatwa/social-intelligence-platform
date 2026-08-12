@@ -3,8 +3,8 @@
 Databricks Free Edition remains the lakehouse and analytics plane. A scheduled
 GitHub Actions workflows call approved provider APIs, write immutable newline-
 delimited JSON batches through the Databricks Files API, and store each source's
-cursor and quota ledger in the same Unity Catalog volume. YouTube and X use the
-same control-plane contract and delivery semantics.
+cursor and quota ledger in the same Unity Catalog volume. YouTube, X, and
+Instagram use the same control-plane contract and delivery semantics.
 
 ```text
 GitHub Actions -> YouTube Data API -> SocialEventEnvelope NDJSON
@@ -53,6 +53,7 @@ Do not place the values in repository variables or source code.
 | `DATABRICKS_TOKEN` | Databricks credential with Files API access to the target volume |
 | `YOUTUBE_API_KEY` | Google API key restricted to YouTube Data API v3 |
 | `X_BEARER_TOKEN` | Bearer credential for the approved X API project |
+| `INSTAGRAM_ACCESS_TOKEN` | Meta credential for the approved Page-linked Instagram Business account |
 | `PIPELINE_STATUS_INGEST_KEY` | Shared secret used only to publish a sanitized run metric to the landing page |
 
 Use a dedicated short-lived Databricks credential when Free Edition supports
@@ -79,14 +80,23 @@ Set repository Actions variables for non-secret configuration:
 | `X_TRENDS_WOEID` | `2487956` (San Francisco pilot) |
 | `X_TRENDS_LOCATION` | `San Francisco` |
 | `X_MAX_TRENDS_PER_RUN` | `20` |
+| `INSTAGRAM_SOURCE_ID` | `instagram-graph-api` |
+| `INSTAGRAM_PAGE_ID` | Required Facebook Page ID linked to the Business account |
+| `INSTAGRAM_HASHTAGS` | empty comma-separated list |
+| `INSTAGRAM_LOOKBACK_HOURS` | `24` |
+| `INSTAGRAM_MAX_MEDIA_PAGES_PER_RULE` | `1` |
+| `INSTAGRAM_MAX_REQUESTS_PER_RUN` | `100` |
 | `PIPELINE_STATUS_URL` | Public landing-page endpoint, ending in `/api/pipeline-status` |
 
-For X-specific setup and the allowed query modes, see [X connector](X_CONNECTOR.md).
+For source-specific setup and supported collection modes, see the
+[X connector](X_CONNECTOR.md) and [Instagram connector](INSTAGRAM_CONNECTOR.md)
+guides.
 
-Leave `ENABLE_YOUTUBE_COLLECTOR` unset during setup. Run the workflow manually,
-inspect the batch, checkpoint, run metric, and Databricks tables, then set it to
-`true` to enable hourly scheduled collection. GitHub may delay scheduled runs,
-so this is a near-real-time MVP rather than an SLA-backed streaming service.
+Leave the relevant `ENABLE_<PLATFORM>_COLLECTOR` variable unset during setup.
+Run the workflow manually, inspect the batch, checkpoint, run metric, and
+Databricks tables, then set it to `true` to enable hourly scheduled collection.
+GitHub may delay scheduled runs, so this is a near-real-time MVP rather than an
+SLA-backed streaming service.
 
 ## Databricks ingestion
 
@@ -114,11 +124,10 @@ Acceptance gates are: no dead-letter rows, no unexplained duplicates, a fresh
 successful collector run, positive quota headroom, and reconciliation of
 sampled videos against the YouTube user interface.
 
-After each collector attempt, the workflow publishes the same run metric that
-lands in `gold_connector_operations` to a separate public-safe status store.
-The endpoint accepts only the versioned operational fields used by the landing
-page; Databricks credentials, event payloads, checkpoints, and internal volume
-paths are never returned to the browser.
+The YouTube workflow also publishes its run metric to a separate public-safe
+status store. Databricks credentials, event payloads, checkpoints, and internal
+volume paths are never returned to the browser. Other collector metrics remain
+in Databricks until their platform-neutral status projection is enabled.
 
 The external job uses source-specific validation. The deterministic demo
 validator intentionally checks fictional challenge and brand-risk scenarios and
