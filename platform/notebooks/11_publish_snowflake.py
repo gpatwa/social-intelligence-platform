@@ -158,6 +158,12 @@ connection = snowflake.connector.connect(
     application="social_intelligence_databricks",
 )
 
+# The account can keep the load warehouse suspended between scheduled runs.
+# Select it explicitly after authenticating so Snowflake resumes it before
+# write_pandas creates its temporary stage and performs schema inference.
+with connection.cursor() as cursor:
+    cursor.execute(f"USE WAREHOUSE {quoted(snowflake_warehouse)}")
+
 published_rows = 0
 try:
     for target, source, keys, strategy in datasets:

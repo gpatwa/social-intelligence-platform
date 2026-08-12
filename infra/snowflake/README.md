@@ -1,5 +1,28 @@
 # Snowflake control plane
 
+## Free Edition: zero-touch developer bootstrap
+
+For the current single-account MVP, use the idempotent bootstrap instead of
+creating GitHub secrets, Terraform Cloud state, keys, and Snowflake objects by
+hand. It opens the provider-owned Snowflake SSO flow, creates the serving
+plane, generates a publisher key in memory, stores it directly in the
+Databricks secret scope, and deploys the bundle:
+
+```bash
+python3 scripts/bootstrap_snowflake_dev.py --run-initial-publish
+```
+
+The only human action is authenticating to Snowflake in its own SSO window;
+the script cannot and must not bypass that consent boundary. It requires an
+account configured for Snowflake ExternalBrowser SSO. The full command is safe
+to re-run. It uses the locally signed-in username by default; add
+`--snowflake-user <username>` only if your Snowflake username differs. Use
+`--rotate-key` only when intentionally rotating the publisher credential.
+
+Terraform and the GitHub deployment workflow remain the production path, where
+reviewed state, protected environments, and workload identity federation are
+appropriate.
+
 This directory is the desired state for the Snowflake serving plane. It creates
 separate publishing and BA warehouses, resource-monitor guardrails, the
 `SOCIAL_INTELLIGENCE` database, `RAW` and `ANALYTICS` schemas, and role-based
