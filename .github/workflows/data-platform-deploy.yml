@@ -74,7 +74,7 @@ jobs:
       TF_VAR_deployer_role: ${{ vars.SNOWFLAKE_ROLE || 'ACCOUNTADMIN' }}
       TF_VAR_publisher_user: SVC_SOCIAL_INTELLIGENCE
       TF_VAR_ba_parent_role: ${{ vars.SNOWFLAKE_BA_PARENT_ROLE }}
-      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
     steps:
       - uses: actions/checkout@v4

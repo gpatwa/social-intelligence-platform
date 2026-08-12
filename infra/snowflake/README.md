@@ -21,6 +21,7 @@ Required CI environment values:
 - `SNOWFLAKE_USER`
 - `SNOWFLAKE_PRIVATE_KEY` (temporary bridge only)
 - `SNOWFLAKE_ROLE` (normally an infrastructure-admin role)
+- `DATABRICKS_HOST`
 - `TF_TOKEN_app_terraform_io`
 - `TF_BACKEND_CONFIG`, containing the environment-specific Terraform Cloud
   backend configuration, for example:
