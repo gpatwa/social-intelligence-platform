@@ -53,13 +53,13 @@ test("server-renders the Social Intelligence landing page", async () => {
   const html = await response.text();
   assert.match(
     html,
-    /<title>Social Intelligence — YouTube signals to Databricks decisions<\/title>/i,
+    /<title>Social Intelligence — governed social signals to Databricks decisions<\/title>/i,
   );
   assert.match(html, /See the signal/);
   assert.match(html, /before it becomes the story\./);
   assert.match(html, /<b>12<\/b> real events landed/);
   assert.match(html, /<b>0<\/b> rejected events/);
-  assert.match(html, /<b>37<\/b> automated tests/);
+  assert.match(html, /<b>51<\/b> automated tests/);
   assert.match(html, /Discovery data is live/);
   assert.match(html, /Pipeline status, without the guesswork/);
   assert.match(html, /Databricks · gold_connector_operations/);
@@ -69,7 +69,7 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /Experience plane/);
   assert.match(
     html,
-    /https:\/\/social-intelligence\.example\/og-live\.png/,
+    /https:\/\/social-intelligence\.example\/og-connectors\.png/,
   );
 });
 
