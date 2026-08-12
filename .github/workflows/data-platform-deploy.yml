@@ -48,8 +48,11 @@ jobs:
       - name: Validate desired state
         run: terraform -chdir=infra/snowflake validate
       - uses: databricks/setup-cli@main
-      - name: Validate Databricks bundle
-        run: databricks bundle validate -t dev
+      # `bundle validate` makes an authenticated workspace request. Keep PR
+      # validation credential-free; the authenticated validation runs in the
+      # protected deployment environment immediately before deployment.
+      - name: Generate Databricks bundle schema
+        run: databricks bundle schema > /dev/null
         working-directory: platform
 
   deploy:
@@ -108,6 +111,14 @@ jobs:
         run: terraform -chdir=infra/snowflake apply -auto-approve tfplan
       - uses: databricks/setup-cli@main
         if: ${{ inputs.deploy_databricks }}
+      - name: Validate Databricks bundle with deployment credentials
+        if: ${{ inputs.deploy_databricks }}
+        run: |
+          databricks bundle validate -t "${{ inputs.target }}" \
+            --var "snowflake_account=${{ vars.SNOWFLAKE_ACCOUNT_IDENTIFIER }}" \
+            --var "snowflake_warehouse=SOCIAL_INTELLIGENCE_LOAD_WH" \
+            --var "snowflake_publish_enabled=${{ vars.ENABLE_SNOWFLAKE_PUBLISH || 'false' }}"
+        working-directory: platform
       - name: Deploy Databricks bundle
         if: ${{ inputs.deploy_databricks }}
         run: |
