@@ -4,6 +4,12 @@ resources:
       name: social-intelligence-external-ingestion-${bundle.target}
       description: Ingests externally collected social events and refreshes governed analytics.
       max_concurrent_runs: 1
+      environments:
+        - environment_key: snowflake_publisher
+          spec:
+            environment_version: "2"
+            dependencies:
+              - "snowflake-connector-python[pandas]>=3.12,<5"
       tasks:
         - task_key: initialize_platform
           notebook_task:
@@ -85,9 +91,7 @@ resources:
               snowflake_role: ${var.snowflake_role}
               secret_scope: ${var.snowflake_secret_scope}
               private_key_secret_key: ${var.snowflake_private_key_secret_key}
-          libraries:
-            - pypi:
-                package: "snowflake-connector-python[pandas]>=3.12,<5"
+          environment_key: snowflake_publisher
 
       schedule:
         quartz_cron_expression: 0 47 * * * ?

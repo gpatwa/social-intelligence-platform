@@ -40,3 +40,5 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/.bootstrap-venv/
+__pycache__/
