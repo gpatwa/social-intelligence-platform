@@ -112,3 +112,70 @@ SELECT
   run_age_minutes
 FROM gold_connector_operations
 ORDER BY completed_at DESC, source_id;
+
+-- =============================================================================
+-- 7. Commercial opportunities: what to act on, why, and for which product
+-- =============================================================================
+SELECT
+  opportunity_id,
+  opportunity_type,
+  title,
+  product_id,
+  product_name,
+  preferred_channel,
+  target_audience,
+  opportunity_score,
+  confidence_score,
+  status,
+  evidence_count,
+  evidence_ref,
+  expires_at
+FROM gold_opportunities
+ORDER BY opportunity_score DESC, signal_ts DESC;
+
+-- =============================================================================
+-- 8. Recommendation review: proposed, approved, rejected, and activated work
+-- =============================================================================
+SELECT
+  recommendation_id,
+  opportunity_id,
+  product_id,
+  action_type,
+  channel,
+  hypothesis,
+  creative_brief,
+  primary_metric,
+  confidence_score,
+  status,
+  decided_by,
+  decision_reason,
+  updated_at
+FROM decision_recommendations
+ORDER BY updated_at DESC;
+
+-- =============================================================================
+-- 9. Pilot scorecard: adoption, experiment velocity, wins, and contribution
+-- =============================================================================
+SELECT *
+FROM gold_pilot_scorecard
+ORDER BY evaluated_at DESC;
+
+SELECT
+  experiment_id,
+  recommendation_id,
+  product_id,
+  channel,
+  status,
+  primary_metric,
+  target_lift_pct,
+  planned_budget,
+  actual_spend,
+  outcome,
+  measured_lift_pct,
+  incremental_revenue,
+  contribution_margin,
+  confidence_level,
+  start_at,
+  end_at
+FROM gold_experiment_performance
+ORDER BY updated_at DESC;

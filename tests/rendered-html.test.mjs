@@ -53,13 +53,13 @@ test("server-renders the Social Intelligence landing page", async () => {
   const html = await response.text();
   assert.match(
     html,
-    /<title>Social Intelligence — governed signals to analyst-ready decisions<\/title>/i,
+    /<title>Social Intelligence — evidence-backed creative investment decisions<\/title>/i,
   );
-  assert.match(html, /See the signal/);
-  assert.match(html, /before it becomes the story\./);
-  assert.match(html, /<b>6<\/b> BA-facing marts/);
+  assert.match(html, /Know what to promote/);
+  assert.match(html, /and prove it worked\./);
+  assert.match(html, /<b>13<\/b> BA-facing marts/);
   assert.match(html, /<b>1<\/b> guarded hourly path/);
-  assert.match(html, /<b>51<\/b> automated tests/);
+  assert.match(html, /<b>55<\/b> platform tests/);
   assert.match(html, /Discovery and serving are live/);
   assert.match(html, /Pipeline status, without the guesswork/);
   assert.match(html, /Databricks · gold_connector_operations/);
@@ -67,11 +67,16 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /Control plane/);
   assert.match(html, /Data plane/);
   assert.match(html, /Experience plane/);
-  assert.match(html, /Databricks governs the signal\. Snowflake makes it usable\./);
+  assert.match(html, /From “what is trending\?” to “what should we fund next\?”/);
+  assert.match(html, /Opportunity/);
+  assert.match(html, /Recommendation/);
+  assert.match(html, /Experiment/);
+  assert.match(html, /Commercial learning/);
+  assert.match(html, /Databricks governs the decision\. Snowflake makes it measurable\./);
   assert.match(html, /Open BA query pack/);
   assert.match(
     html,
-    /https:\/\/social-intelligence\.example\/og-serving\.png/,
+    /https:\/\/social-intelligence\.example\/og-decision\.png/,
   );
 });
 

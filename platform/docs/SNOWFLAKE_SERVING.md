@@ -4,7 +4,7 @@ Databricks remains the governed system of record. Snowflake is the curated
 serving surface for business analysts and BI tools that need familiar SQL.
 
 ```text
-Approved social APIs -> Databricks Bronze/Silver/Gold -> Snowflake ANALYTICS -> BA / BI
+Approved social APIs -> Databricks signals + decisions -> Snowflake ANALYTICS -> BA / BI
 ```
 
 The publisher copies Gold marts only. It never copies raw API payloads,
@@ -41,16 +41,19 @@ analysts use the `SOCIAL_INTELLIGENCE_BA` role with the dedicated
 
 Start with [`snowflake_ba_starter_queries.sql`](../sql/snowflake_ba_starter_queries.sql).
 It includes executive pulse, emerging trends, challenge intelligence, brand
-health, topic performance, and connector operations queries against the six
-curated marts.
+health, topic performance, connector operations, opportunity prioritization,
+recommendation review, experiment performance, and pilot scorecard queries
+against 13 curated marts.
 
 ## Publish behavior
 
-`GOLD_TOPIC_HOURLY` and `GOLD_BRAND_DAILY` use key-based `MERGE` writes.
+`GOLD_TOPIC_HOURLY`, `GOLD_BRAND_DAILY`, and the durable recommendation,
+experiment, and learning records use key-based `MERGE` writes.
 Current-state marts (trends, challenges, KPIs, connector operations, and
-trending topics) are built in a temporary staging table and atomically replaced
-in Snowflake. That prevents removed or expired trends from appearing as active
-to analysts.
+trending topics, opportunities, experiment performance, and the pilot
+scorecard) are built in a temporary staging table and atomically replaced in
+Snowflake. That prevents removed or expired state from appearing as active to
+analysts.
 
 This Free Edition-compatible implementation collects curated Gold marts to the
 driver before writing them. Move to the Spark Snowflake connector plus a staged

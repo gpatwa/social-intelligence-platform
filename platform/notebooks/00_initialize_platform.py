@@ -146,5 +146,161 @@ spark.sql(
     """
 )
 
+# Product and decision records form the commercial control plane. Product maps
+# can be maintained by an API or catalog sync; lifecycle tables are append-safe
+# and are never replaced by the scheduled analytics rebuild.
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`control_product_catalog` (
+      tenant_id STRING NOT NULL,
+      product_id STRING NOT NULL,
+      product_name STRING NOT NULL,
+      category STRING,
+      gross_margin_rate DOUBLE,
+      active BOOLEAN NOT NULL,
+      updated_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Tenant product catalog used to translate social signals into commercial opportunities'
+    """
+)
+
+spark.sql(
+    f"""
+    MERGE INTO {ns}.`control_product_catalog` AS target
+    USING (
+      SELECT * FROM VALUES
+        ('{tenant_id}', 'acme-core', 'Acme Core', 'consumer-electronics', 0.60, true, CURRENT_TIMESTAMP())
+      AS product(tenant_id, product_id, product_name, category, gross_margin_rate, active, updated_at)
+    ) AS incoming
+    ON target.tenant_id = incoming.tenant_id AND target.product_id = incoming.product_id
+    WHEN MATCHED THEN UPDATE SET
+      product_name = incoming.product_name,
+      category = incoming.category,
+      gross_margin_rate = incoming.gross_margin_rate,
+      active = incoming.active,
+      updated_at = incoming.updated_at
+    WHEN NOT MATCHED THEN INSERT *
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`control_signal_product_map` (
+      tenant_id STRING NOT NULL,
+      signal_key STRING NOT NULL,
+      product_id STRING NOT NULL,
+      product_fit DOUBLE NOT NULL,
+      commercial_fit DOUBLE NOT NULL,
+      target_audience STRING,
+      preferred_channel STRING,
+      active BOOLEAN NOT NULL,
+      updated_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Explicit governed mapping from discovered signals to products and activation context'
+    """
+)
+
+spark.sql(
+    f"""
+    MERGE INTO {ns}.`control_signal_product_map` AS target
+    USING (
+      SELECT * FROM VALUES
+        ('{tenant_id}', 'battery_issue', 'acme-core', 1.00, 0.70, 'current customers', 'owned-social', true, CURRENT_TIMESTAMP()),
+        ('{tenant_id}', 'product_tips', 'acme-core', 0.90, 0.80, 'consideration-stage shoppers', 'paid-social', true, CURRENT_TIMESTAMP()),
+        ('{tenant_id}', 'glow_up_challenge', 'acme-core', 0.70, 0.75, 'creator-led lifestyle audiences', 'paid-social', true, CURRENT_TIMESTAMP()),
+        ('{tenant_id}', 'glowupchallenge', 'acme-core', 0.70, 0.75, 'creator-led lifestyle audiences', 'paid-social', true, CURRENT_TIMESTAMP())
+      AS mapping(tenant_id, signal_key, product_id, product_fit, commercial_fit,
+                 target_audience, preferred_channel, active, updated_at)
+    ) AS incoming
+    ON target.tenant_id = incoming.tenant_id AND target.signal_key = incoming.signal_key
+       AND target.product_id = incoming.product_id
+    WHEN MATCHED THEN UPDATE SET
+      product_fit = incoming.product_fit,
+      commercial_fit = incoming.commercial_fit,
+      target_audience = incoming.target_audience,
+      preferred_channel = incoming.preferred_channel,
+      active = incoming.active,
+      updated_at = incoming.updated_at
+    WHEN NOT MATCHED THEN INSERT *
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_recommendations` (
+      recommendation_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      opportunity_id STRING NOT NULL,
+      product_id STRING,
+      action_type STRING NOT NULL,
+      channel STRING NOT NULL,
+      target_audience STRING,
+      hypothesis STRING NOT NULL,
+      creative_brief STRING NOT NULL,
+      primary_metric STRING NOT NULL,
+      confidence_score DOUBLE NOT NULL,
+      status STRING NOT NULL,
+      evidence_ref STRING NOT NULL,
+      created_at TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP NOT NULL,
+      decided_by STRING,
+      decision_reason STRING
+    )
+    USING DELTA
+    COMMENT 'Durable governed recommendation lifecycle; scheduled jobs never erase human decisions'
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_experiments` (
+      experiment_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      recommendation_id STRING NOT NULL,
+      status STRING NOT NULL,
+      primary_metric STRING NOT NULL,
+      guardrail_metric STRING NOT NULL,
+      target_lift_pct DOUBLE,
+      control_definition STRING NOT NULL,
+      treatment_definition STRING NOT NULL,
+      planned_budget DOUBLE NOT NULL,
+      actual_spend DOUBLE,
+      control_conversions BIGINT,
+      treatment_conversions BIGINT,
+      control_revenue DOUBLE,
+      treatment_revenue DOUBLE,
+      start_at TIMESTAMP,
+      end_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Controlled commercial experiments created only from approved recommendations'
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_learnings` (
+      learning_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      experiment_id STRING NOT NULL,
+      recommendation_id STRING NOT NULL,
+      outcome STRING NOT NULL,
+      measured_lift_pct DOUBLE,
+      incremental_revenue DOUBLE,
+      contribution_margin DOUBLE,
+      confidence_level STRING NOT NULL,
+      reusable_insight STRING NOT NULL,
+      recorded_at TIMESTAMP NOT NULL,
+      recorded_by STRING NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Measured experiment outcomes that calibrate future recommendations'
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")

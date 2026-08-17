@@ -747,6 +747,120 @@ nav a:hover {
   margin: 8px 0 0;
 }
 
+.decision-section {
+  background: var(--ivory);
+  border-bottom: 1px solid var(--line);
+}
+
+.decision-heading h2 {
+  max-width: 780px;
+}
+
+.decision-loop {
+  border-left: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.decision-card {
+  background: rgba(255, 255, 255, 0.42);
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  min-height: 310px;
+  padding: 26px;
+  position: relative;
+}
+
+.decision-card:nth-child(2) {
+  background: #eef6e7;
+}
+
+.decision-card:nth-child(3) {
+  background: #fff0ea;
+}
+
+.decision-card:nth-child(4) {
+  background: var(--ink);
+  color: white;
+}
+
+.decision-card-top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.decision-card-top span,
+.decision-card-top small,
+.decision-proof span {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.decision-card-top span {
+  color: var(--coral);
+  font-weight: 700;
+}
+
+.decision-card:nth-child(4) .decision-card-top span {
+  color: var(--green);
+}
+
+.decision-card-top small {
+  color: #7a8790;
+}
+
+.decision-card h3 {
+  font-size: 28px;
+  font-weight: 540;
+  letter-spacing: -0.05em;
+  margin: 78px 0 16px;
+}
+
+.decision-card p {
+  color: #5c6872;
+  font-size: 13px;
+  line-height: 1.62;
+  margin: 0;
+}
+
+.decision-card:nth-child(4) p {
+  color: #aeb9c1;
+}
+
+.decision-card > i {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: flex;
+  font-style: normal;
+  height: 34px;
+  justify-content: center;
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  z-index: 2;
+}
+
+.decision-proof {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.decision-proof span {
+  border-right: 1px solid var(--line);
+  color: #68747d;
+  padding: 18px 20px;
+  text-align: center;
+}
+
 .capability-grid {
   border-left: 1px solid var(--line);
   display: grid;
@@ -1279,6 +1393,15 @@ footer > a {
     grid-template-columns: 1fr 1fr;
   }
 
+  .decision-loop,
+  .decision-proof {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .decision-card:nth-child(2) > i {
+    display: none;
+  }
+
   .status-flow {
     gap: 14px;
     grid-template-columns: 1fr 1fr;
@@ -1442,6 +1565,23 @@ footer > a {
 
   .capability-grid {
     grid-template-columns: 1fr;
+  }
+
+  .decision-loop,
+  .decision-proof {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-card {
+    min-height: 260px;
+  }
+
+  .decision-card h3 {
+    margin-top: 54px;
+  }
+
+  .decision-card > i {
+    display: none;
   }
 
   .capability-card {

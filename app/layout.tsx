@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Social Intelligence — governed signals to analyst-ready decisions";
+const title = "Social Intelligence — evidence-backed creative investment decisions";
 const description =
-  "A governed social intelligence platform for approved multi-source discovery, emerging trends, participation challenges, validated Databricks analytics, and Snowflake BA SQL serving.";
+  "A governed creative investment decision engine that connects social signals to products, recommendations, controlled experiments, revenue, and contribution margin.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-serving.png`;
+  const socialImage = `${origin}/og-decision.png`;
 
   return {
     metadataBase: new URL(origin),
@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: "Social Intelligence — signals to decisions from Databricks Gold to Snowflake SQL",
+          alt: "Social Intelligence — Opportunity to Recommendation to Experiment to Learning",
         },
       ],
     },

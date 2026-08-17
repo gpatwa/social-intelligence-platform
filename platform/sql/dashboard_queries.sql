@@ -159,6 +159,76 @@ WHERE tenant_id = '${tenant_id}'
 ORDER BY health_status DESC, source_id;
 
 -- =============================================================================
+-- PAGE 6: DECISION ENGINE
+-- =============================================================================
+SELECT
+  opportunity_id,
+  opportunity_type,
+  title,
+  signal_type,
+  signal_key,
+  product_id,
+  product_name,
+  preferred_channel,
+  target_audience,
+  opportunity_score,
+  confidence_score,
+  status,
+  evidence_count,
+  evidence_ref,
+  expires_at
+FROM ${catalog}.${schema}.gold_opportunities
+WHERE tenant_id = '${tenant_id}'
+ORDER BY opportunity_score DESC, signal_ts DESC;
+
+-- Recommendation review queue. An operational UI or API should perform
+-- lifecycle transitions; dashboard consumers receive a read-only surface.
+SELECT
+  recommendation_id,
+  opportunity_id,
+  product_id,
+  action_type,
+  channel,
+  target_audience,
+  hypothesis,
+  creative_brief,
+  primary_metric,
+  confidence_score,
+  status,
+  decided_by,
+  decision_reason,
+  updated_at
+FROM ${catalog}.${schema}.decision_recommendations
+WHERE tenant_id = '${tenant_id}'
+ORDER BY updated_at DESC;
+
+-- Pilot scorecard ties recommendation adoption to measured commercial impact.
+SELECT *
+FROM ${catalog}.${schema}.gold_pilot_scorecard
+WHERE tenant_id = '${tenant_id}';
+
+SELECT
+  experiment_id,
+  recommendation_id,
+  product_id,
+  channel,
+  status,
+  primary_metric,
+  target_lift_pct,
+  planned_budget,
+  actual_spend,
+  outcome,
+  measured_lift_pct,
+  incremental_revenue,
+  contribution_margin,
+  confidence_level,
+  start_at,
+  end_at
+FROM ${catalog}.${schema}.gold_experiment_performance
+WHERE tenant_id = '${tenant_id}'
+ORDER BY updated_at DESC;
+
+-- =============================================================================
 -- ALERT: emerging trend. Returns rows only when the threshold is breached.
 -- =============================================================================
 SELECT topic, trend_score, velocity_z, acceleration_pct, hour_ts

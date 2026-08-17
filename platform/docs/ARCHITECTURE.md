@@ -11,6 +11,8 @@ The product uses an event-driven lakehouse with three logical planes:
   tenant-scoped Bronze, Silver, and Gold data products.
 - **Experience plane** exposes stable, tenant-scoped read models for dashboards,
   alerts, human review, search, and future APIs.
+- **Decision layer** converts those read models into durable opportunities,
+  recommendations, controlled experiments, and reusable commercial learnings.
 
 These are logical boundaries in the MVP, not three separately operated service
 stacks. Physical separation becomes appropriate when security boundaries,
@@ -28,7 +30,9 @@ Approved social API / licensed provider
        -> accepted trend observations: bronze_social_trends -> gold_trending_topics
     -> tenant-scoped Gold metrics
     -> gold_signal_feed / gold_source_health
-    -> dashboard, alerts, review queue, and APIs
+    -> gold_opportunities
+       -> decision_recommendations -> decision_experiments -> decision_learnings
+    -> Snowflake BA marts, dashboard, alerts, review queue, and APIs
 ```
 
 The demo generator acts as a source adapter and emits the same event envelope a

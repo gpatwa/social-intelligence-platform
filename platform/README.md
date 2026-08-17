@@ -4,7 +4,8 @@ This project is a deployable Databricks Asset Bundle that demonstrates an
 end-to-end social intelligence product. It uses three logical planes—control,
 data, and experience—on an event-driven lakehouse. It creates realistic demo
 events, ingests them through Auto Loader, enriches and standardizes them, and
-produces trend, challenge, brand, health, signal, and executive KPI tables.
+produces trend, challenge, brand, health, signal, opportunity, recommendation,
+experiment, learning, and executive KPI tables.
 
 ## What the MVP answers
 
@@ -13,6 +14,8 @@ produces trend, challenge, brand, health, signal, and executive KPI tables.
 - How is brand sentiment changing?
 - Which platforms, creators, and regions are driving a trend?
 - Are the source data and derived metrics fresh and complete?
+- Which product or brand action is worth testing next, and what evidence supports it?
+- Did an approved recommendation create incremental revenue and contribution margin?
 
 The demo deliberately includes:
 
@@ -28,7 +31,7 @@ Control: source registry / collection rules / event contracts
 Data: API envelope -> immutable raw events -> dead letter or canonical posts
                                   -> Silver -> tenant-scoped Gold metrics
                                   |
-Experience: unified signal feed -> dashboard / alerts / review / future API
+Experience: unified signal feed -> governed decision loop -> Snowflake / dashboard / API
 ```
 
 The planes are logical boundaries in the MVP. They should become independently
@@ -45,6 +48,7 @@ notebooks/01_generate_demo_data.py     Demo connector emitting event envelopes
 notebooks/02_build_analytics.py        Auto Loader and Bronze/Silver/Gold logic
 notebooks/03_validate_product.py       Data and product acceptance checks
 notebooks/04_model_governance.py       Tenant-scoped review and quality workflow
+notebooks/12_build_decision_workflow.py Opportunity, recommendation, experiment, and learning loop
 notebooks/07_ingest_connector_metrics.py External collector run and quota metrics
 notebooks/08_validate_external_ingestion.py Real-source acceptance gates
 sql/dashboard_queries.sql              Dashboard datasets and alert queries
@@ -142,6 +146,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [Signal ownership and response model](docs/OPERATING_MODEL.md)
 - [Real-source integration contract](docs/REAL_SOURCE_INTEGRATION.md)
 - [Snowflake BA and SQL serving](docs/SNOWFLAKE_SERVING.md)
+- [Creative investment decision engine](docs/DECISION_ENGINE.md)
 - [Production readiness gates](docs/PRODUCTION_READINESS.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a

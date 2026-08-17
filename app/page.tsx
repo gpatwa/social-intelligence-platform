@@ -11,31 +11,58 @@ const pipelineRunUrl =
 const capabilities = [
   {
     index: "01",
-    title: "Emerging trends",
-    copy: "Track topics and creators as they accelerate, with every signal linked back to replayable source evidence.",
-    metric: "Hourly",
-    label: "scheduled discovery",
+    title: "Market opportunities",
+    copy: "Translate accelerating conversations into product-level opportunities with explicit fit, confidence, expiry, and evidence.",
+    metric: "0–100",
+    label: "explainable priority",
   },
   {
     index: "02",
-    title: "Challenge intelligence",
-    copy: "Measure participation growth, creator diversity, geographic spread, and persistence—not just hashtag volume.",
-    metric: "12",
-    label: "live events validated",
+    title: "Creative recommendations",
+    copy: "Generate a testable audience, channel, hypothesis, and creative brief without hiding the source signal or product mapping.",
+    metric: "Gated",
+    label: "human approval",
   },
   {
     index: "03",
-    title: "BA-ready serving",
-    copy: "Validated Databricks Gold marts publish to Snowflake ANALYTICS, where SQL users get a clean, read-only decision surface.",
-    metric: "6",
-    label: "curated marts published",
+    title: "Controlled experiments",
+    copy: "Turn only approved recommendations into planned control-versus-treatment tests with budget and margin guardrails.",
+    metric: "10%",
+    label: "default target lift",
   },
   {
     index: "04",
-    title: "Operational trust",
-    copy: "Monitor collection, checkpoints, quota use, rejected records, and enrichment health alongside the insight.",
-    metric: "51",
-    label: "automated checks passing",
+    title: "Commercial learning",
+    copy: "Measure adoption, win rate, incremental revenue, and contribution margin to improve the next recommendation.",
+    metric: "Closed",
+    label: "decision loop",
+  },
+];
+
+const decisionLoop = [
+  {
+    step: "01",
+    title: "Opportunity",
+    copy: "Social momentum + evidence strength + explicit product and commercial fit.",
+    detail: "Reproducible",
+  },
+  {
+    step: "02",
+    title: "Recommendation",
+    copy: "Audience, channel, hypothesis, creative brief, metric, and approval rationale.",
+    detail: "Governed",
+  },
+  {
+    step: "03",
+    title: "Experiment",
+    copy: "A fixed control and treatment with target lift, budget, and margin guardrails.",
+    detail: "Controlled",
+  },
+  {
+    step: "04",
+    title: "Learning",
+    copy: "Measured lift, incremental revenue, contribution margin, and reusable context.",
+    detail: "Compounding",
   },
 ];
 
@@ -107,6 +134,7 @@ export default function Home() {
         </a>
         <nav aria-label="Primary navigation">
           <a href="#product">Product</a>
+          <a href="#decision">Decision engine</a>
           <a href="#architecture">Architecture</a>
           <a href="#serving">Serving</a>
           <a href="#status">Live status</a>
@@ -121,16 +149,16 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="live-dot" />
-            Live MVP · Social signals → Databricks → Snowflake
+            Pilot-ready · Signal → experiment → commercial learning
           </div>
           <h1>
-            See the signal
-            <span>before it becomes the story.</span>
+            Know what to promote
+            <span>and prove it worked.</span>
           </h1>
           <p className="hero-lede">
-            A governed social intelligence platform that collects real social
-            signals, preserves the evidence, and turns momentum into measurable
-            trends, challenges, brand intelligence, and analyst-ready SQL.
+            A creative investment decision engine that connects real social
+            signals to products, recommends what to test next, and measures the
+            revenue and contribution margin created by the decision.
           </p>
           <div className="hero-actions">
             <a
@@ -164,13 +192,13 @@ export default function Home() {
           <div className="console-main">
             <div className="console-feature">
               <div className="feature-label">
-                <span>Databricks Gold → Snowflake</span>
-                <strong>Guarded hourly publish</strong>
+                <span>Opportunity → recommendation</span>
+                <strong>Evidence retained</strong>
               </div>
-              <h2>Validated signals are ready for SQL.</h2>
+              <h2>Turn momentum into a testable commercial decision.</h2>
               <p>
-                Approved provider APIs land evidence in Databricks. Only
-                validated Gold marts flow to the analyst-facing serving layer.
+                Product fit, creative hypothesis, target audience, approval,
+                experiment design, and outcome stay connected from end to end.
               </p>
               <div className="trend-chart" aria-hidden="true">
                 {[24, 31, 28, 42, 49, 61, 73, 91].map((height, index) => (
@@ -181,27 +209,27 @@ export default function Home() {
                 ))}
               </div>
               <div className="chart-axis">
-                <span>Collect · :17</span>
-                <span>Process · :47</span>
+                <span>Discover</span>
+                <span>Learn</span>
               </div>
             </div>
             <div className="score-stack">
               <article className="score-card accent-green">
-                <span>BA marts</span>
-                <strong>6</strong>
-                <small>published to ANALYTICS</small>
+                <span>Decision stages</span>
+                <strong>4</strong>
+                <small>one governed loop</small>
               </article>
               <article className="score-card accent-coral">
-                <span>Quality checks</span>
-                <strong>51</strong>
-                <small>automated validations</small>
+                <span>Serving marts</span>
+                <strong>13</strong>
+                <small>published to ANALYTICS</small>
               </article>
             </div>
           </div>
           <div className="console-footer">
             <div>
               <span className="health-dot" />
-              Two sources · one governed serving path
+              Two sources · one evidence-to-outcome path
             </div>
             <div>Hourly publish</div>
             <div>Gold-only access</div>
@@ -213,12 +241,12 @@ export default function Home() {
         <p>Latest verified delivery</p>
         <div className="proof-metrics">
           <span>
-            <b>6</b> BA-facing marts
+            <b>13</b> BA-facing marts
           </span>
           <span>
             <b>1</b> guarded hourly path
           </span>
-          <span><b>51</b> automated tests</span>
+          <span><b>55</b> platform tests</span>
           <span>
             <b>100%</b> verified end-to-end run
           </span>
@@ -239,13 +267,47 @@ export default function Home() {
 
       <PipelineStatusPanel dashboardUrl={dashboardUrl} />
 
+      <section className="section decision-section" id="decision">
+        <div className="section-heading decision-heading">
+          <p className="section-kicker">Creative investment decision engine</p>
+          <h2>From “what is trending?” to “what should we fund next?”</h2>
+          <p>
+            Every recommendation carries its source evidence, product mapping,
+            confidence, approval state, experiment design, and commercial
+            outcome. Production gets cheaper; decision quality compounds.
+          </p>
+        </div>
+        <div className="decision-loop" aria-label="Decision engine workflow">
+          {decisionLoop.map((stage, index) => (
+            <article className="decision-card" key={stage.title}>
+              <div className="decision-card-top">
+                <span>{stage.step}</span>
+                <small>{stage.detail}</small>
+              </div>
+              <h3>{stage.title}</h3>
+              <p>{stage.copy}</p>
+              {index < decisionLoop.length - 1 ? (
+                <i aria-hidden="true">→</i>
+              ) : null}
+            </article>
+          ))}
+        </div>
+        <div className="decision-proof">
+          <span>Human approval before activation</span>
+          <span>No automatic ad spend</span>
+          <span>Incremental revenue + margin</span>
+          <span>Snowflake-ready decision records</span>
+        </div>
+      </section>
+
       <section className="section serving-section" id="serving">
         <div className="serving-intro">
           <p className="section-kicker">Analyst serving layer</p>
-          <h2>Databricks governs the signal. Snowflake makes it usable.</h2>
+          <h2>Databricks governs the decision. Snowflake makes it measurable.</h2>
           <p>
             The pipeline publishes only validated Gold marts into a dedicated
-            read-only analytics schema. Analysts get familiar SQL without raw
+            read-only analytics schema. Analysts can inspect opportunities,
+            approvals, experiments, wins, revenue, and margin without raw
             payloads, provider credentials, or unverified events.
           </p>
           <div className="serving-actions">
@@ -271,7 +333,7 @@ export default function Home() {
           <article>
             <span>03</span>
             <strong>Analyze</strong>
-            <p>BA users query six curated marts with a read-only role.</p>
+            <p>BA users query 13 curated signal and decision marts with a read-only role.</p>
           </article>
         </div>
       </section>
