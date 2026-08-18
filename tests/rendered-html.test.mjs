@@ -55,8 +55,8 @@ test("server-renders the Social Intelligence landing page", async () => {
     html,
     /<title>Social Intelligence — evidence-backed creative investment decisions<\/title>/i,
   );
-  assert.match(html, /Know what to promote/);
-  assert.match(html, /and prove it worked\./);
+  assert.match(html, /Find the signal\./);
+  assert.match(html, /Shape what(?:’|&#x27;)s next\./);
   assert.match(html, /<b>13<\/b> BA-facing marts/);
   assert.match(html, /<b>1<\/b> guarded hourly path/);
   assert.match(html, /<b>55<\/b> platform tests/);

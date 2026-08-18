@@ -152,13 +152,12 @@ export default function Home() {
             Pilot-ready · Signal → experiment → commercial learning
           </div>
           <h1>
-            Know what to promote
-            <span>and prove it worked.</span>
+            Find the signal.
+            <span>Shape what’s next.</span>
           </h1>
           <p className="hero-lede">
-            A creative investment decision engine that connects real social
-            signals to products, recommends what to test next, and measures the
-            revenue and contribution margin created by the decision.
+            Turn audience momentum into creative ideas, smarter campaigns, and
+            measurable results—all in one place.
           </p>
           <div className="hero-actions">
             <a
