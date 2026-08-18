@@ -35,7 +35,7 @@ resources:
 
         - task_key: validate_product
           depends_on:
-            - task_key: model_governance
+            - task_key: build_decision_workflow
           notebook_task:
             notebook_path: ../notebooks/03_validate_product.py
             base_parameters:
@@ -47,6 +47,15 @@ resources:
             - task_key: build_analytics
           notebook_task:
             notebook_path: ../notebooks/04_model_governance.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: build_decision_workflow
+          depends_on:
+            - task_key: model_governance
+          notebook_task:
+            notebook_path: ../notebooks/12_build_decision_workflow.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}

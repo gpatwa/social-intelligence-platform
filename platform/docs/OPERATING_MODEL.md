@@ -18,5 +18,12 @@
 
 ## Decision record
 
-For every action taken from a signal, record the trend/challenge ID, hypothesis, action, owner, expected impact, and outcome. This converts the dashboard from passive reporting into a learning loop.
+For every action taken from a signal, the decision engine records the evidence,
+product mapping, hypothesis, action, owner, expected metric, approval rationale,
+experiment design, and measured outcome. `PROPOSED` recommendations require a
+marketing owner; approved recommendations create a `PLANNED` experiment but do
+not launch media or authorize spend.
 
+Weekly pilot review should examine recommendation adoption, experiment velocity,
+win rate, incremental revenue, and contribution margin from
+`gold_pilot_scorecard`. See [the decision-engine contract](DECISION_ENGINE.md).

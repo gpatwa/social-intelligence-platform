@@ -92,6 +92,35 @@ checks = spark.sql(
       FROM {ns}.`gold_signal_feed`
 
       UNION ALL
+      SELECT 'opportunity_scores_are_bounded',
+             COUNT(*) > 0 AND COUNT_IF(opportunity_score < 0 OR opportunity_score > 100
+                                      OR confidence_score < 0 OR confidence_score > 100) = 0,
+             CONCAT(COUNT(*), ' opportunities; ',
+                    COUNT_IF(opportunity_score < 0 OR opportunity_score > 100
+                             OR confidence_score < 0 OR confidence_score > 100),
+                    ' invalid scores')
+      FROM {ns}.`gold_opportunities`
+
+      UNION ALL
+      SELECT 'recommendations_have_evidence_and_parent',
+             COUNT_IF(recommendations.evidence_ref IS NULL OR opportunities.opportunity_id IS NULL) = 0,
+             CONCAT(COUNT(*), ' recommendations; ',
+                    COUNT_IF(recommendations.evidence_ref IS NULL OR opportunities.opportunity_id IS NULL),
+                    ' invalid records')
+      FROM {ns}.`decision_recommendations` recommendations
+      LEFT JOIN {ns}.`gold_opportunities` opportunities
+        ON recommendations.opportunity_id = opportunities.opportunity_id
+
+      UNION ALL
+      SELECT 'experiments_require_approved_recommendations',
+             COUNT_IF(recommendations.recommendation_id IS NULL) = 0,
+             CONCAT(COUNT(*), ' experiments; ',
+                    COUNT_IF(recommendations.recommendation_id IS NULL), ' orphaned')
+      FROM {ns}.`decision_experiments` experiments
+      LEFT JOIN {ns}.`decision_recommendations` recommendations
+        ON experiments.recommendation_id = recommendations.recommendation_id
+
+      UNION ALL
       SELECT 'data_is_recent',
              timestampdiff(HOUR, MAX(created_at), CURRENT_TIMESTAMP()) <= 2,
              CONCAT(timestampdiff(MINUTE, MAX(created_at), CURRENT_TIMESTAMP()), ' minutes old')
@@ -112,3 +141,5 @@ print(f"Dashboard source: {catalog}.{schema}.gold_executive_kpis")
 print(f"Trend source:     {catalog}.{schema}.gold_trend_snapshot")
 print(f"Challenge source: {catalog}.{schema}.gold_challenge_snapshot")
 print(f"Brand source:     {catalog}.{schema}.gold_brand_daily")
+print(f"Opportunity source: {catalog}.{schema}.gold_opportunities")
+print(f"Pilot scorecard:    {catalog}.{schema}.gold_pilot_scorecard")

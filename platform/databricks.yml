@@ -120,6 +120,10 @@ targets:
     variables:
       # Databricks Free Edition creates this writable catalog by default.
       catalog: dev
+      # The serving path has completed its guarded end-to-end validation.
+      # Production remains opt-in through its own target configuration.
+      snowflake_account: zcpwqmj-hd11049
+      snowflake_publish_enabled: "true"
   prod:
     mode: production
     workspace:

@@ -94,6 +94,12 @@ datasets = (
     ("GOLD_EXECUTIVE_KPIS", "gold_executive_kpis", (), "replace"),
     ("GOLD_CONNECTOR_OPERATIONS", "gold_connector_operations", (), "replace"),
     ("GOLD_TRENDING_TOPICS", "gold_trending_topics", (), "replace"),
+    ("GOLD_OPPORTUNITIES", "gold_opportunities", (), "replace"),
+    ("DECISION_RECOMMENDATIONS", "decision_recommendations", ("recommendation_id",), "merge"),
+    ("DECISION_EXPERIMENTS", "decision_experiments", ("experiment_id",), "merge"),
+    ("DECISION_LEARNINGS", "decision_learnings", ("learning_id",), "merge"),
+    ("GOLD_EXPERIMENT_PERFORMANCE", "gold_experiment_performance", (), "replace"),
+    ("GOLD_PILOT_SCORECARD", "gold_pilot_scorecard", (), "replace"),
 )
 
 

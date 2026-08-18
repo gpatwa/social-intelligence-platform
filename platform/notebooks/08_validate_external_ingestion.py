@@ -74,6 +74,18 @@ checks = spark.sql(
         CONCAT(COUNT(*), ' rejected events')
       FROM {namespace}.`bronze_dead_letter_events`
       WHERE tenant_id = '{tenant_id}' AND source_id = '{source_id}'
+
+      UNION ALL
+      SELECT
+        'decision_records_have_valid_lineage',
+        COUNT_IF(opportunities.opportunity_id IS NULL OR recommendations.evidence_ref IS NULL) = 0,
+        CONCAT(COUNT(*), ' recommendations; ',
+               COUNT_IF(opportunities.opportunity_id IS NULL OR recommendations.evidence_ref IS NULL),
+               ' invalid records')
+      FROM {namespace}.`decision_recommendations` recommendations
+      LEFT JOIN {namespace}.`gold_opportunities` opportunities
+        ON recommendations.opportunity_id = opportunities.opportunity_id
+      WHERE recommendations.tenant_id = '{tenant_id}'
     )
     SELECT * FROM checks ORDER BY check_name
     """
