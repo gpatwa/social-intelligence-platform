@@ -45,8 +45,12 @@ The repository contains a working, pilot-ready implementation:
 - **Snowflake serving layer** with 13 curated, read-only marts for BA and SQL users
 - **Automated infrastructure path** using Databricks Asset Bundles, Terraform,
   protected GitHub environments, and an idempotent Snowflake developer bootstrap
+- **Open interoperability foundation** with CloudEvents 1.0 transport mapping,
+  OpenAPI/JSON Schema contracts, and an OKF 0.2 knowledge bundle
+- **MCP server** with tenant-scoped opportunity, evidence, metric, and pipeline
+  tools; recommendation drafting is deterministic and non-persisting
 - **Live pipeline status** surfaced on the public product site from Databricks metrics
-- **55 platform tests and 3 product-site tests** in the current validated delivery
+- **67 platform tests and 3 product-site tests** in the current validated delivery
 
 The deterministic 943-event demo remains available for reproducible validation;
 live-provider ingestion uses the same contracts and downstream pipeline.
@@ -132,7 +136,9 @@ production control plane.
 | Layer | Technology |
 |---|---|
 | Collection | Python connectors, GitHub Actions, provider APIs |
-| Contract and delivery | Versioned JSON Schema, NDJSON, Databricks Files API |
+| Contract and delivery | JSON Schema, CloudEvents 1.0, OpenAPI 3.1, NDJSON, Databricks Files API |
+| Knowledge interoperability | OKF 0.2 Markdown bundle, deterministic catalog, attested computation metadata |
+| Agent interoperability | MCP Python SDK over stdio; provider-neutral read model adapter |
 | Lakehouse and orchestration | Databricks Free Edition, PySpark, Delta tables, Asset Bundles |
 | Analytics and decisioning | Python, SQL, governed Bronze/Silver/Gold and decision tables |
 | BA serving | Snowflake, least-privilege roles, dedicated warehouses, 13 curated marts |
@@ -154,6 +160,8 @@ platform/
   notebooks/                 Control, ingestion, analytics, validation, decision, and serving tasks
   src/social_intelligence/   Contracts, scoring, decisioning, and connectors
   schemas/                   Machine-readable event contract
+  contracts/                 Versioned JSON Schema, CloudEvents mapping, and OpenAPI
+  knowledge/                 Portable OKF business knowledge and computation metadata
   sql/                       Databricks dashboard and Snowflake BA query packs
   tests/                     Platform, connector, decision, and delivery tests
   docs/                      Architecture, operations, connector, and readiness decisions
@@ -176,9 +184,32 @@ npm test
 Platform:
 
 ```bash
-python3 -m pip install -e ./platform
+python3 -m pip install -e './platform[standards]'
+python3 platform/scripts/build_okf_bundle.py \
+  --bundle platform/knowledge/social-intelligence --check
+python3 platform/scripts/validate_okf_bundle.py \
+  --bundle platform/knowledge/social-intelligence
 python3 -m unittest discover -s platform/tests -v
 ```
+
+Start the local MCP server over stdio:
+
+```bash
+python3 -m pip install -e './platform[mcp,standards]'
+social-intelligence-mcp
+```
+
+Set `SOCIAL_INTELLIGENCE_MCP_SNAPSHOT_DIR` to a directory containing the
+governed `opportunities.json`, `evidence.json`, `metrics.json`, and
+`pipeline_status.json` projections exported by the serving task. Without a
+snapshot directory the server starts safely with an empty provider.
+
+The standards profile is documented in
+[ADR 0001](platform/docs/adr/0001-open-agent-and-knowledge-standards.md). It
+keeps runtime framework choices replaceable: events use CloudEvents, durable
+artifacts use versioned schemas, business knowledge uses OKF, and the MCP
+adapter attaches at an explicit boundary. A2A, AG-UI, and OpenTelemetry remain
+separate follow-on adapters.
 
 ## Deploy to Databricks Free Edition
 

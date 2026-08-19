@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/gpatwa/social-intelligence-platform/main/platform/contracts/json-schema/evidence-v1.json",
+  "title": "Evidence Reference v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_id", "tenant_id", "source_type", "source_ref", "observed_at", "trust_tier"],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "source_type": {"enum": ["social_event", "metric", "knowledge", "artifact"]},
+    "source_ref": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "retrieved_at": {"type": "string", "format": "date-time"},
+    "trust_tier": {"enum": ["unverified", "machine_confirmed", "human_reviewed"]},
+    "excerpt": {"type": "string", "maxLength": 2000},
+    "attributes": {"type": "object", "additionalProperties": true}
+  }
+}

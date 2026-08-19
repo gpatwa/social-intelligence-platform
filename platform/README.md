@@ -54,6 +54,10 @@ notebooks/08_validate_external_ingestion.py Real-source acceptance gates
 sql/dashboard_queries.sql              Dashboard datasets and alert queries
 src/social_intelligence/contracts.py   Versioned event-envelope contract
 schemas/social-event-envelope-v1.json  Machine-readable connector contract
+contracts/                             CloudEvents, evidence, artifact, and OpenAPI contracts
+knowledge/social-intelligence/         OKF 0.2 definitions, policies, and computations
+src/social_intelligence/mcp_server.py  MCP stdio server and governed tools
+src/social_intelligence/mcp_service.py Provider-neutral tenant-scoped read model
 src/social_intelligence/scoring.py     Locally testable scoring functions
 tests/                                 Contract and scoring unit tests
 ```
@@ -83,8 +87,16 @@ Bronze, Silver, Gold, and operational tables.
 
 ```bash
 cd social-intelligence-mvp
+python3 -m pip install -e '.[mcp,standards]'
+python3 scripts/build_okf_bundle.py --bundle knowledge/social-intelligence --check
+python3 scripts/validate_okf_bundle.py --bundle knowledge/social-intelligence
 python3 -m unittest discover -s tests -v
 ```
+
+Run the MCP adapter locally with `social-intelligence-mcp`. It reads optional
+JSON projections from `SOCIAL_INTELLIGENCE_MCP_SNAPSHOT_DIR`; the default empty
+provider is intentional so a host never receives cross-tenant or ungoverned
+data. See [MCP operations](docs/MCP.md).
 
 ## Deploy and run
 
@@ -148,6 +160,10 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [Snowflake BA and SQL serving](docs/SNOWFLAKE_SERVING.md)
 - [Creative investment decision engine](docs/DECISION_ENGINE.md)
 - [Production readiness gates](docs/PRODUCTION_READINESS.md)
+- [Open standards decision](docs/adr/0001-open-agent-and-knowledge-standards.md)
+- [Interoperability contract registry](contracts/README.md)
+- [OKF knowledge bundle](knowledge/social-intelligence/index.md)
+- [MCP operations](docs/MCP.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a
 human-review queue (`gold_model_review_queue`) and an initially empty

@@ -1,0 +1,88 @@
+openapi: 3.1.0
+info:
+  title: Social Intelligence Decision API
+  version: 1.0.0
+  description: Read governed opportunities and submit recommendation proposals.
+servers:
+  - url: https://api.example.invalid/v1
+    description: Placeholder replaced by deployment configuration
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {const: ready}
+  /opportunities:
+    get:
+      operationId: listOpportunities
+      parameters:
+        - in: query
+          name: tenant_id
+          required: true
+          schema: {type: string}
+        - in: query
+          name: status
+          schema: {type: string}
+      responses:
+        "200":
+          description: Governed opportunity page
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: ../json-schema/opportunity-v1.json
+  /opportunities/{opportunity_id}:
+    get:
+      operationId: getOpportunity
+      parameters:
+        - in: path
+          name: opportunity_id
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Opportunity with evidence lineage
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/opportunity-v1.json
+        "404": {description: Opportunity not found}
+  /recommendations:
+    post:
+      operationId: proposeRecommendation
+      description: Creates a PROPOSED recommendation. Approval is a separate human gate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/recommendation-v1.json
+      responses:
+        "201":
+          description: Proposal accepted
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/recommendation-v1.json
+        "409": {description: Idempotency conflict}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

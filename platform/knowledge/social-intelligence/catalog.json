@@ -1,0 +1,150 @@
+{
+  "bundle": "social-intelligence",
+  "concept_count": 12,
+  "concepts": [
+    {
+      "description": "Deterministic priority and confidence scoring for a governed opportunity.",
+      "path": "computations/opportunity-score.md",
+      "status": "active",
+      "tags": [
+        "attested",
+        "decisioning",
+        "deterministic"
+      ],
+      "title": "Opportunity score computation",
+      "type": "Attested Computation"
+    },
+    {
+      "description": "Reproducible commercial opportunities joined to governed product mappings.",
+      "path": "datasets/gold-opportunities.md",
+      "status": "active",
+      "tags": [
+        "commercial",
+        "decisioning",
+        "gold"
+      ],
+      "title": "Gold opportunities",
+      "type": "Dataset"
+    },
+    {
+      "description": "Immutable, replayable connector events in the Bronze data plane.",
+      "path": "datasets/social-events.md",
+      "status": "active",
+      "tags": [
+        "bronze",
+        "events",
+        "lineage"
+      ],
+      "title": "Social events",
+      "type": "Dataset"
+    },
+    {
+      "description": "Public interactions divided by public exposure for an observed post.",
+      "path": "metrics/engagement-rate.md",
+      "status": "active",
+      "tags": [
+        "engagement",
+        "normalized"
+      ],
+      "title": "Engagement rate",
+      "type": "Metric"
+    },
+    {
+      "description": "Bounded commercial priority combining signal, evidence, product fit, commercial fit, and risk.",
+      "path": "metrics/opportunity-score.md",
+      "status": "active",
+      "tags": [
+        "commercial",
+        "decisioning",
+        "priority"
+      ],
+      "title": "Opportunity score",
+      "type": "Metric"
+    },
+    {
+      "description": "Bounded momentum score derived from volume, velocity, and engagement.",
+      "path": "metrics/trend-score.md",
+      "status": "active",
+      "tags": [
+        "momentum",
+        "score",
+        "trend"
+      ],
+      "title": "Trend score",
+      "type": "Metric"
+    },
+    {
+      "description": "Authorized professional-account media and engagement signals from Meta.",
+      "path": "platforms/instagram.md",
+      "status": "draft",
+      "tags": [
+        "connector",
+        "meta",
+        "social"
+      ],
+      "title": "Instagram",
+      "type": "Platform"
+    },
+    {
+      "description": "Public post and engagement signals collected through the X API.",
+      "path": "platforms/x.md",
+      "status": "active",
+      "tags": [
+        "connector",
+        "realtime",
+        "social"
+      ],
+      "title": "X",
+      "type": "Platform"
+    },
+    {
+      "description": "Public video and engagement signals collected through the YouTube Data API.",
+      "path": "platforms/youtube.md",
+      "status": "active",
+      "tags": [
+        "connector",
+        "social",
+        "video"
+      ],
+      "title": "YouTube",
+      "type": "Platform"
+    },
+    {
+      "description": "Evidence-first sequence for turning an opportunity into a measurable proposal.",
+      "path": "playbooks/opportunity-review.md",
+      "status": "active",
+      "tags": [
+        "decisioning",
+        "human-in-the-loop",
+        "workflow"
+      ],
+      "title": "Opportunity review",
+      "type": "Playbook"
+    },
+    {
+      "description": "Every material claim must cite durable evidence and expose confidence.",
+      "path": "policies/evidence-requirements.md",
+      "status": "active",
+      "tags": [
+        "agents",
+        "evidence",
+        "governance"
+      ],
+      "title": "Evidence requirements",
+      "type": "Policy"
+    },
+    {
+      "description": "Spend, publishing, and lifecycle advancement require an explicit human decision.",
+      "path": "policies/human-approval.md",
+      "status": "active",
+      "tags": [
+        "approval",
+        "governance",
+        "safety"
+      ],
+      "title": "Human approval for external action",
+      "type": "Policy"
+    }
+  ],
+  "okf_version": "0.2"
+}

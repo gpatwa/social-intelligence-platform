@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/gpatwa/social-intelligence-platform/main/platform/contracts/json-schema/recommendation-v1.json",
+  "title": "Recommendation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recommendation_id", "tenant_id", "opportunity_id", "action_type", "channel",
+    "hypothesis", "creative_brief", "primary_metric", "confidence_score", "status", "evidence_ids"
+  ],
+  "properties": {
+    "recommendation_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "opportunity_id": {"type": "string", "minLength": 1},
+    "action_type": {"enum": ["CREATIVE_TEST", "BRAND_RESPONSE"]},
+    "channel": {"type": "string", "minLength": 1},
+    "target_audience": {"type": ["string", "null"]},
+    "hypothesis": {"type": "string", "minLength": 1},
+    "creative_brief": {"type": "string", "minLength": 1},
+    "primary_metric": {"type": "string", "minLength": 1},
+    "confidence_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "status": {"enum": ["PROPOSED", "APPROVED", "REJECTED", "EXPERIMENT_PLANNED", "RUNNING", "COMPLETED", "CANCELLED"]},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "decided_by": {"type": ["string", "null"]},
+    "decision_reason": {"type": ["string", "null"]}
+  }
+}
