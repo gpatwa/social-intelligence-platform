@@ -28,6 +28,11 @@ The serving/export task is responsible for writing these projections from
 Databricks or Snowflake. The MCP layer does not accept arbitrary SQL, provider
 tokens, table names, or model prompts.
 
+For a live read-only connector, set `SOCIAL_INTELLIGENCE_MCP_PROVIDER` to
+`databricks` or `snowflake` and install the matching optional extra. Provider
+credentials remain environment/secret-manager inputs. For Free Edition, run a
+scheduled export with `write_projection_snapshots()` and use `snapshot` mode.
+
 ## Tools
 
 | Tool | Access | Behavior |
@@ -52,3 +57,17 @@ idempotency key, policy checks, and an explicit human approval record.
 current `SnapshotDataProvider` is intentionally portable for Databricks Free
 Edition and local testing. A production adapter can read a governed SQL view or
 an API projection without changing the MCP tools or their contracts.
+
+## Service mode and agent governance
+
+Set `SOCIAL_INTELLIGENCE_MCP_TRANSPORT=streamable-http` to expose the MCP v2
+Streamable HTTP transport. `SOCIAL_INTELLIGENCE_MCP_BEARER_TOKEN` is required;
+`SOCIAL_INTELLIGENCE_MCP_ALLOWED_TENANTS` can restrict the process to a comma
+separated tenant allow-list. Tool metadata is emitted as structured audit
+records and can be connected to an OpenTelemetry tracer.
+
+`social_intelligence.agents.Supervisor` composes research, evidence, critic,
+and strategist stages over the same tool gateway. It produces replayable agent
+artifacts and always stops at `PROPOSED`. `ApprovalGate` and `ExperimentGate`
+are separate deterministic policy boundaries; no agent can approve spend or
+launch an experiment implicitly.

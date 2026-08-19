@@ -14,6 +14,7 @@ import re
 from typing import Any, Mapping, Protocol, Sequence
 
 from .decisioning import stable_decision_id
+from .authorization import StaticTenantAuthorizer, TenantAuthorizer
 
 
 TENANT_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,62}$")
@@ -111,8 +112,18 @@ def _tenant_rows(rows: Sequence[Mapping[str, Any]], tenant_id: str) -> list[dict
 class McpService:
     """Governed read model and non-persisting recommendation draft service."""
 
-    def __init__(self, provider: SocialIntelligenceDataProvider):
+    def __init__(
+        self,
+        provider: SocialIntelligenceDataProvider,
+        authorizer: TenantAuthorizer | None = None,
+    ):
         self.provider = provider
+        self.authorizer = authorizer or StaticTenantAuthorizer()
+
+    def _authorized_tenant(self, tenant_id: str) -> str:
+        tenant = _tenant(tenant_id)
+        self.authorizer.authorize(tenant)
+        return tenant
 
     def list_opportunities(
         self,
@@ -122,7 +133,7 @@ class McpService:
         min_score: float | None = None,
         limit: int = 20,
     ) -> dict[str, Any]:
-        tenant = _tenant(tenant_id)
+        tenant = self._authorized_tenant(tenant_id)
         page_size = _limit(limit)
         if min_score is not None and not 0 <= min_score <= 100:
             raise ValueError("min_score must be between 0 and 100")
@@ -148,7 +159,7 @@ class McpService:
         }
 
     def get_evidence(self, *, tenant_id: str, evidence_id: str) -> dict[str, Any]:
-        tenant = _tenant(tenant_id)
+        tenant = self._authorized_tenant(tenant_id)
         identifier = str(evidence_id or "").strip()
         if not identifier:
             raise ValueError("evidence_id is required")
@@ -169,7 +180,7 @@ class McpService:
         source_id: str | None = None,
         limit: int = 100,
     ) -> dict[str, Any]:
-        tenant = _tenant(tenant_id)
+        tenant = self._authorized_tenant(tenant_id)
         page_size = _limit(limit)
         rows = _tenant_rows(self.provider.metrics(), tenant)
         if metric_name:
@@ -182,7 +193,7 @@ class McpService:
     def get_pipeline_status(
         self, *, tenant_id: str, source_id: str | None = None
     ) -> dict[str, Any]:
-        tenant = _tenant(tenant_id)
+        tenant = self._authorized_tenant(tenant_id)
         rows = _tenant_rows(self.provider.pipeline_status(), tenant)
         if source_id:
             rows = [row for row in rows if row.get("source_id") == source_id]
@@ -206,7 +217,7 @@ class McpService:
         evidence_ids: Sequence[str],
     ) -> dict[str, Any]:
         """Return a deterministic PROPOSED draft; never persists or approves it."""
-        tenant = _tenant(tenant_id)
+        tenant = self._authorized_tenant(tenant_id)
         if (
             not opportunity_id.strip()
             or not action_type.strip()

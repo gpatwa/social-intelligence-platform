@@ -14,6 +14,8 @@ standards = [
   "PyYAML>=6.0,<7.0",
 ]
 mcp = ["mcp>=2.0,<3.0"]
+databricks = ["databricks-sql-connector>=3.0,<4.0"]
+snowflake = ["snowflake-connector-python>=3.12,<4.0"]
 
 [project.scripts]
 social-intelligence-mcp = "social_intelligence.mcp_server:main"
