@@ -8,6 +8,16 @@ version = "0.1.1"
 description = "Databricks social intelligence analytics MVP"
 requires-python = ">=3.10"
 
+[project.optional-dependencies]
+standards = [
+  "jsonschema>=4.23,<5.0",
+  "PyYAML>=6.0,<7.0",
+]
+mcp = ["mcp>=2.0,<3.0"]
+
+[project.scripts]
+social-intelligence-mcp = "social_intelligence.mcp_server:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

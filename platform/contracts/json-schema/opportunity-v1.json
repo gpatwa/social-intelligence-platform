@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/gpatwa/social-intelligence-platform/main/platform/contracts/json-schema/opportunity-v1.json",
+  "title": "Commercial Opportunity v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "opportunity_id", "tenant_id", "opportunity_type", "signal_type", "signal_key",
+    "signal_at", "evidence_count", "opportunity_score", "confidence_score", "status", "evidence"
+  ],
+  "properties": {
+    "opportunity_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "opportunity_type": {"enum": ["GROW", "DEFEND"]},
+    "signal_type": {"type": "string", "minLength": 1},
+    "signal_key": {"type": "string", "minLength": 1},
+    "signal_at": {"type": "string", "format": "date-time"},
+    "product_id": {"type": ["string", "null"]},
+    "preferred_channel": {"type": ["string", "null"]},
+    "target_audience": {"type": ["string", "null"]},
+    "evidence_count": {"type": "integer", "minimum": 0},
+    "opportunity_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "confidence_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "status": {"enum": ["NEEDS_MAPPING", "OPEN", "WATCH", "EXPIRED"]},
+    "evidence": {"type": "array", "items": {"$ref": "evidence-v1.json"}, "minItems": 1}
+  }
+}

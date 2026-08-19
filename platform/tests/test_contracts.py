@@ -47,6 +47,34 @@ class SocialEventEnvelopeTests(unittest.TestCase):
         self.assertEqual(record["source_object_id"], "video-123")
         self.assertEqual(record["payload"], '{"title": "Launch", "views": 100}')
 
+    def test_maps_to_cloud_events_without_changing_landing_contract(self):
+        event = SocialEventEnvelope.create(
+            tenant_id="demo",
+            source_id="x/sf market",
+            platform="X",
+            event_type="social.post.observed",
+            source_object_id="post/123",
+            occurred_at=self.occurred_at,
+            collected_at=self.occurred_at,
+            correlation_id="corr-1",
+            payload={"text": "hello"},
+            attributes={"query": "san francisco"},
+        )
+
+        cloud_event = event.to_cloudevent()
+
+        self.assertEqual(cloud_event["specversion"], "1.0")
+        self.assertEqual(cloud_event["type"], event.event_type)
+        self.assertEqual(cloud_event["id"], event.event_id)
+        self.assertEqual(cloud_event["correlationid"], "corr-1")
+        self.assertIn("x%2Fsf%20market", cloud_event["source"])
+        self.assertEqual(cloud_event["subject"], "x/post%2F123")
+        self.assertEqual(cloud_event["data"]["payload"], {"text": "hello"})
+        self.assertEqual(
+            cloud_event["data"]["attributes"], {"query": "san francisco"}
+        )
+        self.assertIsInstance(event.to_record()["payload"], str)
+
     def test_unknown_event_type_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "Unsupported event type"):
             SocialEventEnvelope.create(

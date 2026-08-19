@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/gpatwa/social-intelligence-platform/main/platform/contracts/json-schema/social-event-data-v1.json",
+  "title": "CloudEvent Social Event Data v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "payload", "attributes"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "payload": {"type": "object"},
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    }
+  }
+}

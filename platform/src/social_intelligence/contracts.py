@@ -12,10 +12,16 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 from typing import Any, Mapping
+from urllib.parse import quote
 from uuid import uuid4
 
 
 EVENT_SCHEMA_VERSION = "1.0"
+CLOUDEVENT_SPEC_VERSION = "1.0"
+EVENT_DATA_SCHEMA = (
+    "https://raw.githubusercontent.com/gpatwa/social-intelligence-platform/"
+    "main/platform/contracts/json-schema/social-event-data-v1.json"
+)
 SUPPORTED_EVENT_TYPES = frozenset(
     {
         "social.post.observed",
@@ -136,3 +142,38 @@ class SocialEventEnvelope:
         record["collected_at"] = self.collected_at.astimezone(timezone.utc).isoformat()
         record["payload"] = json.dumps(self.payload, sort_keys=True, default=str)
         return record
+
+    def to_cloudevent(self) -> dict[str, Any]:
+        """Return a CloudEvents 1.0 structured event without changing storage v1.
+
+        The connector envelope remains the durable Databricks landing contract.
+        This adapter provides standards-based transport interoperability while
+        keeping the source payload as a native JSON object in ``data``.
+        """
+        self.validate()
+        source_parts = (
+            quote(self.tenant_id, safe=""),
+            quote(self.platform.lower(), safe=""),
+            quote(self.source_id, safe=""),
+        )
+        return {
+            "specversion": CLOUDEVENT_SPEC_VERSION,
+            "id": self.event_id,
+            "source": "urn:social-intelligence:" + ":".join(source_parts),
+            "type": self.event_type,
+            "subject": f"{quote(self.platform.lower(), safe='')}/{quote(self.source_object_id, safe='')}",
+            "time": self.occurred_at.astimezone(timezone.utc).isoformat(),
+            "datacontenttype": "application/json",
+            "dataschema": EVENT_DATA_SCHEMA,
+            "tenantid": self.tenant_id,
+            "sourceid": self.source_id,
+            "correlationid": self.correlation_id,
+            "idempotencykey": self.idempotency_key,
+            "collectedat": self.collected_at.astimezone(timezone.utc).isoformat(),
+            "schemaversion": self.schema_version,
+            "data": {
+                "schema_version": self.schema_version,
+                "payload": dict(self.payload),
+                "attributes": dict(self.attributes),
+            },
+        }

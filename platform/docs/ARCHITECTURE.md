@@ -38,6 +38,19 @@ Approved social API / licensed provider
 The demo generator acts as a source adapter and emits the same event envelope a
 production connector must emit.
 
+## Interoperability profile
+
+The internal envelope remains the durable landing contract. A backward-compatible
+CloudEvents 1.0 adapter supports event transport, JSON Schema and OpenAPI define
+durable artifacts and service boundaries, and an OKF 0.2 bundle makes metrics,
+datasets, policies, playbooks, and deterministic computations discoverable.
+
+The MCP adapter now exposes tenant-scoped read models and non-persisting
+recommendation drafts. A2A is reserved for independently deployed agents,
+AG-UI for interactive review, and OpenTelemetry for trace correlation. No
+orchestration framework is allowed to become the system of record. See
+[ADR 0001](adr/0001-open-agent-and-knowledge-standards.md).
+
 ## Event contract
 
 Every delivery has:
