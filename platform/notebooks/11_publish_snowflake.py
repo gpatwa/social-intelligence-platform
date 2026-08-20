@@ -88,6 +88,8 @@ publish_run_id = f"{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}-{uuid4().hex[:12]
 # the current state and therefore use a staged atomic replacement.
 datasets = (
     ("GOLD_TOPIC_HOURLY", "gold_topic_hourly", ("tenant_id", "hour_ts", "topic"), "merge"),
+    ("GOLD_CONTENT_PERFORMANCE", "gold_content_performance", (), "replace"),
+    ("GOLD_CREATOR_PERFORMANCE", "gold_creator_performance", (), "replace"),
     ("GOLD_BRAND_DAILY", "gold_brand_daily", ("tenant_id", "metric_date", "brand"), "merge"),
     ("GOLD_TREND_SNAPSHOT", "gold_trend_snapshot", (), "replace"),
     ("GOLD_CHALLENGE_SNAPSHOT", "gold_challenge_snapshot", (), "replace"),

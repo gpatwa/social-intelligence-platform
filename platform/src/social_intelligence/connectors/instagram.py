@@ -201,6 +201,34 @@ class InstagramConnectorConfig:
             raise ValueError("max_requests_per_run must be between 1 and 450")
 
 
+@dataclass(frozen=True)
+class InstagramConnectionDiagnostics:
+    """Sanitized preflight result for the Page-to-Instagram linkage.
+
+    This result is deliberately safe to publish to operations systems: it
+    contains no access token and no response payload from Meta.
+    """
+
+    page_id: str
+    page_accessible: bool
+    instagram_business_linked: bool
+    instagram_account_id: str = ""
+    instagram_username: str = ""
+    status: str = "UNKNOWN"
+    message: str = ""
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "page_id": self.page_id,
+            "page_accessible": self.page_accessible,
+            "instagram_business_linked": self.instagram_business_linked,
+            "instagram_account_id": self.instagram_account_id,
+            "instagram_username": self.instagram_username,
+            "status": self.status,
+            "message": self.message,
+        }
+
+
 class InstagramConnector:
     """Collect owned media and permitted hashtag discovery through Graph API."""
 
@@ -224,6 +252,63 @@ class InstagramConnector:
         self._clock = clock
         self._sleeper = sleeper
         self._quota_observer = quota_observer
+
+    def diagnose_connection(self) -> InstagramConnectionDiagnostics:
+        """Check Page access and Instagram Business linkage without collecting.
+
+        This is safe to run while Page linking is temporarily restricted. It
+        makes the actionable Meta prerequisite explicit instead of requiring a
+        full collection run to discover it.
+        """
+        client = InstagramGraphApiClient(
+            access_token=self._access_token,
+            retry_policy=self._retry_policy,
+            max_requests_per_run=self.config.max_requests_per_run,
+            transport=self._transport,
+            sleeper=self._sleeper,
+            on_request=None,
+        )
+        try:
+            response = client.get(
+                self.config.page_id,
+                {"fields": "id,name,instagram_business_account{id,username}"},
+            )
+        except InstagramApiError:
+            return InstagramConnectionDiagnostics(
+                page_id=self.config.page_id,
+                page_accessible=False,
+                instagram_business_linked=False,
+                status="ERROR",
+                message="Meta rejected the Page diagnostic request.",
+            )
+
+        page_id = str(response.get("id", "")).strip()
+        account = response.get("instagram_business_account")
+        if not page_id:
+            return InstagramConnectionDiagnostics(
+                page_id=self.config.page_id,
+                page_accessible=False,
+                instagram_business_linked=False,
+                status="ERROR",
+                message="Meta returned no Page identifier.",
+            )
+        if not isinstance(account, Mapping) or not str(account.get("id", "")).strip():
+            return InstagramConnectionDiagnostics(
+                page_id=self.config.page_id,
+                page_accessible=True,
+                instagram_business_linked=False,
+                status="ACTION_REQUIRED",
+                message="Link an Instagram Business account to this Facebook Page.",
+            )
+        return InstagramConnectionDiagnostics(
+            page_id=page_id,
+            page_accessible=True,
+            instagram_business_linked=True,
+            instagram_account_id=str(account["id"]),
+            instagram_username=str(account.get("username", "")),
+            status="READY",
+            message="Page and Instagram Business account are linked.",
+        )
 
     def collect(
         self,

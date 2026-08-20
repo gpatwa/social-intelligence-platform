@@ -150,6 +150,41 @@ FROM ${catalog}.${schema}.gold_signal_feed
 WHERE tenant_id = '${tenant_id}'
 ORDER BY signal_ts DESC, score DESC;
 
+-- Cross-platform content quality. Score prioritizes engagement efficiency,
+-- then bounded engagement and reach evidence; it is not a raw follower ranking.
+SELECT
+  platform,
+  post_id,
+  author_id,
+  topic,
+  engagement_rate,
+  engagements,
+  views,
+  content_performance_score,
+  efficiency_band,
+  created_at
+FROM ${catalog}.${schema}.gold_content_performance
+WHERE tenant_id = '${tenant_id}'
+ORDER BY content_performance_score DESC, created_at DESC
+LIMIT 100;
+
+-- Creator/account performance is segmented by platform to avoid invalid
+-- comparisons of native follower and reach metrics.
+SELECT
+  platform,
+  author_id,
+  post_count,
+  avg_engagement_rate,
+  avg_content_performance_score,
+  engagements,
+  views,
+  active_topic_count,
+  latest_post_at
+FROM ${catalog}.${schema}.gold_creator_performance
+WHERE tenant_id = '${tenant_id}'
+ORDER BY avg_content_performance_score DESC, engagements DESC
+LIMIT 100;
+
 -- Source SLO and ingestion health.
 SELECT source_id, platform, collection_mode, health_status, freshness_minutes,
        delivered_events, duplicate_deliveries, rejected_events,

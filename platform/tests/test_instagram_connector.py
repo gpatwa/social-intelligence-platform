@@ -25,14 +25,15 @@ HASHTAG = json.loads((FIXTURES / "hashtag_search.json").read_text())
 
 
 class FixtureTransport:
-    def __init__(self, media=MEDIA):
+    def __init__(self, media=MEDIA, page=PAGE):
         self.calls = []
         self.media = media
+        self.page = page
 
     def __call__(self, path, params):
         self.calls.append((path, dict(params)))
         if path == "1181090461764724":
-            return PAGE
+            return self.page
         if path == "ig_hashtag_search":
             return HASHTAG
         return self.media
@@ -72,6 +73,26 @@ class InstagramConnectorTests(unittest.TestCase):
         self.assertEqual(batch.statistics["requests_used"], 2)
         self.assertEqual(transport.calls[1][0], "17841400000000001/media")
         self.assertEqual(transport.calls[1][1]["limit"], "100")
+
+    def test_diagnose_connection_reports_ready_without_collecting_media(self):
+        transport = FixtureTransport()
+        result = self.connector(transport).diagnose_connection()
+
+        self.assertEqual(result.status, "READY")
+        self.assertTrue(result.page_accessible)
+        self.assertTrue(result.instagram_business_linked)
+        self.assertEqual(result.instagram_account_id, "17841400000000001")
+        self.assertEqual(result.instagram_username, "socialsignals")
+        self.assertEqual([call[0] for call in transport.calls], ["1181090461764724"])
+
+    def test_diagnose_connection_explains_missing_page_link(self):
+        page_without_instagram = {"id": "1181090461764724", "name": "Social Intelligence Signals"}
+        result = self.connector(FixtureTransport(page=page_without_instagram)).diagnose_connection()
+
+        self.assertEqual(result.status, "ACTION_REQUIRED")
+        self.assertTrue(result.page_accessible)
+        self.assertFalse(result.instagram_business_linked)
+        self.assertIn("Link an Instagram Business account", result.message)
 
     def test_hashtag_rule_uses_documented_search_then_recent_media_flow(self):
         transport = FixtureTransport()

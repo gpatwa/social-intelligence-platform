@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
+import argparse
 import json
 import os
 import re
@@ -170,6 +171,19 @@ class ExternalInstagramCollector:
         self.connector_factory = connector_factory
         self.clock = clock
 
+    def diagnose_connection(self) -> Mapping[str, object]:
+        """Run a sanitized Meta Page-link preflight without landing data."""
+        connector = self.connector_factory(self.config, lambda _quota: None)
+        diagnose = getattr(connector, "diagnose_connection", None)
+        if not callable(diagnose):
+            raise TypeError("Configured Instagram connector does not support diagnostics")
+        result = diagnose()
+        if hasattr(result, "to_dict"):
+            return result.to_dict()
+        if isinstance(result, Mapping):
+            return dict(result)
+        raise TypeError("Instagram diagnostic returned an unsupported result")
+
     def run(self) -> Mapping[str, object]:
         started_at = self.clock().astimezone(timezone.utc)
         run_id = f"{started_at:%Y%m%dT%H%M%S}-{uuid4().hex}"
@@ -312,9 +326,18 @@ class ExternalInstagramCollector:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Collect or preflight the Instagram connector")
+    parser.add_argument(
+        "--diagnose",
+        action="store_true",
+        help="check Page access and Instagram Business linkage without collecting media",
+    )
+    args = parser.parse_args()
     config = ExternalInstagramConfig.from_environment()
     files = DatabricksFilesClient(host=config.databricks_host, token=config.databricks_token)
-    print(json.dumps(ExternalInstagramCollector(config, files).run(), sort_keys=True))
+    collector = ExternalInstagramCollector(config, files)
+    result = collector.diagnose_connection() if args.diagnose else collector.run()
+    print(json.dumps(result, sort_keys=True))
     return 0
 
 

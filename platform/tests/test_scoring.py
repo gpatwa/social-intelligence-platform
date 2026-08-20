@@ -4,7 +4,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from social_intelligence.scoring import challenge_score, engagement_rate, trend_score
+from social_intelligence.scoring import (
+    challenge_score,
+    content_performance_score,
+    cross_platform_confidence,
+    engagement_rate,
+    trend_score,
+)
 
 
 class ScoringTests(unittest.TestCase):
@@ -13,6 +19,18 @@ class ScoringTests(unittest.TestCase):
 
     def test_engagement_rate_handles_zero_views(self):
         self.assertEqual(engagement_rate(10, 10, 10, 10, 0), 0.0)
+
+    def test_content_performance_favors_efficiency_without_unbounded_volume(self):
+        efficient = content_performance_score(0.10, 2_000, 20_000)
+        weak = content_performance_score(0.01, 10_000, 1_000_000)
+        self.assertGreater(efficient, weak)
+        self.assertLessEqual(content_performance_score(10, 10**9, 10**9), 100.0)
+
+    def test_cross_platform_confidence_requires_independent_evidence(self):
+        single_platform = cross_platform_confidence(1, 1, 1)
+        corroborated = cross_platform_confidence(3, 75, 400)
+        self.assertGreater(corroborated, 90)
+        self.assertGreater(corroborated, single_platform)
 
     def test_strong_trend_scores_above_baseline(self):
         baseline = trend_score(0.2, 0.1, 0.05, 5, 1, 0.1, 0.5)
@@ -38,4 +56,3 @@ class ScoringTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

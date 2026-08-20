@@ -13,6 +13,8 @@ experiment, learning, and executive KPI tables.
 - Which hashtags or participation patterns look like viral challenges?
 - How is brand sentiment changing?
 - Which platforms, creators, and regions are driving a trend?
+- Which posts and creators are outperforming their platform baseline, without
+  confusing raw reach with quality?
 - Are the source data and derived metrics fresh and complete?
 - Which product or brand action is worth testing next, and what evidence supports it?
 - Did an approved recommendation create incremental revenue and contribution margin?
@@ -147,7 +149,9 @@ Open `sql/dashboard_queries.sql` in Databricks SQL and create datasets from the 
 2. **Emerging trends** — trend score, velocity z-score, acceleration, creator breadth.
 3. **Challenges** — participation score, unique creators, geographic and platform spread.
 4. **Brand health** — daily sentiment, negative rate, engagement and mention changes.
-5. **Operations** — freshness, invalid rows, duplicates and pipeline status.
+5. **Content and creators** — efficiency-weighted post performance and
+   platform-segmented creator performance.
+6. **Operations** — freshness, invalid rows, duplicates and pipeline status.
 
 Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The queries marked `ALERT` return a row only when the relevant threshold is breached and can be attached to Databricks SQL alerts.
 
@@ -159,6 +163,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [Real-source integration contract](docs/REAL_SOURCE_INTEGRATION.md)
 - [Snowflake BA and SQL serving](docs/SNOWFLAKE_SERVING.md)
 - [Creative investment decision engine](docs/DECISION_ENGINE.md)
+- [Cross-platform scoring definitions](docs/CROSS_PLATFORM_SCORING.md)
 - [Production readiness gates](docs/PRODUCTION_READINESS.md)
 - [Open standards decision](docs/adr/0001-open-agent-and-knowledge-standards.md)
 - [Interoperability contract registry](contracts/README.md)

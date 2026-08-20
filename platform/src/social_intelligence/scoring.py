@@ -27,6 +27,39 @@ def engagement_rate(
     return numerator / views
 
 
+def content_performance_score(
+    engagement_rate_value: float,
+    engagements: int,
+    views: int,
+) -> float:
+    """Score post performance without treating raw volume as cross-platform truth.
+
+    Engagement efficiency is the primary signal.  Absolute engagements and
+    reach contribute only as bounded evidence, which prevents a large account
+    from winning solely because its platform has a larger audience.
+    """
+    score = (
+        50.0 * clamp(engagement_rate_value / 0.10, 0.0, 1.0)
+        + 35.0 * clamp(log1p(max(engagements, 0)) / log1p(10_000), 0.0, 1.0)
+        + 15.0 * clamp(log1p(max(views, 0)) / log1p(100_000), 0.0, 1.0)
+    )
+    return round(clamp(score), 2)
+
+
+def cross_platform_confidence(
+    platform_count: int,
+    creator_count: int,
+    evidence_count: int,
+) -> float:
+    """Return evidence confidence, not a claim that a topic will keep growing."""
+    score = (
+        50.0 * clamp(max(platform_count, 0) / 3.0, 0.0, 1.0)
+        + 30.0 * clamp(log1p(max(creator_count, 0)) / log1p(100), 0.0, 1.0)
+        + 20.0 * clamp(log1p(max(evidence_count, 0)) / log1p(500), 0.0, 1.0)
+    )
+    return round(clamp(score), 2)
+
+
 def trend_score(
     velocity_z: float,
     engagement_velocity_z: float,
@@ -67,4 +100,3 @@ def challenge_score(
         + 10.0 * clamp(max(persistence_hours, 0) / 24.0, 0.0, 1.0)
     )
     return round(clamp(score), 2)
-

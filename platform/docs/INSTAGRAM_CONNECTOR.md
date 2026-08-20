@@ -30,6 +30,10 @@ API.
   than silently skipping data.
 - Events are at-least-once; downstream logical-event idempotency absorbs the
   replay window.
+- Every workflow run performs a sanitized Page-link preflight before collecting
+  media. It reports `READY`, `ACTION_REQUIRED`, or `ERROR` and never prints an
+  access token. Run the same check locally with
+  `python -m social_intelligence.connectors.external_instagram --diagnose`.
 
 ## Meta prerequisites
 
@@ -79,8 +83,9 @@ Set these non-secret GitHub Actions variables:
 
 The `Instagram collector` workflow is schedule-disabled until
 `ENABLE_INSTAGRAM_COLLECTOR=true`. Once Page linkage and token authorization
-work, run it manually first. Inspect its immutable event batch and run metric,
-then run the existing `social_intelligence_external_ingestion` job:
+work, run it manually first. The workflow preflight must return `READY`; then
+inspect its immutable event batch and run metric, and run the existing
+`social_intelligence_external_ingestion` job:
 
 ```bash
 databricks bundle run social_intelligence_external_ingestion -t dev \

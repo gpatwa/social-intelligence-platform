@@ -328,6 +328,58 @@ spark.sql(
 
 spark.sql(
     f"""
+    CREATE OR REPLACE TABLE {ns}.`gold_content_performance`
+    COMMENT 'Explainable cross-platform post performance scores; efficiency is weighted above raw reach'
+    AS
+    SELECT
+      tenant_id,
+      platform,
+      post_id,
+      author_id,
+      topic,
+      sentiment_label,
+      created_at,
+      views,
+      engagements,
+      engagement_rate,
+      ROUND(LEAST(100.0, GREATEST(0.0,
+          50.0 * LEAST(1.0, GREATEST(0.0, engagement_rate / 0.10))
+        + 35.0 * LEAST(1.0, LOG1P(engagements) / LOG1P(10000))
+        + 15.0 * LEAST(1.0, LOG1P(views) / LOG1P(100000))
+      )), 2) AS content_performance_score,
+      CASE
+        WHEN engagement_rate >= 0.10 THEN 'high'
+        WHEN engagement_rate >= 0.03 THEN 'medium'
+        ELSE 'baseline'
+      END AS efficiency_band
+    FROM {ns}.`silver_social_posts`
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE OR REPLACE TABLE {ns}.`gold_creator_performance`
+    COMMENT 'Creator and account performance by platform; no audience-size ranking is implied'
+    AS
+    SELECT
+      tenant_id,
+      platform,
+      author_id,
+      COUNT(*) AS post_count,
+      MAX(created_at) AS latest_post_at,
+      SUM(views) AS views,
+      SUM(engagements) AS engagements,
+      AVG(engagement_rate) AS avg_engagement_rate,
+      AVG(content_performance_score) AS avg_content_performance_score,
+      AVG(CASE WHEN sentiment_label = 'positive' THEN 1.0 ELSE 0.0 END) AS positive_share,
+      COUNT(DISTINCT topic) AS active_topic_count
+    FROM {ns}.`gold_content_performance`
+    GROUP BY tenant_id, platform, author_id
+    """
+)
+
+spark.sql(
+    f"""
     CREATE OR REPLACE TABLE {ns}.`gold_topic_hourly`
     COMMENT 'Hourly topic performance used for trend detection'
     AS
@@ -387,7 +439,12 @@ spark.sql(
         + 10.0 * LEAST(1.0, platform_count / 3.0)
         + 10.0 * LEAST(1.0, novelty)
         + 5.0 * LEAST(1.0, positive_share)
-      )), 2) AS trend_score
+      )), 2) AS trend_score,
+      ROUND(LEAST(100.0, GREATEST(0.0,
+          50.0 * LEAST(1.0, platform_count / 3.0)
+        + 30.0 * LEAST(1.0, LOG1P(creator_count) / LOG1P(100))
+        + 20.0 * LEAST(1.0, LOG1P(post_count) / LOG1P(500))
+      )), 2) AS cross_platform_confidence
     FROM components
     """
 )
@@ -600,7 +657,10 @@ spark.sql(
       CASE WHEN trend_score >= 70 THEN 'critical'
            WHEN trend_score >= 45 THEN 'high'
            ELSE 'info' END AS severity,
-      CONCAT('Topic ', topic, ' trend score ', CAST(trend_score AS STRING)) AS summary,
+      CONCAT(
+        'Topic ', topic, ' trend score ', CAST(trend_score AS STRING),
+        ' with cross-platform confidence ', CAST(cross_platform_confidence AS STRING)
+      ) AS summary,
       post_count AS evidence_count,
       'gold_trend_snapshot' AS source_table
     FROM {ns}.`gold_trend_snapshot`
@@ -650,6 +710,8 @@ for table_name in (
     "bronze_social_posts",
     "bronze_social_trends",
     "silver_social_posts",
+    "gold_content_performance",
+    "gold_creator_performance",
     "gold_trending_topics",
     "gold_topic_hourly",
     "gold_trend_hourly",
