@@ -1,5 +1,10 @@
 # MCP operations
 
+The server also exposes `recommend_agent_stack`, a non-mutating tool that turns
+one of the five supported enterprise workflow outcomes and its constraints into
+an evidence-linked implementation blueprint. It never provisions infrastructure
+or bypasses approval. See [Agent Stack Advisor](AGENT_STACK_ADVISOR.md).
+
 The repository now includes a thin MCP adapter for agent hosts. It is a
 protocol boundary over governed read models, not a second data plane or a place
 for model-specific business logic.

@@ -107,6 +107,7 @@ class McpProtocolTests(unittest.TestCase):
                         "get_metrics",
                         "get_pipeline_status",
                         "draft_recommendation",
+                        "recommend_agent_stack",
                     },
                 )
                 result = await session.call_tool(
@@ -114,6 +115,13 @@ class McpProtocolTests(unittest.TestCase):
                 )
                 self.assertFalse(result.is_error)
                 self.assertEqual(result.structured_content["returned"], 1)
+
+                advisor = await session.call_tool(
+                    "recommend_agent_stack",
+                    {"tenant_id": TENANT, "workflow_type": "internal_reporting"},
+                )
+                self.assertFalse(advisor.is_error)
+                self.assertEqual(advisor.structured_content["blueprint"]["pattern"], "AUTOMATION_FIRST")
 
         asyncio.run(exercise())
 

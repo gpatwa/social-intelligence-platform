@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Social Intelligence — evidence-backed creative investment decisions";
+const title = "Social Intelligence — Enterprise AI Builder Intelligence";
 const description =
-  "A governed creative investment decision engine that connects social signals to products, recommendations, controlled experiments, revenue, and contribution margin.";
+  "Turn market signals and business workflows into evidence-backed product decisions, governed agent stacks, and measurable outcomes.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-decision.png`;
+  const socialImage = `${origin}/og-agent-stack.png`;
 
   return {
     metadataBase: new URL(origin),
@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: "Social Intelligence — Opportunity to Recommendation to Experiment to Learning",
+          alt: "Enterprise AI Builder Intelligence — from business outcome to governed agent stack",
         },
       ],
     },

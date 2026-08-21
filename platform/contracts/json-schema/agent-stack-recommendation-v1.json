@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/agent-stack-recommendation-v1.json",
+  "title": "Agent Stack Recommendation v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["recommendation_id", "schema_version", "blueprint", "fit_score", "stack", "required_controls", "success_metrics", "approval_required", "mutation"],
+  "properties": {
+    "recommendation_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema_version": {"const": "1.0"},
+    "blueprint": {
+      "type": "object",
+      "required": ["id", "name", "pattern"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "pattern": {"enum": ["AUTOMATION_FIRST", "WORKFLOW_WITH_AI", "BOUNDED_AGENT"]}
+      }
+    },
+    "fit_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "stack": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "required_controls": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "success_metrics": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "approval_required": {"type": "boolean"},
+    "mutation": {"const": "none"}
+  }
+}

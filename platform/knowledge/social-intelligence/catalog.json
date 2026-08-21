@@ -1,6 +1,6 @@
 {
   "bundle": "social-intelligence",
-  "concept_count": 12,
+  "concept_count": 13,
   "concepts": [
     {
       "description": "Deterministic priority and confidence scoring for a governed opportunity.",
@@ -108,6 +108,19 @@
       ],
       "title": "YouTube",
       "type": "Platform"
+    },
+    {
+      "description": "Automation-first sequence for selecting a governed AI agent implementation stack.",
+      "path": "playbooks/agent-stack-selection.md",
+      "status": "active",
+      "tags": [
+        "agents",
+        "architecture",
+        "human-in-the-loop",
+        "stack-advisor"
+      ],
+      "title": "Enterprise agent stack selection",
+      "type": "Playbook"
     },
     {
       "description": "Evidence-first sequence for turning an opportunity into a measurable proposal.",

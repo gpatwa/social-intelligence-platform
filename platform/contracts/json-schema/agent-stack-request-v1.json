@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/agent-stack-request-v1.json",
+  "title": "Agent Stack Advisor Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tenant_id", "workflow_type", "integration_surface", "risk_level", "team_profile", "cloud_preference"],
+  "properties": {
+    "tenant_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,62}$"},
+    "workflow_type": {"enum": ["lead_response", "document_processing", "follow_up", "crm_reactivation", "internal_reporting"]},
+    "integration_surface": {"enum": ["api", "mixed", "legacy_ui"]},
+    "risk_level": {"enum": ["low", "moderate", "high"]},
+    "team_profile": {"enum": ["business", "mixed", "engineering"]},
+    "cloud_preference": {"enum": ["neutral", "databricks", "microsoft", "google", "aws"]},
+    "enterprise_data": {"type": "boolean", "default": true},
+    "personalization": {"type": "boolean", "default": false},
+    "external_actions": {"type": "boolean", "default": true},
+    "max_time_to_value_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30}
+  }
+}

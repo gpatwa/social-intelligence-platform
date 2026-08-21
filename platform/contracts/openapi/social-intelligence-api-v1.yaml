@@ -78,6 +78,24 @@ paths:
               schema:
                 $ref: ../json-schema/recommendation-v1.json
         "409": {description: Idempotency conflict}
+  /agent-stack/recommendations:
+    post:
+      operationId: recommendAgentStack
+      description: Returns an evidence-linked, non-mutating AI automation stack recommendation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/agent-stack-request-v1.json
+      responses:
+        "200":
+          description: Deterministic implementation recommendation
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/agent-stack-recommendation-v1.json
+        "400": {description: Invalid workflow constraints}
 components:
   securitySchemes:
     bearerAuth:

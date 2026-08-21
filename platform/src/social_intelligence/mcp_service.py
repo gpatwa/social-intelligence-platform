@@ -15,6 +15,7 @@ from typing import Any, Mapping, Protocol, Sequence
 
 from .decisioning import stable_decision_id
 from .authorization import StaticTenantAuthorizer, TenantAuthorizer
+from .stack_advisor import StackAdvisorRequest, recommend_stack
 
 
 TENANT_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,62}$")
@@ -251,3 +252,34 @@ class McpService:
             "mutation": "none",
             "approval_required": True,
         }
+
+    def recommend_agent_stack(
+        self,
+        *,
+        tenant_id: str,
+        workflow_type: str,
+        integration_surface: str = "mixed",
+        risk_level: str = "moderate",
+        team_profile: str = "mixed",
+        cloud_preference: str = "neutral",
+        enterprise_data: bool = True,
+        personalization: bool = False,
+        external_actions: bool = True,
+        max_time_to_value_days: int = 30,
+    ) -> dict[str, Any]:
+        """Recommend a stack without provisioning, authenticating, or writing data."""
+        tenant = self._authorized_tenant(tenant_id)
+        result = recommend_stack(
+            StackAdvisorRequest(
+                workflow_type=workflow_type,
+                integration_surface=integration_surface,
+                risk_level=risk_level,
+                team_profile=team_profile,
+                cloud_preference=cloud_preference,
+                enterprise_data=enterprise_data,
+                personalization=personalization,
+                external_actions=external_actions,
+                max_time_to_value_days=max_time_to_value_days,
+            )
+        )
+        return {"tenant_id": tenant, **result}

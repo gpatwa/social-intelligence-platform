@@ -1,4 +1,5 @@
 import { PipelineStatusPanel } from "./pipeline-status";
+import { AgentStackAdvisor } from "./agent-stack-advisor";
 
 const dashboardUrl =
   "https://dbc-b8672746-8e43.cloud.databricks.com/dashboardsv3/01f17ce244971d80b97f3c0aa6b033ef/published?o=7474657828954669";
@@ -135,6 +136,7 @@ export default function Home() {
         <nav aria-label="Primary navigation">
           <a href="#product">Product</a>
           <a href="#decision">Decision engine</a>
+          <a href="#advisor">Stack advisor</a>
           <a href="#architecture">Architecture</a>
           <a href="#serving">Serving</a>
           <a href="#status">Live status</a>
@@ -149,15 +151,15 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="live-dot" />
-            Pilot-ready · Signal → experiment → commercial learning
+            Enterprise AI Builder Intelligence · Pilot-ready
           </div>
           <h1>
             Find the signal.
             <span>Shape what’s next.</span>
           </h1>
           <p className="hero-lede">
-            Turn audience momentum into creative ideas, smarter campaigns, and
-            measurable results—all in one place.
+            Turn market signals into product decisions—and business workflows
+            into governed AI architectures that prove their value.
           </p>
           <div className="hero-actions">
             <a
@@ -245,7 +247,7 @@ export default function Home() {
           <span>
             <b>1</b> guarded hourly path
           </span>
-          <span><b>55</b> platform tests</span>
+          <span><b>80</b> automated checks</span>
           <span>
             <b>100%</b> verified end-to-end run
           </span>
@@ -298,6 +300,8 @@ export default function Home() {
           <span>Snowflake-ready decision records</span>
         </div>
       </section>
+
+      <AgentStackAdvisor />
 
       <section className="section serving-section" id="serving">
         <div className="serving-intro">
@@ -441,6 +445,7 @@ export default function Home() {
               <li>Quota controls, retries, and source health</li>
               <li>Scheduled Databricks analytics workflow</li>
               <li>Guarded Snowflake serving for BA SQL</li>
+              <li>CLI + MCP enterprise Agent Stack Advisor</li>
             </ul>
           </article>
           <article className="readiness-card path">
@@ -496,8 +501,8 @@ export default function Home() {
         </div>
         <p>
           Live YouTube and X collection, governed Databricks analytics, and
-          Snowflake BA serving. Instagram is authorization-ready; Reddit remains
-          approval-pending.
+          Snowflake BA serving—with an evidence-linked advisor for enterprise AI
+          automation and agent architecture.
         </p>
         <a href="#top">Back to top ↑</a>
       </footer>

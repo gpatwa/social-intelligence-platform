@@ -18,6 +18,8 @@ experiment, learning, and executive KPI tables.
 - Are the source data and derived metrics fresh and complete?
 - Which product or brand action is worth testing next, and what evidence supports it?
 - Did an approved recommendation create incremental revenue and contribution margin?
+- Should a business workflow use deterministic automation, a bounded agent, or
+  computer use—and which governed stack best fits its constraints?
 
 The demo deliberately includes:
 
@@ -61,6 +63,7 @@ knowledge/social-intelligence/         OKF 0.2 definitions, policies, and comput
 src/social_intelligence/mcp_server.py  MCP stdio server and governed tools
 src/social_intelligence/mcp_service.py Provider-neutral tenant-scoped read model
 src/social_intelligence/scoring.py     Locally testable scoring functions
+src/social_intelligence/stack_advisor.py Deterministic enterprise agent stack advisor
 tests/                                 Contract and scoring unit tests
 ```
 
@@ -169,6 +172,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [Interoperability contract registry](contracts/README.md)
 - [OKF knowledge bundle](knowledge/social-intelligence/index.md)
 - [MCP operations](docs/MCP.md)
+- [Agent Stack Advisor](docs/AGENT_STACK_ADVISOR.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a
 human-review queue (`gold_model_review_queue`) and an initially empty

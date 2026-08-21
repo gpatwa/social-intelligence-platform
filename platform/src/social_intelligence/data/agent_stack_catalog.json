@@ -1,0 +1,103 @@
+{
+  "catalog_version": "1.0",
+  "reviewed_at": "2026-08-20",
+  "blueprints": {
+    "lead_response": {
+      "name": "Bounded lead-response agent",
+      "summary": "Qualify and route inbound demand quickly while keeping pricing, commitments, and sensitive replies under human control.",
+      "pattern": "BOUNDED_AGENT",
+      "delivery_days": 7,
+      "metrics": ["median_response_time", "qualified_lead_rate", "meeting_conversion_rate", "human_escalation_rate"]
+    },
+    "document_processing": {
+      "name": "Deterministic document workflow",
+      "summary": "Extract and validate structured fields, route exceptions, and reserve an agent for ambiguous documents only.",
+      "pattern": "AUTOMATION_FIRST",
+      "delivery_days": 10,
+      "metrics": ["straight_through_processing_rate", "field_accuracy", "exception_rate", "cost_per_document"]
+    },
+    "follow_up": {
+      "name": "Policy-bounded follow-up agent",
+      "summary": "Select the next approved action and draft context-aware follow-up without allowing unrestricted outbound communication.",
+      "pattern": "BOUNDED_AGENT",
+      "delivery_days": 7,
+      "metrics": ["reply_rate", "conversion_rate", "unsubscribe_rate", "approval_override_rate"]
+    },
+    "crm_reactivation": {
+      "name": "CRM reactivation workflow",
+      "summary": "Score dormant records, generate approved message variants, and measure incremental pipeline against a control group.",
+      "pattern": "WORKFLOW_WITH_AI",
+      "delivery_days": 14,
+      "metrics": ["reactivation_rate", "incremental_pipeline", "conversion_lift", "contact_compliance_rate"]
+    },
+    "internal_reporting": {
+      "name": "Grounded reporting workflow",
+      "summary": "Compute metrics deterministically, use AI only for explanation, and preserve links back to governed source records.",
+      "pattern": "AUTOMATION_FIRST",
+      "delivery_days": 7,
+      "metrics": ["report_cycle_time", "citation_coverage", "factual_accuracy", "analyst_hours_saved"]
+    }
+  },
+  "evidence": [
+    {
+      "id": "langgraph-durable-execution",
+      "label": "LangGraph durable execution and human-in-the-loop",
+      "url": "https://docs.langchain.com/oss/python/langgraph/overview",
+      "tags": ["langgraph"]
+    },
+    {
+      "id": "databricks-mlflow-genai",
+      "label": "MLflow 3 tracing, evaluation, and monitoring",
+      "url": "https://docs.databricks.com/aws/en/mlflow3/genai/",
+      "tags": ["evaluation", "databricks"]
+    },
+    {
+      "id": "composio-auth",
+      "label": "Composio scoped authentication and tool execution",
+      "url": "https://docs.composio.dev/docs/how-composio-works",
+      "tags": ["composio"]
+    },
+    {
+      "id": "orgo-computer-use",
+      "label": "Orgo isolated computer-use infrastructure",
+      "url": "https://docs.orgo.ai/introduction",
+      "tags": ["orgo"]
+    },
+    {
+      "id": "honcho-memory",
+      "label": "Honcho stateful agent memory",
+      "url": "https://honcho.dev/docs/v3/documentation/introduction/overview",
+      "tags": ["honcho"]
+    },
+    {
+      "id": "microsoft-agent-framework",
+      "label": "Microsoft Agent Framework agents and explicit workflows",
+      "url": "https://learn.microsoft.com/en-us/agent-framework/overview/",
+      "tags": ["microsoft"]
+    },
+    {
+      "id": "google-agent-lifecycle",
+      "label": "Google agent build, evaluate, deploy, publish, and observe lifecycle",
+      "url": "https://google.github.io/agents-cli/guide/development/",
+      "tags": ["google"]
+    },
+    {
+      "id": "aws-agentcore",
+      "label": "AWS Bedrock AgentCore enterprise practices",
+      "url": "https://aws.amazon.com/blogs/machine-learning/ai-agents-in-enterprises-best-practices-with-amazon-bedrock-agentcore/",
+      "tags": ["aws"]
+    },
+    {
+      "id": "temporal-durable-execution",
+      "label": "Temporal durable execution",
+      "url": "https://docs.temporal.io/",
+      "tags": ["temporal"]
+    },
+    {
+      "id": "n8n-ai-workflows",
+      "label": "n8n AI workflow documentation",
+      "url": "https://docs.n8n.io/advanced-ai/",
+      "tags": ["n8n"]
+    }
+  ]
+}

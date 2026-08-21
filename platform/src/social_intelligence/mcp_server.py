@@ -48,8 +48,8 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
     recorder = audit or McpAuditRecorder()
     server = MCPServer(SERVER_NAME, instructions=(
         "Use tenant-scoped read tools to inspect governed opportunities, evidence, "
-        "metrics, and pipeline status. Drafts never persist and approvals are not "
-        "available through MCP."
+        "metrics, pipeline status, and evidence-linked agent stack recommendations. "
+        "Drafts never persist and approvals are not available through MCP."
     ))
 
     def invoke(tool: str, tenant_id: str, operation: Any) -> Any:
@@ -100,6 +100,33 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
             channel=channel, hypothesis=hypothesis, creative_brief=creative_brief,
             primary_metric=primary_metric, confidence_score=confidence_score,
             evidence_ids=evidence_ids))
+
+    @server.tool()
+    def recommend_agent_stack(
+        tenant_id: str,
+        workflow_type: str,
+        integration_surface: str = "mixed",
+        risk_level: str = "moderate",
+        team_profile: str = "mixed",
+        cloud_preference: str = "neutral",
+        enterprise_data: bool = True,
+        personalization: bool = False,
+        external_actions: bool = True,
+        max_time_to_value_days: int = 30,
+    ) -> dict[str, Any]:
+        """Recommend a governed AI automation stack; this tool never provisions it."""
+        return invoke("recommend_agent_stack", tenant_id, lambda: service.recommend_agent_stack(
+            tenant_id=tenant_id,
+            workflow_type=workflow_type,
+            integration_surface=integration_surface,
+            risk_level=risk_level,
+            team_profile=team_profile,
+            cloud_preference=cloud_preference,
+            enterprise_data=enterprise_data,
+            personalization=personalization,
+            external_actions=external_actions,
+            max_time_to_value_days=max_time_to_value_days,
+        ))
     return server
 
 

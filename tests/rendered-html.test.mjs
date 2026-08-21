@@ -53,13 +53,13 @@ test("server-renders the Social Intelligence landing page", async () => {
   const html = await response.text();
   assert.match(
     html,
-    /<title>Social Intelligence — evidence-backed creative investment decisions<\/title>/i,
+    /<title>Social Intelligence — Enterprise AI Builder Intelligence<\/title>/i,
   );
   assert.match(html, /Find the signal\./);
   assert.match(html, /Shape what(?:’|&#x27;)s next\./);
   assert.match(html, /<b>13<\/b> BA-facing marts/);
   assert.match(html, /<b>1<\/b> guarded hourly path/);
-  assert.match(html, /<b>55<\/b> platform tests/);
+  assert.match(html, /<b>80<\/b> automated checks/);
   assert.match(html, /Discovery and serving are live/);
   assert.match(html, /Pipeline status, without the guesswork/);
   assert.match(html, /Databricks · gold_connector_operations/);
@@ -74,9 +74,13 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /Commercial learning/);
   assert.match(html, /Databricks governs the decision\. Snowflake makes it measurable\./);
   assert.match(html, /Open BA query pack/);
+  assert.match(html, /Agent Stack Advisor/);
+  assert.match(html, /Start with the outcome\. Earn the autonomy\./);
+  assert.match(html, /Deterministic document workflow/);
+  assert.match(html, /No provisioning\. No credentials\. No automatic spend\./);
   assert.match(
     html,
-    /https:\/\/social-intelligence\.example\/og-decision\.png/,
+    /https:\/\/social-intelligence\.example\/og-agent-stack\.png/,
   );
 });
 
