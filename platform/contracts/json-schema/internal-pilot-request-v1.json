@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/internal-pilot-request-v1.json",
+  "title": "Internal Pilot Discovery Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tenant_id", "workflow_type", "business_outcome", "process_owner", "weekly_volume", "minutes_per_case", "loaded_hourly_cost_usd", "baseline_success_rate", "target_success_rate"],
+  "properties": {
+    "tenant_id": {"type": "string", "minLength": 1, "maxLength": 63},
+    "workflow_type": {"enum": ["lead_response", "document_processing", "follow_up", "crm_reactivation", "internal_reporting"]},
+    "business_outcome": {"type": "string", "minLength": 1, "maxLength": 500},
+    "process_owner": {"type": "string", "minLength": 1, "maxLength": 120},
+    "weekly_volume": {"type": "integer", "minimum": 1, "maximum": 10000000},
+    "minutes_per_case": {"type": "number", "exclusiveMinimum": 0, "maximum": 10080},
+    "loaded_hourly_cost_usd": {"type": "number", "minimum": 0, "maximum": 10000},
+    "baseline_success_rate": {"type": "number", "minimum": 0, "maximum": 100},
+    "target_success_rate": {"type": "number", "minimum": 0, "maximum": 100},
+    "target_time_reduction_pct": {"type": "number", "minimum": 1, "maximum": 95, "default": 35},
+    "integration_surface": {"enum": ["api", "mixed", "legacy_ui"], "default": "mixed"},
+    "risk_level": {"enum": ["low", "moderate", "high"], "default": "moderate"},
+    "cloud_preference": {"enum": ["neutral", "databricks", "microsoft", "google", "aws"], "default": "databricks"},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  }
+}

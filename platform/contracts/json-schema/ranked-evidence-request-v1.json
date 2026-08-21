@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/ranked-evidence-request-v1.json",
+  "title": "Ranked Evidence Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tenant_id", "decision_id", "candidates"],
+  "properties": {
+    "tenant_id": {"type": "string", "minLength": 1, "maxLength": 63},
+    "decision_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 20, "default": 5},
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "platform", "source_object_id", "source_url", "title", "author", "published_at", "observed_at", "relevance", "momentum", "source_quality", "corroboration", "freshness", "safety"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1},
+          "platform": {"enum": ["youtube", "x", "instagram", "reddit", "knowledge", "metric"]},
+          "source_object_id": {"type": "string", "minLength": 1},
+          "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "title": {"type": "string", "minLength": 1, "maxLength": 500},
+          "author": {"type": "string", "minLength": 1, "maxLength": 256},
+          "published_at": {"type": "string", "format": "date-time"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "relevance": {"type": "number", "minimum": 0, "maximum": 100},
+          "momentum": {"type": "number", "minimum": 0, "maximum": 100},
+          "source_quality": {"type": "number", "minimum": 0, "maximum": 100},
+          "corroboration": {"type": "number", "minimum": 0, "maximum": 100},
+          "freshness": {"type": "number", "minimum": 0, "maximum": 100},
+          "safety": {"type": "number", "minimum": 0, "maximum": 100},
+          "trust_tier": {"enum": ["unverified", "machine_confirmed", "human_reviewed"], "default": "machine_confirmed"}
+        }
+      }
+    }
+  }
+}

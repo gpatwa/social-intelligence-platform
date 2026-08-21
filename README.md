@@ -42,15 +42,17 @@ The repository contains a working, pilot-ready implementation:
   Gold, decision, quality, and operational data products
 - **Governed decision engine** for opportunities, recommendations, approvals,
   experiments, and reusable learnings
-- **Snowflake serving layer** with 13 curated, read-only marts for BA and SQL users
+- **Snowflake serving layer** with 16 curated, read-only marts for BA and SQL users
 - **Automated infrastructure path** using Databricks Asset Bundles, Terraform,
   protected GitHub environments, and an idempotent Snowflake developer bootstrap
 - **Open interoperability foundation** with CloudEvents 1.0 transport mapping,
   OpenAPI/JSON Schema contracts, and an OKF 0.2 knowledge bundle
 - **MCP server** with tenant-scoped opportunity, evidence, metric, and pipeline
   tools; recommendation drafting is deterministic and non-persisting
+- **Internal Pilot Workspace** with workflow discovery, direct-link ranked
+  evidence, a seven-day staging plan, explicit guardrails, and an outcome scorecard
 - **Live pipeline status** surfaced on the public product site from Databricks metrics
-- **67 platform tests and 3 product-site tests** in the current validated delivery
+- **86 platform tests and 4 product-site tests** in the current validated delivery
 
 The deterministic 943-event demo remains available for reproducible validation;
 live-provider ingestion uses the same contracts and downstream pipeline.
@@ -116,7 +118,7 @@ Read the full [decision-engine contract](platform/docs/DECISION_ENGINE.md).
 
 ## Snowflake for BA and SQL users
 
-Validated Gold and decision data is published to 13 curated marts in
+Validated Gold, ranked-evidence, and decision data is published to 16 curated marts in
 `SOCIAL_INTELLIGENCE.ANALYTICS`. Analysts use the read-only
 `SOCIAL_INTELLIGENCE_BA` role and a dedicated BA warehouse. Bronze payloads,
 provider credentials, and workflow mutation rights are not exposed.
@@ -124,8 +126,8 @@ provider credentials, and workflow mutation rights are not exposed.
 Start with the
 [BA query pack](platform/sql/snowflake_ba_starter_queries.sql) for executive
 pulse, emerging trends, challenges, brand health, connector operations,
-opportunity prioritization, recommendation review, experiment performance, and
-pilot scorecard analysis.
+opportunity prioritization, direct source evidence, recommendation review,
+experiment performance, and pilot scorecard analysis.
 
 See [Snowflake serving](platform/docs/SNOWFLAKE_SERVING.md) for the publishing
 contract and [Terraform infrastructure](infra/snowflake/README.md) for the
@@ -141,7 +143,7 @@ production control plane.
 | Agent interoperability | MCP Python SDK over stdio; provider-neutral read model adapter |
 | Lakehouse and orchestration | Databricks Free Edition, PySpark, Delta tables, Asset Bundles |
 | Analytics and decisioning | Python, SQL, governed Bronze/Silver/Gold and decision tables |
-| BA serving | Snowflake, least-privilege roles, dedicated warehouses, 13 curated marts |
+| BA serving | Snowflake, least-privilege roles, dedicated warehouses, 16 curated marts |
 | Infrastructure and delivery | Terraform, GitHub Actions, protected environments |
 | Product site | React, Next-compatible vinext runtime, Cloudflare Workers, OpenAI Sites |
 

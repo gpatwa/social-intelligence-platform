@@ -216,6 +216,24 @@ FROM ${catalog}.${schema}.gold_opportunities
 WHERE tenant_id = '${tenant_id}'
 ORDER BY opportunity_score DESC, signal_ts DESC;
 
+-- Direct, explainable source links behind the highest-ranked evidence for each
+-- topic decision context. Social correlation is not presented as causation.
+SELECT
+  decision_id,
+  evidence_rank,
+  evidence_score,
+  platform,
+  title,
+  author,
+  source_url,
+  trust_tier,
+  why_ranked,
+  published_at,
+  observed_at
+FROM ${catalog}.${schema}.gold_ranked_evidence
+WHERE tenant_id = '${tenant_id}' AND evidence_rank <= 5
+ORDER BY decision_id, evidence_rank;
+
 -- Recommendation review queue. An operational UI or API should perform
 -- lifecycle transitions; dashboard consumers receive a read-only surface.
 SELECT

@@ -173,6 +173,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [OKF knowledge bundle](knowledge/social-intelligence/index.md)
 - [MCP operations](docs/MCP.md)
 - [Agent Stack Advisor](docs/AGENT_STACK_ADVISOR.md)
+- [Internal Pilot Workspace](docs/INTERNAL_PILOT_WORKSPACE.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a
 human-review queue (`gold_model_review_queue`) and an initially empty

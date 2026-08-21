@@ -54,9 +54,18 @@ resources:
               catalog: ${var.catalog}
               schema: ${var.schema}
 
-        - task_key: build_decision_workflow
+        - task_key: build_ranked_evidence
           depends_on:
             - task_key: refresh_analytics
+          notebook_task:
+            notebook_path: ../notebooks/13_build_ranked_evidence.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: build_decision_workflow
+          depends_on:
+            - task_key: build_ranked_evidence
           notebook_task:
             notebook_path: ../notebooks/12_build_decision_workflow.py
             base_parameters:

@@ -57,9 +57,9 @@ test("server-renders the Social Intelligence landing page", async () => {
   );
   assert.match(html, /Find the signal\./);
   assert.match(html, /Shape what(?:’|&#x27;)s next\./);
-  assert.match(html, /<b>13<\/b> BA-facing marts/);
+  assert.match(html, /<b>16<\/b> BA-facing marts/);
   assert.match(html, /<b>1<\/b> guarded hourly path/);
-  assert.match(html, /<b>80<\/b> automated checks/);
+  assert.match(html, /<b>86<\/b> automated checks/);
   assert.match(html, /Discovery and serving are live/);
   assert.match(html, /Pipeline status, without the guesswork/);
   assert.match(html, /Databricks · gold_connector_operations/);
@@ -78,6 +78,10 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /Start with the outcome\. Earn the autonomy\./);
   assert.match(html, /Deterministic document workflow/);
   assert.match(html, /No provisioning\. No credentials\. No automatic spend\./);
+  assert.match(html, /Internal Pilot Workspace/);
+  assert.match(html, /From ranked evidence to a seven-day decision\./);
+  assert.match(html, /Open source/);
+  assert.match(html, /no sample post is fabricated/);
   assert.match(
     html,
     /https:\/\/social-intelligence\.example\/og-agent-stack\.png/,
@@ -124,5 +128,39 @@ test("fails closed when the public metrics store is unavailable", async () => {
     status: "PENDING",
     operationalStatus: "AWAITING_TELEMETRY",
     message: "Metrics store is not configured",
+  });
+});
+
+test("fails closed when the metrics table is not initialized", async () => {
+  const worker = await loadWorker();
+  const response = await worker.fetch(
+    new Request("https://social-intelligence.example/api/pipeline-status"),
+    {
+      ASSETS: {
+        fetch: async () => new Response("Not found", { status: 404 }),
+      },
+      DB: {
+        prepare() {
+          return {
+            async first() {
+              throw new Error("no such table: pipeline_status");
+            },
+          };
+        },
+      },
+    },
+    {
+      waitUntil() {},
+      passThroughOnException() {},
+    },
+  );
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    available: false,
+    source: "Databricks · gold_connector_operations",
+    status: "PENDING",
+    operationalStatus: "AWAITING_TELEMETRY",
+    message: "Metrics store schema is not initialized",
   });
 });

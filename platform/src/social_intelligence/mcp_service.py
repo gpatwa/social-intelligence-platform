@@ -15,6 +15,8 @@ from typing import Any, Mapping, Protocol, Sequence
 
 from .decisioning import stable_decision_id
 from .authorization import StaticTenantAuthorizer, TenantAuthorizer
+from .evidence_ranking import EvidenceCandidate, rank_evidence
+from .pilot_workspace import PilotDiscoveryRequest, create_internal_pilot_plan
 from .stack_advisor import StackAdvisorRequest, recommend_stack
 
 
@@ -283,3 +285,65 @@ class McpService:
             )
         )
         return {"tenant_id": tenant, **result}
+
+    def rank_evidence(
+        self,
+        *,
+        tenant_id: str,
+        decision_id: str,
+        candidates: Sequence[Mapping[str, Any]],
+        limit: int = 5,
+    ) -> dict[str, Any]:
+        """Rank normalized evidence without fetching, scraping, or writing data."""
+        tenant = self._authorized_tenant(tenant_id)
+        decision = str(decision_id or "").strip()
+        if not decision:
+            raise ValueError("decision_id is required")
+        normalized_candidates = []
+        for item in candidates:
+            values = dict(item)
+            values.pop("tenant_id", None)
+            values.pop("decision_id", None)
+            normalized_candidates.append(
+                EvidenceCandidate(tenant_id=tenant, decision_id=decision, **values)
+            )
+        return rank_evidence(normalized_candidates, limit=limit)
+
+    def create_internal_pilot_plan(
+        self,
+        *,
+        tenant_id: str,
+        workflow_type: str,
+        business_outcome: str,
+        process_owner: str,
+        weekly_volume: int,
+        minutes_per_case: float,
+        loaded_hourly_cost_usd: float,
+        baseline_success_rate: float,
+        target_success_rate: float,
+        target_time_reduction_pct: float = 35,
+        integration_surface: str = "mixed",
+        risk_level: str = "moderate",
+        cloud_preference: str = "databricks",
+        evidence_ids: Sequence[str] = (),
+    ) -> dict[str, Any]:
+        """Create a non-mutating, draft-only seven-day internal pilot plan."""
+        tenant = self._authorized_tenant(tenant_id)
+        return create_internal_pilot_plan(
+            PilotDiscoveryRequest(
+                tenant_id=tenant,
+                workflow_type=workflow_type,
+                business_outcome=business_outcome,
+                process_owner=process_owner,
+                weekly_volume=weekly_volume,
+                minutes_per_case=minutes_per_case,
+                loaded_hourly_cost_usd=loaded_hourly_cost_usd,
+                baseline_success_rate=baseline_success_rate,
+                target_success_rate=target_success_rate,
+                target_time_reduction_pct=target_time_reduction_pct,
+                integration_surface=integration_surface,
+                risk_level=risk_level,
+                cloud_preference=cloud_preference,
+                evidence_ids=tuple(evidence_ids),
+            )
+        )

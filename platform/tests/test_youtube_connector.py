@@ -69,6 +69,13 @@ class YouTubeConnectorTests(unittest.TestCase):
         self.assertEqual(set(by_id), {"video-001", "comment-001", "reply-001"})
         self.assertEqual(by_id["video-001"].payload["views"], 12_500)
         self.assertEqual(
+            by_id["video-001"].payload["source_url"],
+            "https://www.youtube.com/watch?v=video-001",
+        )
+        self.assertTrue(
+            by_id["comment-001"].payload["source_url"].endswith("&lc=comment-001")
+        )
+        self.assertEqual(
             by_id["video-001"].payload["hashtags"], ["GlowUpChallenge"]
         )
         self.assertEqual(

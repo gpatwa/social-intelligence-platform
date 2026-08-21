@@ -1,7 +1,20 @@
 {
   "bundle": "social-intelligence",
-  "concept_count": 13,
+  "concept_count": 15,
   "concepts": [
+    {
+      "description": "Deterministic decision-specific evidence ranking with canonical source links and platform diversity.",
+      "path": "computations/evidence-rank.md",
+      "status": "active",
+      "tags": [
+        "attested",
+        "deterministic",
+        "evidence",
+        "ranking"
+      ],
+      "title": "Evidence rank computation",
+      "type": "Attested Computation"
+    },
     {
       "description": "Deterministic priority and confidence scoring for a governed opportunity.",
       "path": "computations/opportunity-score.md",
@@ -120,6 +133,20 @@
         "stack-advisor"
       ],
       "title": "Enterprise agent stack selection",
+      "type": "Playbook"
+    },
+    {
+      "description": "A staging-only sequence for turning one workflow and ranked evidence into a measurable go, iterate, or stop decision.",
+      "path": "playbooks/internal-pilot.md",
+      "status": "active",
+      "tags": [
+        "evidence",
+        "human-in-the-loop",
+        "pilot",
+        "scorecard",
+        "staging"
+      ],
+      "title": "Seven-day internal pilot",
       "type": "Playbook"
     },
     {

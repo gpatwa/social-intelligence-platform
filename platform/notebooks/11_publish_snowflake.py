@@ -97,6 +97,7 @@ datasets = (
     ("GOLD_CONNECTOR_OPERATIONS", "gold_connector_operations", (), "replace"),
     ("GOLD_TRENDING_TOPICS", "gold_trending_topics", (), "replace"),
     ("GOLD_OPPORTUNITIES", "gold_opportunities", (), "replace"),
+    ("GOLD_RANKED_EVIDENCE", "gold_ranked_evidence", (), "replace"),
     ("DECISION_RECOMMENDATIONS", "decision_recommendations", ("recommendation_id",), "merge"),
     ("DECISION_EXPERIMENTS", "decision_experiments", ("experiment_id",), "merge"),
     ("DECISION_LEARNINGS", "decision_learnings", ("learning_id",), "merge"),

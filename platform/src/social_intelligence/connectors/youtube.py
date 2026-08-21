@@ -531,6 +531,9 @@ class YouTubeConnector:
         payload = {
             "post_id": video_id,
             "platform": "youtube",
+            "source_url": f"https://www.youtube.com/watch?v={video_id}",
+            "source_title": title,
+            "source_author": str(snippet.get("channelTitle", "")),
             "author_id": str(snippet.get("channelId", "")),
             "author_followers": 0,
             "content_text": text,
@@ -592,6 +595,11 @@ class YouTubeConnector:
         payload = {
             "post_id": comment_id,
             "platform": "youtube",
+            "source_url": (
+                f"https://www.youtube.com/watch?v={video_id}&lc={comment_id}"
+            ),
+            "source_title": f"Comment on YouTube video {video_id}",
+            "source_author": str(snippet.get("authorDisplayName", "")),
             "author_id": author_id or "unknown",
             "author_followers": 0,
             "content_text": text,

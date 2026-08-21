@@ -108,6 +108,8 @@ class McpProtocolTests(unittest.TestCase):
                         "get_pipeline_status",
                         "draft_recommendation",
                         "recommend_agent_stack",
+                        "rank_evidence",
+                        "create_internal_pilot_plan",
                     },
                 )
                 result = await session.call_tool(
@@ -122,6 +124,53 @@ class McpProtocolTests(unittest.TestCase):
                 )
                 self.assertFalse(advisor.is_error)
                 self.assertEqual(advisor.structured_content["blueprint"]["pattern"], "AUTOMATION_FIRST")
+
+                ranking = await session.call_tool(
+                    "rank_evidence",
+                    {
+                        "tenant_id": TENANT,
+                        "decision_id": "pilot-1",
+                        "candidates": [
+                            {
+                                "evidence_id": "ev-youtube",
+                                "platform": "youtube",
+                                "source_object_id": "video-1",
+                                "source_url": "https://www.youtube.com/watch?v=video-1",
+                                "title": "Enterprise agent pilot",
+                                "author": "Reference channel",
+                                "published_at": NOW,
+                                "observed_at": NOW,
+                                "relevance": 90,
+                                "momentum": 80,
+                                "source_quality": 80,
+                                "corroboration": 70,
+                                "freshness": 90,
+                                "safety": 95,
+                            }
+                        ],
+                    },
+                )
+                self.assertFalse(ranking.is_error)
+                self.assertEqual(ranking.structured_content["items"][0]["rank"], 1)
+
+                pilot = await session.call_tool(
+                    "create_internal_pilot_plan",
+                    {
+                        "tenant_id": TENANT,
+                        "workflow_type": "lead_response",
+                        "business_outcome": "Improve qualified meeting conversion.",
+                        "process_owner": "Growth operations",
+                        "weekly_volume": 100,
+                        "minutes_per_case": 20,
+                        "loaded_hourly_cost_usd": 60,
+                        "baseline_success_rate": 12,
+                        "target_success_rate": 18,
+                        "evidence_ids": ["ev-youtube"],
+                    },
+                )
+                self.assertFalse(pilot.is_error)
+                self.assertEqual(pilot.structured_content["stage"], "INTERNAL_STAGING")
+                self.assertEqual(len(pilot.structured_content["seven_day_plan"]), 7)
 
         asyncio.run(exercise())
 

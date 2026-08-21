@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/ranked-evidence-v1.json",
+  "title": "Ranked Evidence Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ranking_id", "schema_version", "score_version", "tenant_id", "decision_id", "items", "candidate_count", "unique_source_count", "method", "causality_claim", "mutation"],
+  "properties": {
+    "ranking_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema_version": {"const": "1.0"},
+    "score_version": {"const": "evidence-rank-v1"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "decision_id": {"type": "string", "minLength": 1},
+    "candidate_count": {"type": "integer", "minimum": 1},
+    "unique_source_count": {"type": "integer", "minimum": 1},
+    "causality_claim": {"const": "none"},
+    "mutation": {"const": "none"},
+    "method": {"type": "object", "additionalProperties": true},
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["evidence_id", "platform", "source_url", "title", "rank", "base_score", "rank_score", "why_ranked", "score_version"],
+        "properties": {
+          "evidence_id": {"type": "string"},
+          "platform": {"type": "string"},
+          "source_url": {"type": "string", "format": "uri"},
+          "title": {"type": "string"},
+          "rank": {"type": "integer", "minimum": 1},
+          "base_score": {"type": "number", "minimum": 0, "maximum": 100},
+          "rank_score": {"type": "number", "minimum": 0, "maximum": 100},
+          "why_ranked": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "score_version": {"const": "evidence-rank-v1"}
+        }
+      }
+    }
+  }
+}

@@ -134,7 +134,26 @@ FROM gold_opportunities
 ORDER BY opportunity_score DESC, signal_ts DESC;
 
 -- =============================================================================
--- 8. Recommendation review: proposed, approved, rejected, and activated work
+-- 8. Ranked evidence: direct sources behind each decision context
+-- =============================================================================
+SELECT
+  decision_id,
+  evidence_rank,
+  evidence_score,
+  platform,
+  title,
+  author,
+  source_url,
+  trust_tier,
+  why_ranked,
+  published_at,
+  observed_at
+FROM gold_ranked_evidence
+WHERE evidence_rank <= 5
+ORDER BY decision_id, evidence_rank;
+
+-- =============================================================================
+-- 9. Recommendation review: proposed, approved, rejected, and activated work
 -- =============================================================================
 SELECT
   recommendation_id,
@@ -154,7 +173,7 @@ FROM decision_recommendations
 ORDER BY updated_at DESC;
 
 -- =============================================================================
--- 9. Pilot scorecard: adoption, experiment velocity, wins, and contribution
+-- 10. Pilot scorecard: adoption, experiment velocity, wins, and contribution
 -- =============================================================================
 SELECT *
 FROM gold_pilot_scorecard

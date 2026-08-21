@@ -96,6 +96,42 @@ paths:
               schema:
                 $ref: ../json-schema/agent-stack-recommendation-v1.json
         "400": {description: Invalid workflow constraints}
+  /evidence/ranked:
+    post:
+      operationId: rankEvidence
+      description: Ranks decision-specific evidence from normalized features without fetching or mutating source data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/ranked-evidence-request-v1.json
+      responses:
+        "200":
+          description: Explainable evidence ranking snapshot
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/ranked-evidence-v1.json
+        "400": {description: Invalid evidence candidates}
+  /internal-pilots/plan:
+    post:
+      operationId: createInternalPilotPlan
+      description: Creates a non-mutating, draft-only seven-day internal staging plan.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/internal-pilot-request-v1.json
+      responses:
+        "200":
+          description: Internal staging pilot plan
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/internal-pilot-plan-v1.json
+        "400": {description: Invalid discovery inputs}
 components:
   securitySchemes:
     bearerAuth:

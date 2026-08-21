@@ -1,5 +1,6 @@
 import { PipelineStatusPanel } from "./pipeline-status";
 import { AgentStackAdvisor } from "./agent-stack-advisor";
+import { InternalPilotWorkspace } from "./internal-pilot-workspace";
 
 const dashboardUrl =
   "https://dbc-b8672746-8e43.cloud.databricks.com/dashboardsv3/01f17ce244971d80b97f3c0aa6b033ef/published?o=7474657828954669";
@@ -134,8 +135,8 @@ export default function Home() {
           </span>
         </a>
         <nav aria-label="Primary navigation">
-          <a href="#product">Product</a>
           <a href="#decision">Decision engine</a>
+          <a href="#workspace">Pilot workspace</a>
           <a href="#advisor">Stack advisor</a>
           <a href="#architecture">Architecture</a>
           <a href="#serving">Serving</a>
@@ -164,19 +165,17 @@ export default function Home() {
           <div className="hero-actions">
             <a
               className="button button-primary"
+              href="#workspace"
+            >
+              Build an internal pilot <span aria-hidden="true">↓</span>
+            </a>
+            <a
+              className="button button-secondary"
               href={dashboardUrl}
               target="_blank"
               rel="noreferrer"
             >
               Open the analytics workspace <span aria-hidden="true">↗</span>
-            </a>
-            <a
-              className="button button-secondary"
-              href={githubUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Inspect the platform
             </a>
           </div>
           <p className="access-note">
@@ -222,7 +221,7 @@ export default function Home() {
               </article>
               <article className="score-card accent-coral">
                 <span>Serving marts</span>
-                <strong>13</strong>
+                <strong>16</strong>
                 <small>published to ANALYTICS</small>
               </article>
             </div>
@@ -242,12 +241,12 @@ export default function Home() {
         <p>Latest verified delivery</p>
         <div className="proof-metrics">
           <span>
-            <b>13</b> BA-facing marts
+            <b>16</b> BA-facing marts
           </span>
           <span>
             <b>1</b> guarded hourly path
           </span>
-          <span><b>80</b> automated checks</span>
+          <span><b>86</b> automated checks</span>
           <span>
             <b>100%</b> verified end-to-end run
           </span>
@@ -301,6 +300,8 @@ export default function Home() {
         </div>
       </section>
 
+      <InternalPilotWorkspace />
+
       <AgentStackAdvisor />
 
       <section className="section serving-section" id="serving">
@@ -336,7 +337,7 @@ export default function Home() {
           <article>
             <span>03</span>
             <strong>Analyze</strong>
-            <p>BA users query 13 curated signal and decision marts with a read-only role.</p>
+            <p>BA users query 16 curated signal, evidence, and decision marts with a read-only role.</p>
           </article>
         </div>
       </section>
@@ -445,13 +446,15 @@ export default function Home() {
               <li>Quota controls, retries, and source health</li>
               <li>Scheduled Databricks analytics workflow</li>
               <li>Guarded Snowflake serving for BA SQL</li>
+              <li>Direct-link, explainable ranked evidence</li>
+              <li>Seven-day internal pilot planner and scorecard</li>
               <li>CLI + MCP enterprise Agent Stack Advisor</li>
             </ul>
           </article>
           <article className="readiness-card path">
             <div className="readiness-title">
-              <span>Production path</span>
-              <b>Next gates</b>
+              <span>Deferred production controls</span>
+              <b>After pilot proof</b>
             </div>
             <ul>
               <li>Google quota for engagement enrichment</li>

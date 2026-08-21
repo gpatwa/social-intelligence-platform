@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/internal-pilot-plan-v1.json",
+  "title": "Internal Pilot Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pilot_id", "schema_version", "stage", "status", "request", "discovery", "workflow", "architecture", "seven_day_plan", "scorecard", "staging_controls", "evidence_ids", "approval_required", "mutation"],
+  "properties": {
+    "pilot_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema_version": {"const": "1.0"},
+    "stage": {"const": "INTERNAL_STAGING"},
+    "status": {"const": "PLANNED"},
+    "request": {"type": "object", "additionalProperties": true},
+    "discovery": {"type": "object", "additionalProperties": true},
+    "workflow": {
+      "type": "object",
+      "required": ["operating_mode", "steps", "prohibited_actions"],
+      "properties": {
+        "operating_mode": {"const": "DRAFT_AND_RECOMMEND_ONLY"},
+        "steps": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": true}},
+        "prohibited_actions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "architecture": {"$ref": "agent-stack-recommendation-v1.json"},
+    "seven_day_plan": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"type": "object", "additionalProperties": true}},
+    "scorecard": {"type": "object", "additionalProperties": true},
+    "staging_controls": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "approval_required": {"const": true},
+    "mutation": {"const": "none"}
+  }
+}

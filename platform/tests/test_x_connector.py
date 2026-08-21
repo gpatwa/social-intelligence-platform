@@ -59,6 +59,10 @@ class XConnectorTests(unittest.TestCase):
         self.assertEqual(event.payload["comments"], 7)
         self.assertEqual(event.payload["shares"], 11)
         self.assertEqual(event.payload["hashtags"], ["GlowUpChallenge"])
+        self.assertEqual(
+            event.payload["source_url"],
+            f"https://x.com/i/web/status/{event.source_object_id}",
+        )
         self.assertEqual(batch.statistics["posts_discovered"], 1)
         request = transport.calls[0]
         self.assertEqual(request[0], "tweets/search/recent")

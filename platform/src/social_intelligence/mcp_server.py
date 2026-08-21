@@ -48,7 +48,8 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
     recorder = audit or McpAuditRecorder()
     server = MCPServer(SERVER_NAME, instructions=(
         "Use tenant-scoped read tools to inspect governed opportunities, evidence, "
-        "metrics, pipeline status, and evidence-linked agent stack recommendations. "
+        "metrics, pipeline status, ranked evidence, internal pilot plans, and "
+        "evidence-linked agent stack recommendations. "
         "Drafts never persist and approvals are not available through MCP."
     ))
 
@@ -126,6 +127,56 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
             personalization=personalization,
             external_actions=external_actions,
             max_time_to_value_days=max_time_to_value_days,
+        ))
+
+    @server.tool()
+    def rank_evidence(
+        tenant_id: str,
+        decision_id: str,
+        candidates: list[dict[str, Any]],
+        limit: int = 5,
+    ) -> dict[str, Any]:
+        """Rank decision-specific evidence; candidate features must already be normalized."""
+        return invoke("rank_evidence", tenant_id, lambda: service.rank_evidence(
+            tenant_id=tenant_id,
+            decision_id=decision_id,
+            candidates=candidates,
+            limit=limit,
+        ))
+
+    @server.tool()
+    def create_internal_pilot_plan(
+        tenant_id: str,
+        workflow_type: str,
+        business_outcome: str,
+        process_owner: str,
+        weekly_volume: int,
+        minutes_per_case: float,
+        loaded_hourly_cost_usd: float,
+        baseline_success_rate: float,
+        target_success_rate: float,
+        target_time_reduction_pct: float = 35,
+        integration_surface: str = "mixed",
+        risk_level: str = "moderate",
+        cloud_preference: str = "databricks",
+        evidence_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Create a draft-only seven-day internal pilot plan; nothing is deployed."""
+        return invoke("create_internal_pilot_plan", tenant_id, lambda: service.create_internal_pilot_plan(
+            tenant_id=tenant_id,
+            workflow_type=workflow_type,
+            business_outcome=business_outcome,
+            process_owner=process_owner,
+            weekly_volume=weekly_volume,
+            minutes_per_case=minutes_per_case,
+            loaded_hourly_cost_usd=loaded_hourly_cost_usd,
+            baseline_success_rate=baseline_success_rate,
+            target_success_rate=target_success_rate,
+            target_time_reduction_pct=target_time_reduction_pct,
+            integration_surface=integration_surface,
+            risk_level=risk_level,
+            cloud_preference=cloud_preference,
+            evidence_ids=evidence_ids or [],
         ))
     return server
 

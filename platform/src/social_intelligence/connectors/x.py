@@ -475,6 +475,9 @@ class XConnector:
         payload = {
             "post_id": post_id,
             "platform": "x",
+            "source_url": f"https://x.com/i/web/status/{post_id}",
+            "source_title": str(item.get("text", ""))[:160],
+            "source_author": str(item.get("author_id", "unknown")) or "unknown",
             "author_id": str(item.get("author_id", "unknown")) or "unknown",
             "author_followers": 0,
             "content_text": str(item.get("text", "")),

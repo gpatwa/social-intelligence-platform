@@ -82,14 +82,22 @@ async function getPipelineStatus(env: Env) {
     });
   }
 
-  const row = await env.DB.prepare(
-    `SELECT run_id, source_id, platform, runtime, status, operational_status,
-            started_at, completed_at, received_at, active_rules,
-            videos_discovered, events_emitted, search_calls_remaining,
-            core_units_remaining, error_type
-       FROM pipeline_status
-      WHERE id = 1`,
-  ).first<Record<string, string | number>>();
+  let row: Record<string, string | number> | null;
+  try {
+    row = await env.DB.prepare(
+      `SELECT run_id, source_id, platform, runtime, status, operational_status,
+              started_at, completed_at, received_at, active_rules,
+              videos_discovered, events_emitted, search_calls_remaining,
+              core_units_remaining, error_type
+         FROM pipeline_status
+        WHERE id = 1`,
+    ).first<Record<string, string | number>>();
+  } catch {
+    return Response.json(emptyStatus("Metrics store schema is not initialized"), {
+      headers: jsonHeaders,
+      status: 503,
+    });
+  }
 
   if (!row) {
     return Response.json(emptyStatus("Awaiting the next Databricks metric heartbeat"), {

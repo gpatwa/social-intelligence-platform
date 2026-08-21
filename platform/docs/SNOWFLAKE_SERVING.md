@@ -43,7 +43,7 @@ Start with [`snowflake_ba_starter_queries.sql`](../sql/snowflake_ba_starter_quer
 It includes executive pulse, emerging trends, challenge intelligence, brand
 health, topic performance, connector operations, opportunity prioritization,
 recommendation review, experiment performance, and pilot scorecard queries
-against 13 curated marts.
+against 16 curated marts, including direct-link ranked evidence.
 
 ## Publish behavior
 
@@ -51,7 +51,7 @@ against 13 curated marts.
 experiment, and learning records use key-based `MERGE` writes.
 Current-state marts (trends, challenges, KPIs, connector operations, and
 trending topics, opportunities, experiment performance, and the pilot
-scorecard) are built in a temporary staging table and atomically replaced in
+scorecard, and ranked evidence) are built in a temporary staging table and atomically replaced in
 Snowflake. That prevents removed or expired state from appearing as active to
 analysts.
 

@@ -15,6 +15,9 @@ migration plan; published versions are never rewritten in place.
 | Opportunity | Prioritized commercial signal | [`v1`](json-schema/opportunity-v1.json) |
 | Recommendation | Governed action proposal | [`v1`](json-schema/recommendation-v1.json) |
 | Experiment plan | Measurement gate for an approved action | [`v1`](json-schema/experiment-plan-v1.json) |
+| Ranked evidence | Explainable, decision-specific source ranking | [`v1`](json-schema/ranked-evidence-v1.json) |
+| Internal pilot request | Bounded staging discovery inputs | [`v1`](json-schema/internal-pilot-request-v1.json) |
+| Internal pilot plan | Seven-day plan, workflow, controls, and scorecard | [`v1`](json-schema/internal-pilot-plan-v1.json) |
 | Consumer API | Read/propose API boundary | [`v1`](openapi/social-intelligence-api-v1.yaml) |
 
 CloudEvents describes **what happened**. OKF describes **what the concepts and
