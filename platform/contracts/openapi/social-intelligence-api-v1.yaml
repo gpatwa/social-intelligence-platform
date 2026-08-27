@@ -150,6 +150,24 @@ paths:
               schema:
                 $ref: ../json-schema/recommendation-context-v1.json
         "400": {description: Invalid context inputs or no eligible candidates}
+  /recommendation-reranks:
+    post:
+      operationId: rerankRecommendationContext
+      description: Runs an offline, constrained rerank of an existing recommendation context. The output is draft-only and cannot activate an external action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/recommendation-context-v1.json
+      responses:
+        "200":
+          description: Cited proposed ranking
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/batch-rerank-v1.json
+        "400": {description: Invalid context or ungrounded reranker output}
 components:
   securitySchemes:
     bearerAuth:

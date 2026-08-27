@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/batch-rerank-v1.json",
+  "title": "Offline batch rerank v1",
+  "description": "A cited, draft-only ranking of candidates supplied by recommendation-context-v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rerank_id", "schema_version", "reranker_version", "mode", "context_id", "tenant_id", "decision_id", "provider", "model", "status", "ranked_candidates", "primary_candidate_id", "evidence_ids", "guardrails", "approval_required", "causality_claim", "mutation"],
+  "properties": {
+    "rerank_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "schema_version": {"const": "1.0"}, "reranker_version": {"const": "batch-reranker-v1"}, "mode": {"const": "OFFLINE"},
+    "context_id": {"type": "string", "minLength": 1}, "tenant_id": {"type": "string", "minLength": 1}, "decision_id": {"type": "string", "minLength": 1}, "provider": {"type": "string", "minLength": 1}, "model": {"type": "string", "minLength": 1}, "status": {"const": "PROPOSED"},
+    "ranked_candidates": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["candidate_id", "rank", "score", "citations", "rationale", "score_components"], "properties": {"candidate_id": {"type": "string", "minLength": 1}, "rank": {"type": "integer", "minimum": 1}, "score": {"type": "number", "minimum": 0, "maximum": 100}, "citations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "rationale": {"type": "string", "minLength": 1}, "score_components": {"type": "object"}}}},
+    "primary_candidate_id": {"type": "string", "minLength": 1}, "evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "guardrails": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "approval_required": {"const": true}, "causality_claim": {"const": "none"}, "mutation": {"const": "none"}
+  }
+}

@@ -48,7 +48,7 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
     recorder = audit or McpAuditRecorder()
     server = MCPServer(SERVER_NAME, instructions=(
         "Use tenant-scoped read tools to inspect governed opportunities, evidence, "
-        "metrics, pipeline status, ranked evidence, recommendation contexts, internal pilot plans, and "
+        "metrics, pipeline status, ranked evidence, recommendation contexts, offline reranks, internal pilot plans, and "
         "evidence-linked agent stack recommendations. "
         "Drafts never persist and approvals are not available through MCP."
     ))
@@ -208,6 +208,15 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
             allowed_channels=allowed_channels or [],
             excluded_candidate_ids=excluded_candidate_ids or [],
             max_evidence_items=max_evidence_items,
+        ))
+
+    @server.tool()
+    def rerank_recommendation_context(
+        tenant_id: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Run the offline baseline on a supplied tenant-owned context; never activates anything."""
+        return invoke("rerank_recommendation_context", tenant_id, lambda: service.rerank_recommendation_context(
+            tenant_id=tenant_id, context=context,
         ))
     return server
 

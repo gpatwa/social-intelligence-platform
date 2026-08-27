@@ -51,6 +51,7 @@ scheduled export with `write_projection_snapshots()` and use `snapshot` mode.
 | `rank_evidence` | Draft | Ranks normalized, decision-specific evidence without fetching or writing data |
 | `create_internal_pilot_plan` | Draft | Creates a seven-day, staging-only pilot plan |
 | `compile_recommendation_context` | Draft | Compiles evidence, business context, candidates, and outcome aggregates for a future batch reranker; never calls a model |
+| `rerank_recommendation_context` | Draft | Runs the deterministic offline baseline over a tenant-owned context; returns cited proposals only |
 
 Every tool requires `tenant_id`. The service rejects malformed tenant IDs and
 filters rows before returning them. An empty or missing snapshot directory

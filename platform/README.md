@@ -109,6 +109,11 @@ eligible candidate set, and governed outcome aggregates for a future evaluated
 batch reranker. It is non-mutating and model-free; see
 [Recommendation Context](docs/RECOMMENDATION_CONTEXT.md).
 
+The [Offline Batch Reranker](docs/BATCH_RERANKER.md) consumes that bounded
+packet, returns a cited `PROPOSED` ranking, and includes a deterministic
+baseline plus a provider-neutral adapter/evaluation boundary. It cannot
+activate ads, content, spend, or any other external action.
+
 ## Deploy and run
 
 Using Databricks Free Edition? Start with [FREE_EDITION.md](FREE_EDITION.md) and

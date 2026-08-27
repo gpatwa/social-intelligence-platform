@@ -1,6 +1,6 @@
 {
   "bundle": "social-intelligence",
-  "concept_count": 16,
+  "concept_count": 17,
   "concepts": [
     {
       "description": "Deterministic decision-specific evidence ranking with canonical source links and platform diversity.",
@@ -147,6 +147,20 @@
         "staging"
       ],
       "title": "Seven-day internal pilot",
+      "type": "Playbook"
+    },
+    {
+      "description": "Evaluate a bounded candidate reranker with citation and candidate-set gates before using a model in an internal pilot.",
+      "path": "playbooks/offline-batch-reranking.md",
+      "status": "active",
+      "tags": [
+        "evaluation",
+        "grounding",
+        "recommendation",
+        "reranking",
+        "staging"
+      ],
+      "title": "Offline batch reranking",
       "type": "Playbook"
     },
     {

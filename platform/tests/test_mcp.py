@@ -108,6 +108,23 @@ class McpServiceTests(unittest.TestCase):
         self.assertEqual(result["status"], "READY_FOR_RERANK")
         self.assertEqual(result["mutation"], "none")
 
+    def test_offline_rerank_requires_the_authorized_context_tenant(self):
+        service = McpService(provider())
+        context = service.compile_recommendation_context(
+            tenant_id=TENANT, decision_id="pilot-1", business_objective="Increase qualified demand.",
+            market="San Francisco", locale="en-US", primary_metric="qualified_demo_rate",
+            ranked_evidence=[{"evidence_id": "ev-1", "rank": 1, "rank_score": 90,
+                              "platform": "youtube", "title": "Pilot evidence",
+                              "source_url": "https://www.youtube.com/watch?v=pilot-1", "why_ranked": ["Strong match"]}],
+            candidates=[{"candidate_id": "creative-1", "candidate_type": "creative", "title": "Proof point",
+                         "description": "Use observed proof.", "channels": ["linkedin"], "expected_outcome": "More demos"}],
+        )
+        result = service.rerank_recommendation_context(tenant_id=TENANT, context=context)
+        self.assertEqual(result["mode"], "OFFLINE")
+        context["tenant_id"] = "other"
+        with self.assertRaisesRegex(ValueError, "context tenant_id"):
+            service.rerank_recommendation_context(tenant_id=TENANT, context=context)
+
 
 class McpProtocolTests(unittest.TestCase):
     def test_server_registers_governed_tools_and_executes_tenant_filter(self):
@@ -127,6 +144,7 @@ class McpProtocolTests(unittest.TestCase):
                         "rank_evidence",
                         "create_internal_pilot_plan",
                         "compile_recommendation_context",
+                        "rerank_recommendation_context",
                     },
                 )
                 result = await session.call_tool(
@@ -204,6 +222,12 @@ class McpProtocolTests(unittest.TestCase):
                 )
                 self.assertFalse(context.is_error)
                 self.assertEqual(context.structured_content["context_version"], "recommendation-context-v1")
+
+                rerank = await session.call_tool("rerank_recommendation_context", {
+                    "tenant_id": TENANT, "context": context.structured_content,
+                })
+                self.assertFalse(rerank.is_error)
+                self.assertEqual(rerank.structured_content["mode"], "OFFLINE")
 
         asyncio.run(exercise())
 

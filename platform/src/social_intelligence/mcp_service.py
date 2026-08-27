@@ -21,6 +21,7 @@ from .recommendation_context import (
     RecommendationContextRequest,
     compile_recommendation_context,
 )
+from .batch_reranker import rerank_context
 from .stack_advisor import StackAdvisorRequest, recommend_stack
 
 
@@ -386,3 +387,12 @@ class McpService:
                 max_evidence_items=max_evidence_items,
             )
         )
+
+    def rerank_recommendation_context(
+        self, *, tenant_id: str, context: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Run the deterministic offline baseline over a tenant-owned context only."""
+        tenant = self._authorized_tenant(tenant_id)
+        if str(context.get("tenant_id", "")).strip() != tenant:
+            raise ValueError("context tenant_id must match the authorized tenant")
+        return rerank_context(context)

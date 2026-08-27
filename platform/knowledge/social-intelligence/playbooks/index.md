@@ -8,3 +8,4 @@ title: Playbooks
 - [Enterprise agent stack selection](agent-stack-selection.md)
 - [Seven-day internal pilot](internal-pilot.md)
 - [Recommendation context preparation](recommendation-context.md)
+- [Offline batch reranking](offline-batch-reranking.md)
