@@ -16,6 +16,8 @@ migration plan; published versions are never rewritten in place.
 | Recommendation | Governed action proposal | [`v1`](json-schema/recommendation-v1.json) |
 | Experiment plan | Measurement gate for an approved action | [`v1`](json-schema/experiment-plan-v1.json) |
 | Ranked evidence | Explainable, decision-specific source ranking | [`v1`](json-schema/ranked-evidence-v1.json) |
+| Recommendation context request | Bounded inputs to compile a batch-reranking context | [`v1`](json-schema/recommendation-context-request-v1.json) |
+| Recommendation context | Deterministic evidence, business, candidate, and outcome packet | [`v1`](json-schema/recommendation-context-v1.json) |
 | Internal pilot request | Bounded staging discovery inputs | [`v1`](json-schema/internal-pilot-request-v1.json) |
 | Internal pilot plan | Seven-day plan, workflow, controls, and scorecard | [`v1`](json-schema/internal-pilot-plan-v1.json) |
 | Consumer API | Read/propose API boundary | [`v1`](openapi/social-intelligence-api-v1.yaml) |
@@ -34,3 +36,6 @@ future adapters around these durable contracts, not replacements for them.
   chain-of-thought or provider-specific message history.
 - MCP tools must use these contracts through a tenant-scoped provider; they may
   read or draft, but never approve spend or mutate lifecycle state directly.
+- `recommendation-context-v1` is context preparation only: it may constrain a
+  future model ranker, but it cannot invoke a model, invent candidates, retrieve
+  external data, claim causality, or make an external change.

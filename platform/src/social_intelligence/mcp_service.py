@@ -17,6 +17,10 @@ from .decisioning import stable_decision_id
 from .authorization import StaticTenantAuthorizer, TenantAuthorizer
 from .evidence_ranking import EvidenceCandidate, rank_evidence
 from .pilot_workspace import PilotDiscoveryRequest, create_internal_pilot_plan
+from .recommendation_context import (
+    RecommendationContextRequest,
+    compile_recommendation_context,
+)
 from .stack_advisor import StackAdvisorRequest, recommend_stack
 
 
@@ -345,5 +349,40 @@ class McpService:
                 risk_level=risk_level,
                 cloud_preference=cloud_preference,
                 evidence_ids=tuple(evidence_ids),
+            )
+        )
+
+    def compile_recommendation_context(
+        self,
+        *,
+        tenant_id: str,
+        decision_id: str,
+        business_objective: str,
+        market: str,
+        locale: str,
+        primary_metric: str,
+        ranked_evidence: Sequence[Mapping[str, Any]],
+        candidates: Sequence[Mapping[str, Any]],
+        outcome_signals: Sequence[Mapping[str, Any]] = (),
+        allowed_channels: Sequence[str] = (),
+        excluded_candidate_ids: Sequence[str] = (),
+        max_evidence_items: int = 5,
+    ) -> dict[str, Any]:
+        """Compile a non-mutating, constrained input for a future batch reranker."""
+        tenant = self._authorized_tenant(tenant_id)
+        return compile_recommendation_context(
+            RecommendationContextRequest(
+                tenant_id=tenant,
+                decision_id=decision_id,
+                business_objective=business_objective,
+                market=market,
+                locale=locale,
+                primary_metric=primary_metric,
+                ranked_evidence=ranked_evidence,
+                candidates=candidates,
+                outcome_signals=outcome_signals,
+                allowed_channels=allowed_channels,
+                excluded_candidate_ids=excluded_candidate_ids,
+                max_evidence_items=max_evidence_items,
             )
         )

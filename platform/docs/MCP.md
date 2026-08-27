@@ -47,6 +47,10 @@ scheduled export with `write_projection_snapshots()` and use `snapshot` mode.
 | `get_metrics` | Read | Tenant-scoped metric observations with source filters |
 | `get_pipeline_status` | Read | Tenant-scoped source freshness and health projection |
 | `draft_recommendation` | Draft | Returns deterministic `PROPOSED` output; never persists or approves |
+| `recommend_agent_stack` | Draft | Returns a deterministic, evidence-linked enterprise AI stack blueprint |
+| `rank_evidence` | Draft | Ranks normalized, decision-specific evidence without fetching or writing data |
+| `create_internal_pilot_plan` | Draft | Creates a seven-day, staging-only pilot plan |
+| `compile_recommendation_context` | Draft | Compiles evidence, business context, candidates, and outcome aggregates for a future batch reranker; never calls a model |
 
 Every tool requires `tenant_id`. The service rejects malformed tenant IDs and
 filters rows before returning them. An empty or missing snapshot directory

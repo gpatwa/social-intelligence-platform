@@ -132,6 +132,24 @@ paths:
               schema:
                 $ref: ../json-schema/internal-pilot-plan-v1.json
         "400": {description: Invalid discovery inputs}
+  /recommendation-contexts/compile:
+    post:
+      operationId: compileRecommendationContext
+      description: Compiles a bounded, non-mutating context packet for a future batch reranker. It does not call a model or approve an action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/recommendation-context-request-v1.json
+      responses:
+        "200":
+          description: Deterministic staging context ready for review or offline reranking
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/recommendation-context-v1.json
+        "400": {description: Invalid context inputs or no eligible candidates}
 components:
   securitySchemes:
     bearerAuth:

@@ -92,6 +92,22 @@ class McpServiceTests(unittest.TestCase):
         self.assertTrue(draft["approval_required"])
         self.assertEqual(draft["evidence_ids"], ["ev-1"])
 
+    def test_context_compiler_is_tenant_scoped_and_draft_only(self):
+        result = McpService(provider()).compile_recommendation_context(
+            tenant_id=TENANT, decision_id="pilot-1", business_objective="Increase qualified demand.",
+            market="San Francisco", locale="en-US", primary_metric="qualified_demo_rate",
+            ranked_evidence=[{"evidence_id": "ev-1", "rank": 1, "rank_score": 90,
+                              "platform": "youtube", "title": "Pilot evidence",
+                              "source_url": "https://www.youtube.com/watch?v=pilot-1",
+                              "why_ranked": ["Strong match"]}],
+            candidates=[{"candidate_id": "creative-1", "candidate_type": "creative",
+                         "title": "Proof point", "description": "Use observed proof.",
+                         "channels": ["linkedin"], "expected_outcome": "More demos"}],
+        )
+        self.assertEqual(result["tenant_id"], TENANT)
+        self.assertEqual(result["status"], "READY_FOR_RERANK")
+        self.assertEqual(result["mutation"], "none")
+
 
 class McpProtocolTests(unittest.TestCase):
     def test_server_registers_governed_tools_and_executes_tenant_filter(self):
@@ -110,6 +126,7 @@ class McpProtocolTests(unittest.TestCase):
                         "recommend_agent_stack",
                         "rank_evidence",
                         "create_internal_pilot_plan",
+                        "compile_recommendation_context",
                     },
                 )
                 result = await session.call_tool(
@@ -171,6 +188,22 @@ class McpProtocolTests(unittest.TestCase):
                 self.assertFalse(pilot.is_error)
                 self.assertEqual(pilot.structured_content["stage"], "INTERNAL_STAGING")
                 self.assertEqual(len(pilot.structured_content["seven_day_plan"]), 7)
+
+                context = await session.call_tool(
+                    "compile_recommendation_context",
+                    {"tenant_id": TENANT, "decision_id": "pilot-1",
+                     "business_objective": "Increase qualified demand.", "market": "San Francisco",
+                     "locale": "en-US", "primary_metric": "qualified_demo_rate",
+                     "ranked_evidence": [{"evidence_id": "ev-youtube", "rank": 1, "rank_score": 90,
+                                           "platform": "youtube", "title": "Enterprise pilot",
+                                           "source_url": "https://www.youtube.com/watch?v=video-1",
+                                           "why_ranked": ["Strong match"]}],
+                     "candidates": [{"candidate_id": "creative-1", "candidate_type": "creative",
+                                     "title": "Proof", "description": "Observed proof point.",
+                                     "channels": ["linkedin"], "expected_outcome": "More demos"}]},
+                )
+                self.assertFalse(context.is_error)
+                self.assertEqual(context.structured_content["context_version"], "recommendation-context-v1")
 
         asyncio.run(exercise())
 

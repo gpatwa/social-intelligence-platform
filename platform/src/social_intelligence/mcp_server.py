@@ -48,7 +48,7 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
     recorder = audit or McpAuditRecorder()
     server = MCPServer(SERVER_NAME, instructions=(
         "Use tenant-scoped read tools to inspect governed opportunities, evidence, "
-        "metrics, pipeline status, ranked evidence, internal pilot plans, and "
+        "metrics, pipeline status, ranked evidence, recommendation contexts, internal pilot plans, and "
         "evidence-linked agent stack recommendations. "
         "Drafts never persist and approvals are not available through MCP."
     ))
@@ -177,6 +177,37 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
             risk_level=risk_level,
             cloud_preference=cloud_preference,
             evidence_ids=evidence_ids or [],
+        ))
+
+    @server.tool()
+    def compile_recommendation_context(
+        tenant_id: str,
+        decision_id: str,
+        business_objective: str,
+        market: str,
+        locale: str,
+        primary_metric: str,
+        ranked_evidence: list[dict[str, Any]],
+        candidates: list[dict[str, Any]],
+        outcome_signals: list[dict[str, Any]] | None = None,
+        allowed_channels: list[str] | None = None,
+        excluded_candidate_ids: list[str] | None = None,
+        max_evidence_items: int = 5,
+    ) -> dict[str, Any]:
+        """Compile a constrained, draft-only context for future batch reranking."""
+        return invoke("compile_recommendation_context", tenant_id, lambda: service.compile_recommendation_context(
+            tenant_id=tenant_id,
+            decision_id=decision_id,
+            business_objective=business_objective,
+            market=market,
+            locale=locale,
+            primary_metric=primary_metric,
+            ranked_evidence=ranked_evidence,
+            candidates=candidates,
+            outcome_signals=outcome_signals or [],
+            allowed_channels=allowed_channels or [],
+            excluded_candidate_ids=excluded_candidate_ids or [],
+            max_evidence_items=max_evidence_items,
         ))
     return server
 

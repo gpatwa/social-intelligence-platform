@@ -1,6 +1,6 @@
 {
   "bundle": "social-intelligence",
-  "concept_count": 15,
+  "concept_count": 16,
   "concepts": [
     {
       "description": "Deterministic decision-specific evidence ranking with canonical source links and platform diversity.",
@@ -159,6 +159,20 @@
         "workflow"
       ],
       "title": "Opportunity review",
+      "type": "Playbook"
+    },
+    {
+      "description": "Build a bounded, reviewable decision packet before any model-assisted recommendation ranking.",
+      "path": "playbooks/recommendation-context.md",
+      "status": "active",
+      "tags": [
+        "evidence",
+        "human-in-the-loop",
+        "llm",
+        "recommendation",
+        "staging"
+      ],
+      "title": "Recommendation context preparation",
       "type": "Playbook"
     },
     {

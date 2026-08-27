@@ -64,6 +64,7 @@ src/social_intelligence/mcp_server.py  MCP stdio server and governed tools
 src/social_intelligence/mcp_service.py Provider-neutral tenant-scoped read model
 src/social_intelligence/scoring.py     Locally testable scoring functions
 src/social_intelligence/stack_advisor.py Deterministic enterprise agent stack advisor
+src/social_intelligence/recommendation_context.py Deterministic context compiler for a future batch reranker
 tests/                                 Contract and scoring unit tests
 ```
 
@@ -102,6 +103,11 @@ Run the MCP adapter locally with `social-intelligence-mcp`. It reads optional
 JSON projections from `SOCIAL_INTELLIGENCE_MCP_SNAPSHOT_DIR`; the default empty
 provider is intentional so a host never receives cross-tenant or ungoverned
 data. See [MCP operations](docs/MCP.md).
+
+`recommendation-context-v1` packages ranked evidence, business context, an
+eligible candidate set, and governed outcome aggregates for a future evaluated
+batch reranker. It is non-mutating and model-free; see
+[Recommendation Context](docs/RECOMMENDATION_CONTEXT.md).
 
 ## Deploy and run
 
