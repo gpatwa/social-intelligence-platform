@@ -18,21 +18,42 @@ channel coverage.
 
 ## Provider integration
 
-Future OpenAI, Gemini, Anthropic, or self-hosted adapters implement the narrow
-`RerankerAdapter` protocol. They receive `structured_rerank_request()` and
+The shipped optional OpenAI adapter uses the Responses API's strict JSON-schema
+output mode, then validates its result locally. Future Gemini, Anthropic, or
+self-hosted adapters implement the same narrow `RerankerAdapter` protocol.
+They receive `structured_rerank_request()` and
 must return structured candidates with `candidate_id`, `score`, `citations`,
 and `rationale`. `rerank_context()` validates the output before it becomes an
 artifact. Provider credentials, raw model transcripts, and model-specific
 prompting do not enter the durable contract.
+
+Install the optional dependency and configure an explicit model only in the
+staging worker environment:
+
+```bash
+python3 -m pip install -e './platform[openai]'
+export SOCIAL_INTELLIGENCE_RERANKER_PROVIDER=openai
+export SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL='your-approved-model'
+export OPENAI_API_KEY='...'
+```
+
+The OpenAI adapter is opt-in; `deterministic/offline-baseline-v1` remains the
+default, including for MCP. Keep the API key in a secret manager, not Git,
+Databricks notebook source, or the durable rerank artifact.
 
 ## Run locally
 
 ```bash
 social-intelligence-batch-reranker rerank context.json
 social-intelligence-batch-reranker evaluate evaluation-fixtures.json
+social-intelligence-batch-reranker evaluate-staging
 ```
 
 `evaluate` reports grounding, candidate-boundary, and expected-selection rates.
 It is a release gate for a provider adapter, not proof of causal business lift.
 All output remains `PROPOSED`; an approval and experiment gate are still
 required before any action.
+
+`evaluate-staging` runs five synthetic, governed golden cases. It is a
+regression gate only. Before production, replace it with a human-labeled,
+tenant-approved 30–50 case set and add cost/latency thresholds.

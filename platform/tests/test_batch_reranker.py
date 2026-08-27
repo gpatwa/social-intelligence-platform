@@ -1,12 +1,18 @@
+import json
+import os
 import unittest
+from unittest.mock import patch
 
 from social_intelligence.batch_reranker import (
     DeterministicOfflineReranker,
+    OpenAIResponsesReranker,
+    adapter_from_environment,
     evaluate_reranker,
     rerank_context,
     structured_rerank_request,
 )
 from social_intelligence.recommendation_context import RecommendationContextRequest, compile_recommendation_context
+from social_intelligence.reranker_benchmark import staging_benchmark_cases
 
 
 def context():
@@ -58,6 +64,43 @@ class BatchRerankerTests(unittest.TestCase):
         result = evaluate_reranker([{"case_id": "golden-1", "context": context(), "expected_candidate_ids": ["creative-1"]}])
         self.assertEqual(result["release_gate"], "PASS")
         self.assertEqual(result["grounding_rate"], 1.0)
+        self.assertEqual(result["expected_selection_rate"], 1.0)
+
+    def test_openai_adapter_uses_structured_output_and_still_obeys_local_validation(self):
+        class Response:
+            output_text = json.dumps({"ranked_candidates": [
+                {"candidate_id": "creative-1", "score": 91, "citations": ["ev-1"], "rationale": "Evidence-backed."},
+                {"candidate_id": "creative-2", "score": 81, "citations": ["ev-1"], "rationale": "Evidence-backed."},
+            ]})
+
+        class Client:
+            def __init__(self):
+                self.responses = self
+                self.request = None
+            def create(self, **kwargs):
+                self.request = kwargs
+                return Response()
+
+        client = Client()
+        result = rerank_context(context(), OpenAIResponsesReranker(model="test-model", client=client))
+        self.assertEqual(result["provider"], "openai")
+        self.assertEqual(result["primary_candidate_id"], "creative-1")
+        self.assertFalse(client.request["store"])
+        self.assertEqual(client.request["text"]["format"]["type"], "json_schema")
+        self.assertTrue(client.request["text"]["format"]["strict"])
+
+    def test_environment_adapter_requires_an_explicit_openai_model(self):
+        with patch.dict(os.environ, {"SOCIAL_INTELLIGENCE_RERANKER_PROVIDER": "openai"}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "OPENAI_RERANKER_MODEL"):
+                adapter_from_environment()
+        with patch.dict(os.environ, {"SOCIAL_INTELLIGENCE_RERANKER_PROVIDER": "openai", "SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL": "test-model"}, clear=True):
+            adapter = adapter_from_environment()
+        self.assertIsInstance(adapter, OpenAIResponsesReranker)
+
+    def test_synthetic_staging_benchmark_protects_the_baseline(self):
+        result = evaluate_reranker(staging_benchmark_cases())
+        self.assertEqual(result["case_count"], 5)
+        self.assertEqual(result["release_gate"], "PASS")
         self.assertEqual(result["expected_selection_rate"], 1.0)
 
 

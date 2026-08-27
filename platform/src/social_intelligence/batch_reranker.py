@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+import json
+import os
 from typing import Any, Mapping, Protocol, Sequence
 
 
@@ -36,6 +38,29 @@ class RerankerAdapter(Protocol):
     model: str
 
     def rerank(self, context: Mapping[str, Any]) -> Sequence[Mapping[str, Any]]: ...
+
+
+OPENAI_RANKING_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["ranked_candidates"],
+    "properties": {
+        "ranked_candidates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["candidate_id", "score", "citations", "rationale"],
+                "properties": {
+                    "candidate_id": {"type": "string"},
+                    "score": {"type": "number"},
+                    "citations": {"type": "array", "items": {"type": "string"}},
+                    "rationale": {"type": "string"},
+                },
+            },
+        }
+    },
+}
 
 
 def _validate_context(context: Mapping[str, Any]) -> dict[str, Any]:
@@ -118,6 +143,77 @@ class DeterministicOfflineReranker:
                 },
             })
         return sorted(results, key=lambda item: (-item["score"], item["candidate_id"]))
+
+
+@dataclass
+class OpenAIResponsesReranker:
+    """Optional Responses API adapter using strict structured output.
+
+    It receives only the already bounded recommendation context.  The result is
+    still passed through the same candidate and citation validator as every
+    other provider, and this adapter never enables external action.
+    """
+
+    model: str
+    client: Any | None = None
+    provider: str = "openai"
+
+    def __post_init__(self) -> None:
+        self.model = _text(self.model, "model", 128)
+
+    def _client(self) -> Any:
+        if self.client is not None:
+            return self.client
+        try:
+            from openai import OpenAI
+        except ImportError as error:  # pragma: no cover - environment-specific
+            raise RuntimeError("Install the OpenAI optional dependency before using this adapter") from error
+        return OpenAI()
+
+    def rerank(self, context: Mapping[str, Any]) -> Sequence[Mapping[str, Any]]:
+        request = structured_rerank_request(context)
+        response = self._client().responses.create(
+            model=self.model,
+            instructions=(
+                "You are an offline recommendation ranker. Follow every constraint in the "
+                "provided structured request. Return only the requested JSON schema. Do not "
+                "invoke tools, retrieve data, create candidates, claim causality, or describe "
+                "hidden reasoning."
+            ),
+            input=json.dumps(request, separators=(",", ":"), sort_keys=True),
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "social_intelligence_candidate_ranking",
+                    "strict": True,
+                    "schema": OPENAI_RANKING_SCHEMA,
+                }
+            },
+            store=False,
+        )
+        output_text = getattr(response, "output_text", "")
+        if not isinstance(output_text, str) or not output_text.strip():
+            raise RuntimeError("OpenAI reranker response did not contain structured output text")
+        try:
+            payload = json.loads(output_text)
+        except json.JSONDecodeError as error:
+            raise RuntimeError("OpenAI reranker returned invalid JSON") from error
+        if not isinstance(payload, Mapping) or not isinstance(payload.get("ranked_candidates"), list):
+            raise RuntimeError("OpenAI reranker response is missing ranked_candidates")
+        return payload["ranked_candidates"]
+
+
+def adapter_from_environment() -> RerankerAdapter:
+    """Select deterministic staging or an explicitly configured OpenAI adapter."""
+    provider = os.environ.get("SOCIAL_INTELLIGENCE_RERANKER_PROVIDER", "deterministic").strip().lower()
+    if provider in {"", "deterministic"}:
+        return DeterministicOfflineReranker()
+    if provider == "openai":
+        model = os.environ.get("SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL", "").strip()
+        if not model:
+            raise RuntimeError("SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL is required for the OpenAI reranker")
+        return OpenAIResponsesReranker(model=model)
+    raise RuntimeError(f"Unsupported reranker provider: {provider}")
 
 
 def _normalize_ranked_items(

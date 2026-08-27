@@ -114,6 +114,10 @@ packet, returns a cited `PROPOSED` ranking, and includes a deterministic
 baseline plus a provider-neutral adapter/evaluation boundary. It cannot
 activate ads, content, spend, or any other external action.
 
+An optional OpenAI Responses adapter is available through
+`./platform[openai]`; it is explicitly configured for staging and never
+becomes the default MCP path.
+
 ## Deploy and run
 
 Using Databricks Free Edition? Start with [FREE_EDITION.md](FREE_EDITION.md) and
