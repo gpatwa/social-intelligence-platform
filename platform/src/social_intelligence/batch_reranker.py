@@ -41,29 +41,6 @@ class RerankerAdapter(Protocol):
     def rerank(self, context: Mapping[str, Any]) -> Sequence[Mapping[str, Any]]: ...
 
 
-OPENAI_RANKING_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["ranked_candidates"],
-    "properties": {
-        "ranked_candidates": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["candidate_id", "score", "citations", "rationale"],
-                "properties": {
-                    "candidate_id": {"type": "string"},
-                    "score": {"type": "number"},
-                    "citations": {"type": "array", "items": {"type": "string"}},
-                    "rationale": {"type": "string"},
-                },
-            },
-        }
-    },
-}
-
-
 def _validate_context(context: Mapping[str, Any]) -> dict[str, Any]:
     if context.get("context_version") != "recommendation-context-v1":
         raise ValueError("context_version must be recommendation-context-v1")
@@ -91,6 +68,43 @@ def _validate_context(context: Mapping[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def openai_ranking_schema(context: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a strict provider schema with this context's allowed IDs.
+
+    JSON Schema cannot express all ranking semantics, so the local validator
+    remains authoritative.  Dynamic enums eliminate a common model failure
+    mode before it reaches that validator: citing a title or URL instead of an
+    evidence ID, or inventing a candidate ID.
+    """
+    checked = _validate_context(context)
+    candidate_ids = sorted(item["candidate_id"] for item in checked["candidate_set"])
+    evidence_ids = sorted(item["evidence_id"] for item in checked["evidence"])
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["ranked_candidates"],
+        "properties": {
+            "ranked_candidates": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["candidate_id", "score", "citations", "rationale"],
+                    "properties": {
+                        "candidate_id": {"type": "string", "enum": candidate_ids},
+                        "score": {"type": "number"},
+                        "citations": {
+                            "type": "array",
+                            "items": {"type": "string", "enum": evidence_ids},
+                        },
+                        "rationale": {"type": "string"},
+                    },
+                },
+            }
+        },
+    }
+
+
 def structured_rerank_request(context: Mapping[str, Any]) -> dict[str, Any]:
     """Return provider-neutral structured input, not a provider prompt transcript."""
     checked = _validate_context(context)
@@ -103,6 +117,8 @@ def structured_rerank_request(context: Mapping[str, Any]) -> dict[str, Any]:
             "Do not claim causality from observational evidence.",
             "Return structured output only; this is an offline draft, not an activation request.",
         ],
+        "allowed_candidate_ids": sorted(item["candidate_id"] for item in checked["candidate_set"]),
+        "allowed_evidence_ids": sorted(item["evidence_id"] for item in checked["evidence"]),
         "context": checked,
     }
 
@@ -191,7 +207,7 @@ class OpenAIResponsesReranker:
                     "type": "json_schema",
                     "name": "social_intelligence_candidate_ranking",
                     "strict": True,
-                    "schema": OPENAI_RANKING_SCHEMA,
+                    "schema": openai_ranking_schema(context),
                 }
             },
             reasoning={"effort": self.reasoning_effort},

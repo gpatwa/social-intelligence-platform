@@ -49,6 +49,8 @@ class BatchRerankerTests(unittest.TestCase):
         request = structured_rerank_request(context())
         self.assertEqual(request["task"], "rank_supplied_candidates")
         self.assertIn("never invent", " ".join(request["constraints"]))
+        self.assertEqual(request["allowed_candidate_ids"], ["creative-1", "creative-2"])
+        self.assertEqual(request["allowed_evidence_ids"], ["ev-1"])
         self.assertNotIn("raw_social_content", str(request["context"]).lower())
 
     def test_bad_adapter_cannot_return_unknown_or_uncited_candidate(self):
@@ -89,6 +91,10 @@ class BatchRerankerTests(unittest.TestCase):
         self.assertFalse(client.request["store"])
         self.assertEqual(client.request["text"]["format"]["type"], "json_schema")
         self.assertTrue(client.request["text"]["format"]["strict"])
+        schema = client.request["text"]["format"]["schema"]
+        ranking_item = schema["properties"]["ranked_candidates"]["items"]["properties"]
+        self.assertEqual(ranking_item["candidate_id"]["enum"], ["creative-1", "creative-2"])
+        self.assertEqual(ranking_item["citations"]["items"]["enum"], ["ev-1"])
         self.assertEqual(client.request["reasoning"], {"effort": "high"})
 
     def test_environment_adapter_requires_an_explicit_openai_model(self):

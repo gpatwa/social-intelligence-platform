@@ -38,6 +38,7 @@ jobs:
           SOCIAL_INTELLIGENCE_RERANKER_PROVIDER: openai
           SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL: ${{ inputs.model }}
         run: |
+          set -o pipefail
           test -n "$OPENAI_API_KEY"
           social-intelligence-batch-reranker \
             --provider openai \
@@ -47,6 +48,7 @@ jobs:
             | tee reranker-shadow-evaluation.json
 
       - name: Upload evaluation artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: reranker-shadow-evaluation
