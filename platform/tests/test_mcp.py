@@ -125,6 +125,32 @@ class McpServiceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "context tenant_id"):
             service.rerank_recommendation_context(tenant_id=TENANT, context=context)
 
+    def test_review_and_outcome_artifacts_remain_non_persisting_and_tenant_scoped(self):
+        service = McpService(provider())
+        context = service.compile_recommendation_context(
+            tenant_id=TENANT, decision_id="pilot-1", business_objective="Increase qualified demand.",
+            market="San Francisco", locale="en-US", primary_metric="qualified_demo_rate",
+            ranked_evidence=[{"evidence_id": "ev-1", "rank": 1, "rank_score": 90,
+                              "platform": "youtube", "title": "Pilot evidence",
+                              "source_url": "https://www.youtube.com/watch?v=pilot-1", "why_ranked": ["Strong match"]}],
+            candidates=[{"candidate_id": "creative-1", "candidate_type": "creative", "title": "Proof point",
+                         "description": "Use observed proof.", "channels": ["linkedin"], "expected_outcome": "More demos"}],
+        )
+        rerank = service.rerank_recommendation_context(tenant_id=TENANT, context=context)
+        review = service.create_recommendation_review(
+            tenant_id=TENANT, rerank=rerank, decision="APPROVE", reviewer_id="reviewer_01",
+            decision_reason="Evidence is relevant.", reviewed_at="2026-08-28T12:00:00+00:00",
+            idempotency_key="mcp-review-1",
+        )
+        self.assertEqual(review["status"], "APPROVED_FOR_HANDOFF")
+        self.assertEqual(review["mutation"], "none")
+        outcome = service.record_recommendation_outcome(
+            tenant_id=TENANT, review=review, metric_name="qualified_demo_rate", observed_value=0.2,
+            unit="ratio", observed_at="2026-08-29T12:00:00+00:00", measurement_source="crm",
+            reported_by="growth_ops_01", idempotency_key="mcp-outcome-1",
+        )
+        self.assertEqual(outcome["attribution"], "OBSERVATIONAL_ONLY")
+
 
 class McpProtocolTests(unittest.TestCase):
     def test_server_registers_governed_tools_and_executes_tenant_filter(self):
@@ -145,6 +171,8 @@ class McpProtocolTests(unittest.TestCase):
                         "create_internal_pilot_plan",
                         "compile_recommendation_context",
                         "rerank_recommendation_context",
+                        "create_recommendation_review",
+                        "record_recommendation_outcome",
                     },
                 )
                 result = await session.call_tool(

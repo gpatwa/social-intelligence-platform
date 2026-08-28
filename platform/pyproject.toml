@@ -27,6 +27,7 @@ social-intelligence-stack-advisor = "social_intelligence.stack_advisor_cli:main"
 social-intelligence-pilot = "social_intelligence.pilot_cli:main"
 social-intelligence-recommendation-context = "social_intelligence.recommendation_context_cli:main"
 social-intelligence-batch-reranker = "social_intelligence.batch_reranker_cli:main"
+social-intelligence-recommendation-review = "social_intelligence.recommendation_review_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

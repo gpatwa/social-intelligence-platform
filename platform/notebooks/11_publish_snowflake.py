@@ -103,6 +103,8 @@ datasets = (
     ("DECISION_LEARNINGS", "decision_learnings", ("learning_id",), "merge"),
     ("GOLD_EXPERIMENT_PERFORMANCE", "gold_experiment_performance", (), "replace"),
     ("GOLD_PILOT_SCORECARD", "gold_pilot_scorecard", (), "replace"),
+    ("GOLD_RECOMMENDATION_REVIEW_OUTCOMES", "gold_recommendation_review_outcomes", (), "replace"),
+    ("GOLD_RECOMMENDATION_REVIEW_SCORECARD", "gold_recommendation_review_scorecard", (), "replace"),
 )
 
 

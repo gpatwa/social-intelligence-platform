@@ -52,14 +52,17 @@ scheduled export with `write_projection_snapshots()` and use `snapshot` mode.
 | `create_internal_pilot_plan` | Draft | Creates a seven-day, staging-only pilot plan |
 | `compile_recommendation_context` | Draft | Compiles evidence, business context, candidates, and outcome aggregates for a future batch reranker; never calls a model |
 | `rerank_recommendation_context` | Draft | Runs the deterministic offline baseline over a tenant-owned context; returns cited proposals only |
+| `create_recommendation_review` | Compile | Validates a human approve, edit, or reject artifact over a cited rerank; never persists or acts externally |
+| `record_recommendation_outcome` | Compile | Validates an observational measurement for an approved review; never persists or claims causality |
 
 Every tool requires `tenant_id`. The service rejects malformed tenant IDs and
 filters rows before returning them. An empty or missing snapshot directory
 returns an empty projection; it does not fall back to another tenant.
 
-Approval, spend, publishing, lifecycle mutation, and arbitrary SQL are not MCP
-tools. A future write path must use a separate authenticated service, an
-idempotency key, policy checks, and an explicit human approval record.
+Spend, publishing, lifecycle mutation, and arbitrary SQL are not MCP tools.
+Review and outcome artifacts are compile-only. Their append-only persistence
+uses a separate authenticated service with the supplied idempotency key, policy
+checks, and the explicit human approval record.
 
 ## Provider boundary
 

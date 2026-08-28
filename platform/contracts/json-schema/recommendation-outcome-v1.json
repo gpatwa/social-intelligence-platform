@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/recommendation-outcome-v1.json",
+  "title": "Recommendation outcome v1",
+  "description": "Append-safe, observational outcome record attached to a human-approved recommendation review.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["outcome_id", "schema_version", "outcome_version", "tenant_id", "review_id", "rerank_id", "context_id", "decision_id", "candidate_id", "metric_name", "observed_value", "baseline_value", "unit", "measurement_window_days", "measurement_source", "observed_at", "reported_by", "idempotency_key", "confidence", "attribution", "causality_claim", "mutation"],
+  "properties": {
+    "outcome_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema_version": {"const": "1.0"},
+    "outcome_version": {"const": "recommendation-outcome-v1"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "review_id": {"type": "string", "minLength": 1},
+    "rerank_id": {"type": "string", "minLength": 1},
+    "context_id": {"type": "string", "minLength": 1},
+    "decision_id": {"type": "string", "minLength": 1},
+    "candidate_id": {"type": "string", "minLength": 1},
+    "metric_name": {"type": "string", "minLength": 1},
+    "observed_value": {"type": "number"},
+    "baseline_value": {"type": ["number", "null"]},
+    "unit": {"type": "string", "minLength": 1},
+    "measurement_window_days": {"type": "integer", "minimum": 1, "maximum": 90},
+    "measurement_source": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "reported_by": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string", "minLength": 1},
+    "confidence": {"enum": ["DIRECTIONAL", "MEASURED"]},
+    "attribution": {"const": "OBSERVATIONAL_ONLY"},
+    "causality_claim": {"const": "none"},
+    "mutation": {"const": "none"}
+  }
+}

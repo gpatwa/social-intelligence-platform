@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/recommendation-review-v1.json",
+  "title": "Recommendation review v1",
+  "description": "Append-safe human review record for a cited offline rerank. A handoff remains manual and cannot activate an external system.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["review_id", "schema_version", "review_version", "tenant_id", "rerank_id", "context_id", "decision_id", "decision", "status", "reviewer_id", "decision_reason", "reviewed_at", "idempotency_key", "selected_candidate_id", "selected_candidate_rank", "evidence_ids", "edited_brief", "handoff", "approval_required", "causality_claim", "mutation"],
+  "properties": {
+    "review_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema_version": {"const": "1.0"},
+    "review_version": {"const": "recommendation-review-v1"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "rerank_id": {"type": "string", "minLength": 1},
+    "context_id": {"type": "string", "minLength": 1},
+    "decision_id": {"type": "string", "minLength": 1},
+    "decision": {"enum": ["APPROVE", "EDIT", "REJECT"]},
+    "status": {"enum": ["APPROVED_FOR_HANDOFF", "EDITED_FOR_HANDOFF", "REJECTED"]},
+    "reviewer_id": {"type": "string", "minLength": 1},
+    "decision_reason": {"type": "string", "minLength": 1},
+    "reviewer_note": {"type": ["string", "null"]},
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "idempotency_key": {"type": "string", "minLength": 1},
+    "selected_candidate_id": {"type": ["string", "null"]},
+    "selected_candidate_rank": {"type": ["integer", "null"], "minimum": 1},
+    "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "edited_brief": {"type": ["string", "null"]},
+    "handoff": {"type": "object", "additionalProperties": false, "required": ["state", "external_action_permitted", "allowed_next_step"], "properties": {"state": {"enum": ["READY_FOR_MANUAL_HANDOFF", "NOT_REQUESTED"]}, "external_action_permitted": {"const": false}, "allowed_next_step": {"type": "string", "minLength": 1}}},
+    "approval_required": {"const": false},
+    "causality_claim": {"const": "none"},
+    "mutation": {"const": "none"}
+  }
+}

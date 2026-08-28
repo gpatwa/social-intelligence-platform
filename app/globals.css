@@ -1907,6 +1907,121 @@ nav a:hover {
   font-size: 12px;
 }
 
+.recommendation-review-demo {
+  display: grid;
+  gap: 14px;
+}
+
+.review-demo-heading,
+.review-candidates label,
+.review-actions {
+  align-items: center;
+  display: flex;
+}
+
+.review-demo-heading {
+  justify-content: space-between;
+}
+
+.review-demo-heading div,
+.review-candidates label div {
+  display: grid;
+  gap: 4px;
+}
+
+.review-demo-heading span,
+.review-candidates label span,
+.review-demo-note {
+  color: #65717b;
+  font-size: 12px;
+}
+
+.review-demo-heading strong,
+.review-candidates label strong {
+  font-size: 14px;
+}
+
+.review-demo-heading em {
+  color: #55703e;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-candidates {
+  display: grid;
+  gap: 8px;
+}
+
+.review-candidates label {
+  border: 1px solid var(--line);
+  cursor: pointer;
+  gap: 10px;
+  min-height: 62px;
+  padding: 10px 12px;
+}
+
+.review-candidates label.selected {
+  background: #f0fae7;
+  border-color: #91cc61;
+}
+
+.review-candidates input {
+  accent-color: var(--ink);
+}
+
+.review-candidates b {
+  color: var(--coral);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+}
+
+.review-candidates label div {
+  flex: 1;
+}
+
+.review-candidates em {
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 16px;
+  font-style: normal;
+}
+
+.review-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-actions > button:not(.review-record) {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: #65717b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  padding: 8px 10px;
+  text-transform: capitalize;
+}
+
+.review-actions > button.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: white;
+}
+
+.review-record {
+  margin-left: auto;
+  min-height: 34px;
+  padding: 8px 12px;
+}
+
+.review-demo-note {
+  line-height: 1.5;
+  margin: 0;
+}
+
 .pilot-guardrails {
   align-items: center;
   background: #dce3d7;

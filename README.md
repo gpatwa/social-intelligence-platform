@@ -23,7 +23,7 @@ The platform helps product and marketing teams answer four connected questions:
    and confidence so later decisions improve.
 
 ```text
-Signal -> Opportunity -> Recommendation -> Approval -> Experiment -> Learning
+Signal -> Evidence -> Recommendation -> Offline rerank -> Human review -> Outcome -> Learning
 ```
 
 Every decision retains its source evidence, product mapping, rationale, approval
@@ -40,9 +40,9 @@ The repository contains a working, pilot-ready implementation:
   bounded retries, quota controls, idempotency, and replay
 - **Databricks Free Edition lakehouse** with control metadata and Bronze, Silver,
   Gold, decision, quality, and operational data products
-- **Governed decision engine** for opportunities, recommendations, approvals,
-  experiments, and reusable learnings
-- **Snowflake serving layer** with 16 curated, read-only marts for BA and SQL users
+- **Governed decision engine** for opportunities, recommendations, cited offline
+  reranks, human reviews, observational outcomes, experiments, and reusable learnings
+- **Snowflake serving layer** with 18 curated, read-only marts for BA and SQL users
 - **Automated infrastructure path** using Databricks Asset Bundles, Terraform,
   protected GitHub environments, and an idempotent Snowflake developer bootstrap
 - **Open interoperability foundation** with CloudEvents 1.0 transport mapping,
@@ -52,7 +52,7 @@ The repository contains a working, pilot-ready implementation:
 - **Internal Pilot Workspace** with workflow discovery, direct-link ranked
   evidence, a seven-day staging plan, explicit guardrails, and an outcome scorecard
 - **Live pipeline status** surfaced on the public product site from Databricks metrics
-- **86 platform tests and 4 product-site tests** in the current validated delivery
+- **106 platform tests and 4 product-site tests** in the current validated delivery
 
 The deterministic 943-event demo remains available for reproducible validation;
 live-provider ingestion uses the same contracts and downstream pipeline.
@@ -70,7 +70,7 @@ Approved social APIs
     -> Bronze validation, quarantine, and deduplication
     -> Silver canonical social observations
     -> tenant-scoped Gold signals and operational metrics
-    -> opportunities -> recommendations -> experiments -> learnings
+    -> opportunities -> recommendations -> offline reranks -> human reviews -> outcomes -> learnings
     -> Snowflake ANALYTICS marts -> BA / BI / SQL
     -> product site, live status, dashboards, alerts, and review queues
 ```
@@ -118,7 +118,7 @@ Read the full [decision-engine contract](platform/docs/DECISION_ENGINE.md).
 
 ## Snowflake for BA and SQL users
 
-Validated Gold, ranked-evidence, and decision data is published to 16 curated marts in
+Validated Gold, ranked-evidence, decision, and internal review/outcome data is published to 18 curated marts in
 `SOCIAL_INTELLIGENCE.ANALYTICS`. Analysts use the read-only
 `SOCIAL_INTELLIGENCE_BA` role and a dedicated BA warehouse. Bronze payloads,
 provider credentials, and workflow mutation rights are not exposed.
@@ -143,7 +143,7 @@ production control plane.
 | Agent interoperability | MCP Python SDK over stdio; provider-neutral read model adapter |
 | Lakehouse and orchestration | Databricks Free Edition, PySpark, Delta tables, Asset Bundles |
 | Analytics and decisioning | Python, SQL, governed Bronze/Silver/Gold and decision tables |
-| BA serving | Snowflake, least-privilege roles, dedicated warehouses, 16 curated marts |
+| BA serving | Snowflake, least-privilege roles, dedicated warehouses, 18 curated marts |
 | Infrastructure and delivery | Terraform, GitHub Actions, protected environments |
 | Product site | React, Next-compatible vinext runtime, Cloudflare Workers, OpenAI Sites |
 

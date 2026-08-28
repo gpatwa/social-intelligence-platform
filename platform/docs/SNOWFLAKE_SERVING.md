@@ -42,16 +42,18 @@ analysts use the `SOCIAL_INTELLIGENCE_BA` role with the dedicated
 Start with [`snowflake_ba_starter_queries.sql`](../sql/snowflake_ba_starter_queries.sql).
 It includes executive pulse, emerging trends, challenge intelligence, brand
 health, topic performance, connector operations, opportunity prioritization,
-recommendation review, experiment performance, and pilot scorecard queries
-against 16 curated marts, including direct-link ranked evidence.
+recommendation review, experiment performance, internal review-outcome
+coverage, and pilot scorecard queries against 18 curated marts, including
+direct-link ranked evidence.
 
 ## Publish behavior
 
 `GOLD_TOPIC_HOURLY`, `GOLD_BRAND_DAILY`, and the durable recommendation,
 experiment, and learning records use key-based `MERGE` writes.
-Current-state marts (trends, challenges, KPIs, connector operations, and
-trending topics, opportunities, experiment performance, and the pilot
-scorecard, and ranked evidence) are built in a temporary staging table and atomically replaced in
+Current-state marts (trends, challenges, KPIs, connector operations, trending
+topics, opportunities, experiment performance, the pilot scorecard, review
+outcomes and review scorecard, and ranked evidence) are built in a temporary
+staging table and atomically replaced in
 Snowflake. That prevents removed or expired state from appearing as active to
 analysts.
 

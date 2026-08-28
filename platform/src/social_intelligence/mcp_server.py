@@ -48,7 +48,7 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
     recorder = audit or McpAuditRecorder()
     server = MCPServer(SERVER_NAME, instructions=(
         "Use tenant-scoped read tools to inspect governed opportunities, evidence, "
-        "metrics, pipeline status, ranked evidence, recommendation contexts, offline reranks, internal pilot plans, and "
+        "metrics, pipeline status, ranked evidence, recommendation contexts, offline reranks, non-persisting human review/outcome artifacts, internal pilot plans, and "
         "evidence-linked agent stack recommendations. "
         "Drafts never persist and approvals are not available through MCP."
     ))
@@ -217,6 +217,49 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
         """Run the offline baseline on a supplied tenant-owned context; never activates anything."""
         return invoke("rerank_recommendation_context", tenant_id, lambda: service.rerank_recommendation_context(
             tenant_id=tenant_id, context=context,
+        ))
+
+    @server.tool()
+    def create_recommendation_review(
+        tenant_id: str,
+        rerank: dict[str, Any],
+        decision: str,
+        reviewer_id: str,
+        decision_reason: str,
+        reviewed_at: str,
+        idempotency_key: str,
+        selected_candidate_id: str | None = None,
+        edited_brief: str | None = None,
+        reviewer_note: str | None = None,
+    ) -> dict[str, Any]:
+        """Compile a cited human approval, edit, or rejection; it never triggers an external action."""
+        return invoke("create_recommendation_review", tenant_id, lambda: service.create_recommendation_review(
+            tenant_id=tenant_id, rerank=rerank, decision=decision, reviewer_id=reviewer_id,
+            decision_reason=decision_reason, reviewed_at=reviewed_at, idempotency_key=idempotency_key,
+            selected_candidate_id=selected_candidate_id, edited_brief=edited_brief, reviewer_note=reviewer_note,
+        ))
+
+    @server.tool()
+    def record_recommendation_outcome(
+        tenant_id: str,
+        review: dict[str, Any],
+        metric_name: str,
+        observed_value: float,
+        unit: str,
+        observed_at: str,
+        measurement_source: str,
+        reported_by: str,
+        idempotency_key: str,
+        measurement_window_days: int = 7,
+        baseline_value: float | None = None,
+        confidence: str = "DIRECTIONAL",
+    ) -> dict[str, Any]:
+        """Compile an observational outcome for an approved review; it never writes to an external system."""
+        return invoke("record_recommendation_outcome", tenant_id, lambda: service.record_recommendation_outcome(
+            tenant_id=tenant_id, review=review, metric_name=metric_name, observed_value=observed_value,
+            unit=unit, observed_at=observed_at, measurement_source=measurement_source,
+            reported_by=reported_by, idempotency_key=idempotency_key,
+            measurement_window_days=measurement_window_days, baseline_value=baseline_value, confidence=confidence,
         ))
     return server
 

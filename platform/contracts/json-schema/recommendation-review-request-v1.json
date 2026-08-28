@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/recommendation-review-request-v1.json",
+  "title": "Recommendation review request v1",
+  "description": "A human decision over one cited, offline reranking artifact. This request cannot activate an external action.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tenant_id", "rerank", "decision", "reviewer_id", "decision_reason", "reviewed_at", "idempotency_key"],
+  "properties": {
+    "tenant_id": {"type": "string", "minLength": 1, "maxLength": 63},
+    "rerank": {"$ref": "batch-rerank-v1.json"},
+    "decision": {"enum": ["APPROVE", "EDIT", "REJECT"]},
+    "reviewer_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+    "decision_reason": {"type": "string", "minLength": 1, "maxLength": 500},
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 256},
+    "selected_candidate_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "edited_brief": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "reviewer_note": {"type": "string", "minLength": 1, "maxLength": 1000}
+  }
+}

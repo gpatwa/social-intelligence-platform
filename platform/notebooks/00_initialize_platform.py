@@ -302,5 +302,64 @@ spark.sql(
     """
 )
 
+# Human reviews and outcome observations are append-only control-plane facts.
+# They accept only validated recommendation-review-v1 artifacts through the
+# review ingestion boundary; no provider credential or source payload belongs
+# here. The scheduled decision build never overwrites either table.
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_recommendation_reviews` (
+      review_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      rerank_id STRING NOT NULL,
+      context_id STRING NOT NULL,
+      decision_id STRING NOT NULL,
+      decision STRING NOT NULL,
+      status STRING NOT NULL,
+      reviewer_id STRING NOT NULL,
+      decision_reason STRING NOT NULL,
+      reviewer_note STRING,
+      selected_candidate_id STRING,
+      selected_candidate_rank INT,
+      evidence_ids_json STRING NOT NULL,
+      edited_brief STRING,
+      handoff_state STRING NOT NULL,
+      idempotency_key STRING NOT NULL,
+      reviewed_at TIMESTAMP NOT NULL,
+      received_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Append-only human decisions over cited offline reranks; manual handoff only'
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_recommendation_outcomes` (
+      outcome_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      review_id STRING NOT NULL,
+      rerank_id STRING NOT NULL,
+      context_id STRING NOT NULL,
+      decision_id STRING NOT NULL,
+      candidate_id STRING NOT NULL,
+      metric_name STRING NOT NULL,
+      observed_value DOUBLE NOT NULL,
+      baseline_value DOUBLE,
+      unit STRING NOT NULL,
+      measurement_window_days INT NOT NULL,
+      measurement_source STRING NOT NULL,
+      observed_at TIMESTAMP NOT NULL,
+      reported_by STRING NOT NULL,
+      idempotency_key STRING NOT NULL,
+      confidence STRING NOT NULL,
+      attribution STRING NOT NULL,
+      received_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Append-only observational outcome measurements for approved recommendation reviews'
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")

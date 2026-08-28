@@ -75,6 +75,12 @@ social-intelligence-batch-reranker evaluate evaluation-fixtures.json
 social-intelligence-batch-reranker evaluate-staging
 ```
 
+## What happens after a rerank
+
+Use [`recommendation-review-v1`](RECOMMENDATION_REVIEW.md) to capture a human
+approval, edit, or rejection, followed by bounded observational outcomes. The
+reranker itself remains offline and cannot perform a handoff or external action.
+
 `evaluate` reports grounding, candidate-boundary, and expected-selection rates.
 It is a release gate for a provider adapter, not proof of causal business lift.
 All output remains `PROPOSED`; an approval and experiment gate are still

@@ -53,6 +53,7 @@ notebooks/02_build_analytics.py        Auto Loader and Bronze/Silver/Gold logic
 notebooks/03_validate_product.py       Data and product acceptance checks
 notebooks/04_model_governance.py       Tenant-scoped review and quality workflow
 notebooks/12_build_decision_workflow.py Opportunity, recommendation, experiment, and learning loop
+notebooks/14_build_recommendation_review_scorecard.py Human review/outcome adoption scorecards
 notebooks/07_ingest_connector_metrics.py External collector run and quota metrics
 notebooks/08_validate_external_ingestion.py Real-source acceptance gates
 sql/dashboard_queries.sql              Dashboard datasets and alert queries
@@ -65,6 +66,7 @@ src/social_intelligence/mcp_service.py Provider-neutral tenant-scoped read model
 src/social_intelligence/scoring.py     Locally testable scoring functions
 src/social_intelligence/stack_advisor.py Deterministic enterprise agent stack advisor
 src/social_intelligence/recommendation_context.py Deterministic context compiler for a future batch reranker
+src/social_intelligence/recommendation_review.py Human review and observational outcome compiler
 tests/                                 Contract and scoring unit tests
 ```
 
@@ -121,6 +123,12 @@ becomes the default MCP path.
 The staged shadow evaluation is run by the GitHub Actions workflow
 `Recommendation reranker shadow evaluation`. Its only provider secret is the
 environment-scoped `OPENAI_API_KEY`; see [Offline Batch Reranker](docs/BATCH_RERANKER.md).
+
+[Recommendation review v1](docs/RECOMMENDATION_REVIEW.md) adds the internal
+pilot feedback loop: a human can approve, edit, or reject a cited rerank, then
+record an observational outcome. It exposes compile-only CLI and MCP adapters,
+append-only Databricks control-plane tables, and Snowflake review scorecards;
+it does not enable an external action.
 
 ## Deploy and run
 

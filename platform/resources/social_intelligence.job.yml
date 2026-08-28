@@ -35,7 +35,7 @@ resources:
 
         - task_key: validate_product
           depends_on:
-            - task_key: build_decision_workflow
+            - task_key: build_recommendation_review_scorecard
           notebook_task:
             notebook_path: ../notebooks/03_validate_product.py
             base_parameters:
@@ -66,6 +66,15 @@ resources:
             - task_key: build_ranked_evidence
           notebook_task:
             notebook_path: ../notebooks/12_build_decision_workflow.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+        - task_key: build_recommendation_review_scorecard
+          depends_on:
+            - task_key: build_decision_workflow
+          notebook_task:
+            notebook_path: ../notebooks/14_build_recommendation_review_scorecard.py
             base_parameters:
               catalog: ${var.catalog}
               schema: ${var.schema}

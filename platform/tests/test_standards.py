@@ -57,6 +57,8 @@ class ContractRegistryTests(unittest.TestCase):
                 "/internal-pilots/plan",
                 "/recommendation-contexts/compile",
                 "/recommendation-reranks",
+                "/recommendation-reviews",
+                "/recommendation-outcomes",
             },
         )
         self.assertNotIn("approveRecommendation", str(contract))

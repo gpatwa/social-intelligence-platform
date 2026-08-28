@@ -168,6 +168,42 @@ paths:
               schema:
                 $ref: ../json-schema/batch-rerank-v1.json
         "400": {description: Invalid context or ungrounded reranker output}
+  /recommendation-reviews:
+    post:
+      operationId: createRecommendationReview
+      description: Compiles an append-safe human approval, edit, or rejection over a cited offline rerank. It never launches a campaign or other external action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/recommendation-review-request-v1.json
+      responses:
+        "200":
+          description: Human review artifact ready for governed control-plane persistence
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/recommendation-review-v1.json
+        "400": {description: Invalid review, tenant boundary, or candidate selection}
+  /recommendation-outcomes:
+    post:
+      operationId: recordRecommendationOutcome
+      description: Compiles an observational outcome for a human-approved or human-edited review. This endpoint does not claim causality or mutate an execution system.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/recommendation-outcome-request-v1.json
+      responses:
+        "200":
+          description: Outcome artifact ready for governed control-plane persistence
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/recommendation-outcome-v1.json
+        "400": {description: Invalid outcome or review is not approved}
 components:
   securitySchemes:
     bearerAuth:

@@ -198,3 +198,40 @@ SELECT
   end_at
 FROM gold_experiment_performance
 ORDER BY updated_at DESC;
+
+-- =============================================================================
+-- 11. Internal recommendation-review loop: human acceptance and outcome coverage
+-- =============================================================================
+SELECT
+  tenant_id,
+  reviews_total,
+  approved_total,
+  edited_total,
+  rejected_total,
+  acceptance_rate,
+  outcomes_total,
+  reviews_with_outcomes,
+  outcome_coverage_rate,
+  avg_observed_delta,
+  stage,
+  automation_status,
+  evaluated_at
+FROM gold_recommendation_review_scorecard
+ORDER BY evaluated_at DESC;
+
+SELECT
+  review_id,
+  decision_id,
+  review_status,
+  selected_candidate_id,
+  selected_candidate_rank,
+  metric_name,
+  observed_value,
+  baseline_value,
+  observed_delta,
+  unit,
+  confidence,
+  attribution,
+  observed_at
+FROM gold_recommendation_review_outcomes
+ORDER BY reviewed_at DESC, observed_at DESC;

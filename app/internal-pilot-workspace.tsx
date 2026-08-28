@@ -8,7 +8,7 @@ type Workflow =
   | "follow_up"
   | "crm_reactivation"
   | "internal_reporting";
-type View = "evidence" | "workflow" | "plan" | "scorecard";
+type View = "evidence" | "workflow" | "plan" | "review" | "scorecard";
 
 const workflowLabels: Record<Workflow, string> = {
   lead_response: "Lead response and qualification",
@@ -101,6 +101,23 @@ const sevenDays = [
   ["07", "Outcome review", "Choose GO, ITERATE, or STOP from agreed thresholds."],
 ];
 
+const rerankCandidates = [
+  {
+    id: "proof-winner",
+    rank: 1,
+    score: 91,
+    title: "Lead with observed delivery proof",
+    evidence: "YouTube · ranked evidence 01",
+  },
+  {
+    id: "workshop-winner",
+    rank: 2,
+    score: 84,
+    title: "Invite the right team to a scoped workshop",
+    evidence: "YouTube · ranked evidence 01–02",
+  },
+];
+
 function Field({
   label,
   value,
@@ -137,6 +154,9 @@ export function InternalPilotWorkspace() {
   const [target, setTarget] = useState(18);
   const [view, setView] = useState<View>("evidence");
   const [generated, setGenerated] = useState(false);
+  const [reviewDecision, setReviewDecision] = useState<"APPROVE" | "EDIT" | "REJECT">("APPROVE");
+  const [selectedCandidate, setSelectedCandidate] = useState(rerankCandidates[0].id);
+  const [reviewRecorded, setReviewRecorded] = useState(false);
 
   const economics = useMemo(() => {
     const monthlyCases = Math.max(0, weeklyVolume) * 4.33;
@@ -207,7 +227,7 @@ export function InternalPilotWorkspace() {
           <p className="pilot-assumption">Capacity value is an estimate, not booked revenue. Social evidence supports prioritization, not causation.</p>
 
           <div className="pilot-tabs" role="tablist" aria-label="Pilot artifact views">
-            {(["evidence", "workflow", "plan", "scorecard"] as View[]).map((item) => (
+            {(["evidence", "workflow", "plan", "review", "scorecard"] as View[]).map((item) => (
               <button
                 type="button"
                 role="tab"
@@ -216,7 +236,7 @@ export function InternalPilotWorkspace() {
                 onClick={() => setView(item)}
                 key={item}
               >
-                {item === "plan" ? "7-day plan" : item}
+                {item === "plan" ? "7-day plan" : item === "review" ? "human review" : item}
               </button>
             ))}
           </div>
@@ -258,6 +278,61 @@ export function InternalPilotWorkspace() {
                 {sevenDays.map(([day, focus, exit]) => (
                   <article key={day}><b>{day}</b><strong>{focus}</strong><p>{exit}</p></article>
                 ))}
+              </div>
+            ) : null}
+
+            {view === "review" ? (
+              <div className="recommendation-review-demo">
+                <div className="review-demo-heading">
+                  <div>
+                    <span>03 · Recommendation review</span>
+                    <strong>{reviewRecorded ? "Decision captured locally" : "Choose a bounded decision"}</strong>
+                  </div>
+                  <em>Offline · cited · no external action</em>
+                </div>
+                <div className="review-candidates">
+                  {rerankCandidates.map((candidate) => (
+                    <label className={selectedCandidate === candidate.id ? "selected" : ""} key={candidate.id}>
+                      <input
+                        type="radio"
+                        name="rerank-candidate"
+                        value={candidate.id}
+                        checked={selectedCandidate === candidate.id}
+                        onChange={() => { setSelectedCandidate(candidate.id); setReviewRecorded(false); }}
+                        disabled={reviewDecision === "REJECT"}
+                      />
+                      <b>#{candidate.rank}</b>
+                      <div><strong>{candidate.title}</strong><span>{candidate.evidence}</span></div>
+                      <em>{candidate.score}</em>
+                    </label>
+                  ))}
+                </div>
+                <div className="review-actions" role="group" aria-label="Recommendation review decision">
+                  {(["APPROVE", "EDIT", "REJECT"] as const).map((decision) => (
+                    <button
+                      type="button"
+                      key={decision}
+                      className={reviewDecision === decision ? "active" : ""}
+                      onClick={() => { setReviewDecision(decision); setReviewRecorded(false); }}
+                    >
+                      {decision.toLowerCase()}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="button review-record"
+                    onClick={() => setReviewRecorded(true)}
+                  >
+                    Record staging decision <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+                <p className="review-demo-note">
+                  {reviewRecorded
+                    ? reviewDecision === "REJECT"
+                      ? "Rejected drafts return to review. No handoff is created."
+                      : `${reviewDecision === "EDIT" ? "Edited" : "Approved"} draft is ready for manual handoff and later outcome measurement.`
+                    : "This product preview keeps the decision local. In staging, the same append-only contract is validated before it can be persisted."}
+                </p>
               </div>
             ) : null}
 

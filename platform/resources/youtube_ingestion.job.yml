@@ -76,6 +76,15 @@ resources:
               catalog: ${var.catalog}
               schema: ${var.schema}
 
+        - task_key: build_recommendation_review_scorecard
+          depends_on:
+            - task_key: build_decision_workflow
+          notebook_task:
+            notebook_path: ../notebooks/14_build_recommendation_review_scorecard.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
       environments:
         - environment_key: connector
           spec:

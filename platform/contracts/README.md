@@ -19,6 +19,10 @@ migration plan; published versions are never rewritten in place.
 | Recommendation context request | Bounded inputs to compile a batch-reranking context | [`v1`](json-schema/recommendation-context-request-v1.json) |
 | Recommendation context | Deterministic evidence, business, candidate, and outcome packet | [`v1`](json-schema/recommendation-context-v1.json) |
 | Offline batch rerank | Cited, constrained candidate ranking derived from a recommendation context | [`v1`](json-schema/batch-rerank-v1.json) |
+| Recommendation review request | Human approval, edit, or rejection inputs for one cited rerank | [`v1`](json-schema/recommendation-review-request-v1.json) |
+| Recommendation review | Append-safe review and manual-handoff artifact | [`v1`](json-schema/recommendation-review-v1.json) |
+| Recommendation outcome request | Observational outcome inputs for an approved review | [`v1`](json-schema/recommendation-outcome-request-v1.json) |
+| Recommendation outcome | Append-safe observational measurement artifact | [`v1`](json-schema/recommendation-outcome-v1.json) |
 | Internal pilot request | Bounded staging discovery inputs | [`v1`](json-schema/internal-pilot-request-v1.json) |
 | Internal pilot plan | Seven-day plan, workflow, controls, and scorecard | [`v1`](json-schema/internal-pilot-plan-v1.json) |
 | Consumer API | Read/propose API boundary | [`v1`](openapi/social-intelligence-api-v1.yaml) |
@@ -40,3 +44,8 @@ future adapters around these durable contracts, not replacements for them.
 - `recommendation-context-v1` is context preparation only: it may constrain a
   future model ranker, but it cannot invoke a model, invent candidates, retrieve
   external data, claim causality, or make an external change.
+- `recommendation-review-v1` records an explicit human decision only. An
+  approved or edited item is ready for a **manual** handoff; it never launches
+  an ad, sends a message, spends money, or enables an autonomous agent.
+- `recommendation-outcome-v1` records observational measurement only. It is a
+  feedback signal for evaluation and cannot establish causal lift by itself.
