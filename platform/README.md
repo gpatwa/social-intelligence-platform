@@ -118,6 +118,10 @@ An optional OpenAI Responses adapter is available through
 `./platform[openai]`; it is explicitly configured for staging and never
 becomes the default MCP path.
 
+The staged shadow evaluation is run by the GitHub Actions workflow
+`Recommendation reranker shadow evaluation`. Its only provider secret is the
+environment-scoped `OPENAI_API_KEY`; see [Offline Batch Reranker](docs/BATCH_RERANKER.md).
+
 ## Deploy and run
 
 Using Databricks Free Edition? Start with [FREE_EDITION.md](FREE_EDITION.md) and

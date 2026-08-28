@@ -41,6 +41,27 @@ The OpenAI adapter is opt-in; `deterministic/offline-baseline-v1` remains the
 default, including for MCP. Keep the API key in a secret manager, not Git,
 Databricks notebook source, or the durable rerank artifact.
 
+## Single-store staging setup
+
+For this Free Edition architecture, GitHub Actions is the external staging
+worker. Store the provider credential **only** as the `OPENAI_API_KEY` secret
+in its `staging` environment. The shadow workflow runs there and uploads only a
+non-sensitive evaluation artifact; it does not pass the credential to
+Databricks or Snowflake.
+
+After copying the newly generated OpenAI project/service-account key, run this
+single trusted-machine command from the repository root:
+
+```bash
+platform/scripts/set_github_staging_openai_secret.sh
+```
+
+The helper creates the GitHub `staging` environment if necessary and streams
+the clipboard value directly to GitHub without printing or writing it locally.
+Then use **Actions → Recommendation reranker shadow evaluation → Run workflow**
+and enter the approved model name. The workflow remains manually dispatched to
+avoid surprise model spend.
+
 ## Run locally
 
 ```bash

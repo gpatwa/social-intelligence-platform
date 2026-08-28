@@ -1,0 +1,53 @@
+name: Recommendation reranker shadow evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Approved OpenAI model name for this staging evaluation
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recommendation-reranker-shadow
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    name: Evaluate cited staging reranker
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install reranker dependencies
+        run: python -m pip install -e './platform[openai,standards]'
+
+      - name: Run offline staging benchmark with the approved model
+        env:
+          SOCIAL_INTELLIGENCE_RERANKER_PROVIDER: openai
+          SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL: ${{ inputs.model }}
+        run: |
+          test -n "$OPENAI_API_KEY"
+          social-intelligence-batch-reranker \
+            --provider openai \
+            --model "$SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL" \
+            evaluate-staging \
+            | tee reranker-shadow-evaluation.json
+
+      - name: Upload evaluation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reranker-shadow-evaluation
+          path: reranker-shadow-evaluation.json
+          if-no-files-found: error
