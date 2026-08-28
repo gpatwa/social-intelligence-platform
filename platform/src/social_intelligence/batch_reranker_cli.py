@@ -23,6 +23,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run the offline batch reranker")
     parser.add_argument("--provider", choices=["deterministic", "openai"], default="deterministic")
     parser.add_argument("--model", help="Required for --provider openai; never stored in the result contract")
+    parser.add_argument("--reasoning-effort", choices=["none", "minimal", "low", "medium", "high", "xhigh"], default="high")
     commands = parser.add_subparsers(dest="command", required=True)
     rerank = commands.add_parser("rerank", help="Rerank one recommendation-context-v1 JSON object")
     rerank.add_argument("input", type=Path)
@@ -32,7 +33,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.provider == "openai" and not args.model:
         parser.error("--model is required when --provider openai")
-    adapter = OpenAIResponsesReranker(args.model) if args.provider == "openai" else DeterministicOfflineReranker()
+    adapter = OpenAIResponsesReranker(args.model, reasoning_effort=args.reasoning_effort) if args.provider == "openai" else DeterministicOfflineReranker()
     if args.command == "rerank":
         payload = _load(args.input)
         if not isinstance(payload, dict):

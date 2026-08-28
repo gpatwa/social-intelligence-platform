@@ -34,12 +34,17 @@ staging worker environment:
 python3 -m pip install -e './platform[openai]'
 export SOCIAL_INTELLIGENCE_RERANKER_PROVIDER=openai
 export SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL='your-approved-model'
+export SOCIAL_INTELLIGENCE_OPENAI_REASONING_EFFORT='high'
 export OPENAI_API_KEY='...'
 ```
 
 The OpenAI adapter is opt-in; `deterministic/offline-baseline-v1` remains the
 default, including for MCP. Keep the API key in a secret manager, not Git,
 Databricks notebook source, or the durable rerank artifact.
+
+The current staging configuration uses `gpt-5.6-luna` with `high` reasoning
+effort. “Fast” is a model-selection characteristic, not an API parameter; the
+explicit runtime control is the reasoning effort.
 
 ## Single-store staging setup
 

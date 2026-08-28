@@ -84,10 +84,12 @@ class BatchRerankerTests(unittest.TestCase):
         client = Client()
         result = rerank_context(context(), OpenAIResponsesReranker(model="test-model", client=client))
         self.assertEqual(result["provider"], "openai")
+        self.assertEqual(result["reasoning_effort"], "high")
         self.assertEqual(result["primary_candidate_id"], "creative-1")
         self.assertFalse(client.request["store"])
         self.assertEqual(client.request["text"]["format"]["type"], "json_schema")
         self.assertTrue(client.request["text"]["format"]["strict"])
+        self.assertEqual(client.request["reasoning"], {"effort": "high"})
 
     def test_environment_adapter_requires_an_explicit_openai_model(self):
         with patch.dict(os.environ, {"SOCIAL_INTELLIGENCE_RERANKER_PROVIDER": "openai"}, clear=True):
@@ -96,6 +98,10 @@ class BatchRerankerTests(unittest.TestCase):
         with patch.dict(os.environ, {"SOCIAL_INTELLIGENCE_RERANKER_PROVIDER": "openai", "SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL": "test-model"}, clear=True):
             adapter = adapter_from_environment()
         self.assertIsInstance(adapter, OpenAIResponsesReranker)
+
+    def test_openai_adapter_rejects_unknown_reasoning_effort(self):
+        with self.assertRaisesRegex(ValueError, "reasoning_effort"):
+            OpenAIResponsesReranker(model="test-model", reasoning_effort="fast")
 
     def test_synthetic_staging_benchmark_protects_the_baseline(self):
         result = evaluate_reranker(staging_benchmark_cases())

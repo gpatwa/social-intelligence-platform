@@ -42,6 +42,7 @@ jobs:
           social-intelligence-batch-reranker \
             --provider openai \
             --model "$SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL" \
+            --reasoning-effort high \
             evaluate-staging \
             | tee reranker-shadow-evaluation.json
 

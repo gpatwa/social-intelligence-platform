@@ -16,6 +16,7 @@ from typing import Any, Mapping, Protocol, Sequence
 
 RERANKER_VERSION = "batch-reranker-v1"
 MODE = "OFFLINE"
+REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
 
 
 def _text(value: object, field: str, maximum: int = 500) -> str:
@@ -155,11 +156,15 @@ class OpenAIResponsesReranker:
     """
 
     model: str
+    reasoning_effort: str = "high"
     client: Any | None = None
     provider: str = "openai"
 
     def __post_init__(self) -> None:
         self.model = _text(self.model, "model", 128)
+        self.reasoning_effort = _text(self.reasoning_effort, "reasoning_effort", 16).lower()
+        if self.reasoning_effort not in REASONING_EFFORTS:
+            raise ValueError(f"reasoning_effort must be one of: {', '.join(sorted(REASONING_EFFORTS))}")
 
     def _client(self) -> Any:
         if self.client is not None:
@@ -189,6 +194,7 @@ class OpenAIResponsesReranker:
                     "schema": OPENAI_RANKING_SCHEMA,
                 }
             },
+            reasoning={"effort": self.reasoning_effort},
             store=False,
         )
         output_text = getattr(response, "output_text", "")
@@ -212,7 +218,8 @@ def adapter_from_environment() -> RerankerAdapter:
         model = os.environ.get("SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL", "").strip()
         if not model:
             raise RuntimeError("SOCIAL_INTELLIGENCE_OPENAI_RERANKER_MODEL is required for the OpenAI reranker")
-        return OpenAIResponsesReranker(model=model)
+        effort = os.environ.get("SOCIAL_INTELLIGENCE_OPENAI_REASONING_EFFORT", "high").strip()
+        return OpenAIResponsesReranker(model=model, reasoning_effort=effort)
     raise RuntimeError(f"Unsupported reranker provider: {provider}")
 
 
@@ -267,6 +274,7 @@ def rerank_context(context: Mapping[str, Any], adapter: RerankerAdapter | None =
         "decision_id": checked["decision_id"],
         "provider": selected.provider,
         "model": selected.model,
+        "reasoning_effort": getattr(selected, "reasoning_effort", None),
         "status": "PROPOSED",
         "ranked_candidates": ranked,
         "primary_candidate_id": top["candidate_id"],
