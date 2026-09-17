@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/campaign-measurement-v1.json",
+  "title": "Campaign measurement v1", "description": "Aggregate comparison result and quality-gated offline reranking feedback; it makes no causal claim.",
+  "type": "object", "additionalProperties": false,
+  "required": ["measurement_id", "schema_version", "measurement_version", "tenant_id", "experiment_id", "review_id", "candidate_id", "comparison_method", "primary_metric", "control", "treatment", "observed_conversion_rate_lift_pct", "result", "confidence", "measurement_window_days", "measurement_source", "reported_by", "observed_at", "idempotency_key", "ranking_feedback", "data_policy", "attribution", "causality_claim", "mutation"],
+  "properties": {
+    "measurement_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "schema_version": {"const": "1.0"}, "measurement_version": {"const": "campaign-measurement-v1"}, "tenant_id": {"type": "string"}, "experiment_id": {"type": "string"}, "review_id": {"type": "string"}, "candidate_id": {"type": "string"}, "comparison_method": {"enum": ["RANDOMIZED_AB_TEST", "HOLDOUT", "PRE_POST"]}, "primary_metric": {"type": "string"},
+    "control": {"$ref": "#/$defs/arm"}, "treatment": {"$ref": "#/$defs/arm"}, "observed_conversion_rate_lift_pct": {"type": ["number", "null"]}, "result": {"enum": ["POSITIVE", "NEGATIVE", "INCONCLUSIVE", "INSUFFICIENT_DATA"]}, "confidence": {"enum": ["DIRECTIONAL", "MEASURED"]}, "measurement_window_days": {"type": "integer", "minimum": 1, "maximum": 90}, "measurement_source": {"type": "string"}, "reported_by": {"type": "string"}, "observed_at": {"type": "string", "format": "date-time"}, "idempotency_key": {"type": "string"},
+    "ranking_feedback": {"type": "object", "additionalProperties": false, "required": ["candidate_id", "metric", "value", "unit", "observed_at", "confidence", "eligible_for_offline_reranking"], "properties": {"candidate_id": {"type": "string"}, "metric": {"const": "observed_campaign_conversion_lift_pct"}, "value": {"type": ["number", "null"]}, "unit": {"const": "percent"}, "observed_at": {"type": "string", "format": "date-time"}, "confidence": {"type": "string"}, "eligible_for_offline_reranking": {"type": "boolean"}}},
+    "data_policy": {"const": "AGGREGATE_METRICS_ONLY_NO_PII"}, "attribution": {"enum": ["COMPARATIVE_OBSERVED", "OBSERVATIONAL_ONLY"]}, "causality_claim": {"const": "none"}, "mutation": {"const": "none"}
+  },
+  "$defs": {"arm": {"type": "object", "additionalProperties": false, "required": ["impressions", "conversions", "value", "spend", "conversion_rate"], "properties": {"impressions": {"type": "integer", "minimum": 1}, "conversions": {"type": "integer", "minimum": 0}, "value": {"type": "number", "minimum": 0}, "spend": {"type": "number", "minimum": 0}, "conversion_rate": {"type": "number", "minimum": 0}}}}
+}

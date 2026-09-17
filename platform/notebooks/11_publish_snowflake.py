@@ -105,6 +105,10 @@ datasets = (
     ("GOLD_PILOT_SCORECARD", "gold_pilot_scorecard", (), "replace"),
     ("GOLD_RECOMMENDATION_REVIEW_OUTCOMES", "gold_recommendation_review_outcomes", (), "replace"),
     ("GOLD_RECOMMENDATION_REVIEW_SCORECARD", "gold_recommendation_review_scorecard", (), "replace"),
+    ("DECISION_CAMPAIGN_EXPERIMENTS", "decision_campaign_experiments", ("experiment_id",), "merge"),
+    ("DECISION_CAMPAIGN_MEASUREMENTS", "decision_campaign_measurements", ("measurement_id",), "merge"),
+    ("GOLD_CAMPAIGN_INTELLIGENCE", "gold_campaign_intelligence", (), "replace"),
+    ("GOLD_CAMPAIGN_INTELLIGENCE_SCORECARD", "gold_campaign_intelligence_scorecard", (), "replace"),
 )
 
 

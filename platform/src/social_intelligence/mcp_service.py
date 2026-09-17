@@ -28,6 +28,13 @@ from .recommendation_review import (
     create_recommendation_review,
     record_recommendation_outcome,
 )
+from .campaign_intelligence import (
+    CampaignExperimentRequest,
+    CampaignMeasurementRequest,
+    create_campaign_experiment,
+    measurement_to_outcome_signal,
+    record_campaign_measurement,
+)
 from .stack_advisor import StackAdvisorRequest, recommend_stack
 
 
@@ -468,3 +475,72 @@ class McpService:
                 confidence=confidence,
             )
         )
+
+    def create_campaign_experiment(
+        self,
+        *,
+        tenant_id: str,
+        review: Mapping[str, Any],
+        campaign_name: str,
+        channel: str,
+        business_objective: str,
+        primary_metric: str,
+        control_definition: str,
+        treatment_definition: str,
+        comparison_method: str,
+        planned_start_at: str,
+        planned_end_at: str,
+        created_by: str,
+        idempotency_key: str,
+        target_lift_pct: float = 10.0,
+    ) -> dict[str, Any]:
+        """Compile a no-PII, draft experiment; campaign activation remains manual."""
+        tenant = self._authorized_tenant(tenant_id)
+        return create_campaign_experiment(CampaignExperimentRequest(
+            tenant_id=tenant, review=review, campaign_name=campaign_name, channel=channel,
+            business_objective=business_objective, primary_metric=primary_metric,
+            control_definition=control_definition, treatment_definition=treatment_definition,
+            comparison_method=comparison_method, planned_start_at=planned_start_at,
+            planned_end_at=planned_end_at, created_by=created_by,
+            idempotency_key=idempotency_key, target_lift_pct=target_lift_pct,
+        ))
+
+    def record_campaign_measurement(
+        self,
+        *,
+        tenant_id: str,
+        experiment: Mapping[str, Any],
+        observed_at: str,
+        measurement_source: str,
+        reported_by: str,
+        idempotency_key: str,
+        control_impressions: int,
+        treatment_impressions: int,
+        control_conversions: int,
+        treatment_conversions: int,
+        control_value: float = 0.0,
+        treatment_value: float = 0.0,
+        control_spend: float = 0.0,
+        treatment_spend: float = 0.0,
+        measurement_window_days: int = 7,
+    ) -> dict[str, Any]:
+        """Compile aggregate measurement and optional offline feedback; never writes externally."""
+        tenant = self._authorized_tenant(tenant_id)
+        return record_campaign_measurement(CampaignMeasurementRequest(
+            tenant_id=tenant, experiment=experiment, observed_at=observed_at,
+            measurement_source=measurement_source, reported_by=reported_by,
+            idempotency_key=idempotency_key, control_impressions=control_impressions,
+            treatment_impressions=treatment_impressions, control_conversions=control_conversions,
+            treatment_conversions=treatment_conversions, control_value=control_value,
+            treatment_value=treatment_value, control_spend=control_spend,
+            treatment_spend=treatment_spend, measurement_window_days=measurement_window_days,
+        ))
+
+    def campaign_measurement_feedback(
+        self, *, tenant_id: str, measurement: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Extract a quality-gated signal for a future offline rerank only."""
+        self._authorized_tenant(tenant_id)
+        if str(measurement.get("tenant_id", "")).strip() != tenant_id:
+            raise ValueError("measurement tenant_id must match the authorized tenant")
+        return measurement_to_outcome_signal(measurement)

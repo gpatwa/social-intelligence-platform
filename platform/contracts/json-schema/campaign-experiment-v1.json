@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/campaign-experiment-v1.json",
+  "title": "Campaign experiment v1",
+  "description": "A human-approved, no-PII campaign experiment brief. It cannot activate a campaign.",
+  "type": "object", "additionalProperties": false,
+  "required": ["experiment_id", "schema_version", "experiment_version", "tenant_id", "review_id", "rerank_id", "context_id", "decision_id", "candidate_id", "campaign_name", "channel", "business_objective", "primary_metric", "control_definition", "treatment_definition", "comparison_method", "target_lift_pct", "planned_start_at", "planned_end_at", "created_by", "idempotency_key", "status", "activation", "data_policy", "approval_required", "causality_claim", "mutation"],
+  "properties": {
+    "experiment_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "schema_version": {"const": "1.0"}, "experiment_version": {"const": "campaign-experiment-v1"}, "tenant_id": {"type": "string"},
+    "review_id": {"type": "string"}, "rerank_id": {"type": "string"}, "context_id": {"type": "string"}, "decision_id": {"type": "string"}, "candidate_id": {"type": "string"},
+    "campaign_name": {"type": "string"}, "channel": {"type": "string"}, "business_objective": {"type": "string"}, "primary_metric": {"type": "string"}, "control_definition": {"type": "string"}, "treatment_definition": {"type": "string"}, "comparison_method": {"enum": ["RANDOMIZED_AB_TEST", "HOLDOUT", "PRE_POST"]}, "target_lift_pct": {"type": "number"}, "planned_start_at": {"type": "string", "format": "date-time"}, "planned_end_at": {"type": "string", "format": "date-time"}, "created_by": {"type": "string"}, "idempotency_key": {"type": "string"}, "status": {"const": "DRAFT"},
+    "activation": {"type": "object", "additionalProperties": false, "required": ["state", "external_action_permitted", "audience_export_permitted", "spend_permitted"], "properties": {"state": {"const": "READY_FOR_MANUAL_HANDOFF"}, "external_action_permitted": {"const": false}, "audience_export_permitted": {"const": false}, "spend_permitted": {"const": false}}},
+    "data_policy": {"const": "AGGREGATE_METRICS_ONLY_NO_PII"}, "approval_required": {"const": true}, "causality_claim": {"const": "none"}, "mutation": {"const": "none"}
+  }
+}

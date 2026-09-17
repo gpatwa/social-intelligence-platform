@@ -83,7 +83,7 @@ resources:
 
         - task_key: validate_external_ingestion
           depends_on:
-            - task_key: build_recommendation_review_scorecard
+            - task_key: build_campaign_intelligence
           notebook_task:
             notebook_path: ../notebooks/08_validate_external_ingestion.py
             base_parameters:
@@ -91,6 +91,15 @@ resources:
               schema: ${var.schema}
               tenant_id: ${var.tenant_id}
               source_id: ${var.youtube_source_id}
+
+        - task_key: build_campaign_intelligence
+          depends_on:
+            - task_key: build_recommendation_review_scorecard
+          notebook_task:
+            notebook_path: ../notebooks/15_build_campaign_intelligence.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
 
         - task_key: should_publish_snowflake
           depends_on:

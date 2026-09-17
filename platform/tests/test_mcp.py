@@ -173,6 +173,9 @@ class McpProtocolTests(unittest.TestCase):
                         "rerank_recommendation_context",
                         "create_recommendation_review",
                         "record_recommendation_outcome",
+                        "create_campaign_experiment",
+                        "record_campaign_measurement",
+                        "campaign_measurement_feedback",
                     },
                 )
                 result = await session.call_tool(

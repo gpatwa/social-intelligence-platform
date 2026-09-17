@@ -361,5 +361,76 @@ spark.sql(
     """
 )
 
+# Campaign Intelligence v1 is a separate aggregate-only measurement boundary.
+# It deliberately stores no customer identifiers, audience members, raw ad
+# events, provider tokens, or activation instructions. A future authenticated
+# writer validates the JSON contracts before it can append these records.
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_campaign_experiments` (
+      experiment_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      review_id STRING NOT NULL,
+      rerank_id STRING NOT NULL,
+      context_id STRING NOT NULL,
+      decision_id STRING NOT NULL,
+      candidate_id STRING NOT NULL,
+      campaign_name STRING NOT NULL,
+      channel STRING NOT NULL,
+      business_objective STRING NOT NULL,
+      primary_metric STRING NOT NULL,
+      control_definition STRING NOT NULL,
+      treatment_definition STRING NOT NULL,
+      comparison_method STRING NOT NULL,
+      target_lift_pct DOUBLE NOT NULL,
+      planned_start_at TIMESTAMP NOT NULL,
+      planned_end_at TIMESTAMP NOT NULL,
+      created_by STRING NOT NULL,
+      idempotency_key STRING NOT NULL,
+      status STRING NOT NULL,
+      data_policy STRING NOT NULL,
+      received_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Append-only campaign experiment briefs from approved reviews; aggregate metrics only and manual handoff only'
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_campaign_measurements` (
+      measurement_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      experiment_id STRING NOT NULL,
+      review_id STRING NOT NULL,
+      candidate_id STRING NOT NULL,
+      comparison_method STRING NOT NULL,
+      primary_metric STRING NOT NULL,
+      control_impressions BIGINT NOT NULL,
+      control_conversions BIGINT NOT NULL,
+      control_value DOUBLE NOT NULL,
+      control_spend DOUBLE NOT NULL,
+      treatment_impressions BIGINT NOT NULL,
+      treatment_conversions BIGINT NOT NULL,
+      treatment_value DOUBLE NOT NULL,
+      treatment_spend DOUBLE NOT NULL,
+      observed_conversion_rate_lift_pct DOUBLE,
+      result STRING NOT NULL,
+      confidence STRING NOT NULL,
+      measurement_window_days INT NOT NULL,
+      measurement_source STRING NOT NULL,
+      reported_by STRING NOT NULL,
+      observed_at TIMESTAMP NOT NULL,
+      idempotency_key STRING NOT NULL,
+      feedback_eligible BOOLEAN NOT NULL,
+      attribution STRING NOT NULL,
+      data_policy STRING NOT NULL,
+      received_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Append-only aggregate treatment/control measurements; no identity resolution or causal attribution'
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")

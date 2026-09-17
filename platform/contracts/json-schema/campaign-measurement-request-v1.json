@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://social-intelligence.example/contracts/campaign-measurement-request-v1.json",
+  "title": "Campaign measurement request v1", "description": "Aggregate control/treatment measurements only; no identities, audience rows, or raw events.",
+  "type": "object", "additionalProperties": false,
+  "required": ["tenant_id", "experiment", "observed_at", "measurement_source", "reported_by", "idempotency_key", "control_impressions", "treatment_impressions", "control_conversions", "treatment_conversions"],
+  "properties": {
+    "tenant_id": {"type": "string", "minLength": 1, "maxLength": 63}, "experiment": {"type": "object"}, "observed_at": {"type": "string", "format": "date-time"}, "measurement_source": {"type": "string", "minLength": 1, "maxLength": 128}, "reported_by": {"type": "string", "minLength": 1, "maxLength": 128}, "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 256}, "control_impressions": {"type": "integer", "minimum": 1}, "treatment_impressions": {"type": "integer", "minimum": 1}, "control_conversions": {"type": "integer", "minimum": 0}, "treatment_conversions": {"type": "integer", "minimum": 0}, "control_value": {"type": "number", "minimum": 0, "default": 0}, "treatment_value": {"type": "number", "minimum": 0, "default": 0}, "control_spend": {"type": "number", "minimum": 0, "default": 0}, "treatment_spend": {"type": "number", "minimum": 0, "default": 0}, "measurement_window_days": {"type": "integer", "minimum": 1, "maximum": 90, "default": 7}
+  }
+}

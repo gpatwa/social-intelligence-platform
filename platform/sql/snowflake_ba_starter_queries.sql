@@ -8,6 +8,23 @@ USE DATABASE SOCIAL_INTELLIGENCE;
 USE SCHEMA ANALYTICS;
 
 -- =============================================================================
+-- Campaign Intelligence: aggregate treatment/control outcome review
+-- =============================================================================
+SELECT
+  tenant_id, campaign_name, channel, primary_metric, comparison_method,
+  observed_conversion_rate_lift_pct, result, confidence,
+  feedback_eligible, measurement_source, observed_at
+FROM gold_campaign_intelligence
+ORDER BY observed_at DESC;
+
+SELECT
+  tenant_id, experiments_total, measurements_total, sufficient_measurements_total,
+  reranking_feedback_total, positive_results_total,
+  avg_observed_conversion_rate_lift_pct, measurement_coverage_rate, evaluated_at
+FROM gold_campaign_intelligence_scorecard
+ORDER BY evaluated_at DESC;
+
+-- =============================================================================
 -- 1. Executive pulse: latest 24-hour social signal
 -- =============================================================================
 SELECT

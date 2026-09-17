@@ -204,6 +204,42 @@ paths:
               schema:
                 $ref: ../json-schema/recommendation-outcome-v1.json
         "400": {description: Invalid outcome or review is not approved}
+  /campaign-experiments:
+    post:
+      operationId: createCampaignExperiment
+      description: Compiles a no-PII, manual-handoff experiment from an approved review. It cannot activate a campaign, export an audience, or spend budget.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/campaign-experiment-request-v1.json
+      responses:
+        "200":
+          description: Draft campaign experiment ready for manual handoff
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/campaign-experiment-v1.json
+        "400": {description: Invalid review or experiment boundary}
+  /campaign-measurements:
+    post:
+      operationId: recordCampaignMeasurement
+      description: Compiles aggregate control/treatment measurement and a quality-gated offline feedback signal. It never claims causality.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/campaign-measurement-request-v1.json
+      responses:
+        "200":
+          description: Aggregate campaign measurement
+          content:
+            application/json:
+              schema:
+                $ref: ../json-schema/campaign-measurement-v1.json
+        "400": {description: Invalid aggregate observation or experiment boundary}
 components:
   securitySchemes:
     bearerAuth:

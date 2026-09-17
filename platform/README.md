@@ -54,6 +54,7 @@ notebooks/03_validate_product.py       Data and product acceptance checks
 notebooks/04_model_governance.py       Tenant-scoped review and quality workflow
 notebooks/12_build_decision_workflow.py Opportunity, recommendation, experiment, and learning loop
 notebooks/14_build_recommendation_review_scorecard.py Human review/outcome adoption scorecards
+notebooks/15_build_campaign_intelligence.py Aggregate campaign experiment and measurement marts
 notebooks/07_ingest_connector_metrics.py External collector run and quota metrics
 notebooks/08_validate_external_ingestion.py Real-source acceptance gates
 sql/dashboard_queries.sql              Dashboard datasets and alert queries
@@ -130,6 +131,12 @@ record an observational outcome. It exposes compile-only CLI and MCP adapters,
 append-only Databricks control-plane tables, and Snowflake review scorecards;
 it does not enable an external action.
 
+[Campaign Intelligence v1](docs/CAMPAIGN_INTELLIGENCE.md) adds aggregate-only
+control/treatment experiment briefs and conservative observed-lift
+measurement. It has no identity resolution, audience export, provider action,
+or causal attribution; only quality-gated aggregate feedback may enter a later
+offline rerank.
+
 ## Deploy and run
 
 Using Databricks Free Edition? Start with [FREE_EDITION.md](FREE_EDITION.md) and
@@ -201,6 +208,7 @@ Replace `${catalog}` and `${schema}` in the SQL file with deployed values. The q
 - [MCP operations](docs/MCP.md)
 - [Agent Stack Advisor](docs/AGENT_STACK_ADVISOR.md)
 - [Internal Pilot Workspace](docs/INTERNAL_PILOT_WORKSPACE.md)
+- [Campaign Intelligence v1](docs/CAMPAIGN_INTELLIGENCE.md)
 
 The Free Edition deployment runs daily at 7:30 AM Pacific. It also includes a
 human-review queue (`gold_model_review_queue`) and an initially empty

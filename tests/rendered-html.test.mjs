@@ -57,9 +57,9 @@ test("server-renders the Social Intelligence landing page", async () => {
   );
   assert.match(html, /Find the signal\./);
   assert.match(html, /Shape what(?:’|&#x27;)s next\./);
-  assert.match(html, /<b>16<\/b> BA-facing marts/);
+  assert.match(html, /<b>22<\/b> BA-facing marts/);
   assert.match(html, /<b>1<\/b> guarded hourly path/);
-  assert.match(html, /<b>86<\/b> automated checks/);
+  assert.match(html, /<b>111<\/b> automated checks/);
   assert.match(html, /Discovery and serving are live/);
   assert.match(html, /Pipeline status, without the guesswork/);
   assert.match(html, /Databricks · gold_connector_operations/);
@@ -71,7 +71,7 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /Opportunity/);
   assert.match(html, /Recommendation/);
   assert.match(html, /Experiment/);
-  assert.match(html, /Commercial learning/);
+  assert.match(html, /Campaign intelligence/);
   assert.match(html, /Databricks governs the decision\. Snowflake makes it measurable\./);
   assert.match(html, /Open BA query pack/);
   assert.match(html, /Agent Stack Advisor/);

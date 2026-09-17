@@ -23,6 +23,10 @@ migration plan; published versions are never rewritten in place.
 | Recommendation review | Append-safe review and manual-handoff artifact | [`v1`](json-schema/recommendation-review-v1.json) |
 | Recommendation outcome request | Observational outcome inputs for an approved review | [`v1`](json-schema/recommendation-outcome-request-v1.json) |
 | Recommendation outcome | Append-safe observational measurement artifact | [`v1`](json-schema/recommendation-outcome-v1.json) |
+| Campaign experiment request | Aggregate-only, human-approved campaign experiment inputs | [`v1`](json-schema/campaign-experiment-request-v1.json) |
+| Campaign experiment | Draft, manual-handoff campaign test brief | [`v1`](json-schema/campaign-experiment-v1.json) |
+| Campaign measurement request | Aggregate control/treatment measurement inputs | [`v1`](json-schema/campaign-measurement-request-v1.json) |
+| Campaign measurement | Conservative comparison result and quality-gated reranking feedback | [`v1`](json-schema/campaign-measurement-v1.json) |
 | Internal pilot request | Bounded staging discovery inputs | [`v1`](json-schema/internal-pilot-request-v1.json) |
 | Internal pilot plan | Seven-day plan, workflow, controls, and scorecard | [`v1`](json-schema/internal-pilot-plan-v1.json) |
 | Consumer API | Read/propose API boundary | [`v1`](openapi/social-intelligence-api-v1.yaml) |
@@ -49,3 +53,6 @@ future adapters around these durable contracts, not replacements for them.
   an ad, sends a message, spends money, or enables an autonomous agent.
 - `recommendation-outcome-v1` records observational measurement only. It is a
   feedback signal for evaluation and cannot establish causal lift by itself.
+- Campaign Intelligence v1 accepts aggregate counts and values only. It has no
+  identity graph, raw conversion events, audience export, or spend authority.
+  Treatment/control lift is an observed comparison, never a causal claim.

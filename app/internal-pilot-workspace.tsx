@@ -8,7 +8,7 @@ type Workflow =
   | "follow_up"
   | "crm_reactivation"
   | "internal_reporting";
-type View = "evidence" | "workflow" | "plan" | "review" | "scorecard";
+type View = "evidence" | "workflow" | "plan" | "review" | "campaign" | "scorecard";
 
 const workflowLabels: Record<Workflow, string> = {
   lead_response: "Lead response and qualification",
@@ -227,7 +227,7 @@ export function InternalPilotWorkspace() {
           <p className="pilot-assumption">Capacity value is an estimate, not booked revenue. Social evidence supports prioritization, not causation.</p>
 
           <div className="pilot-tabs" role="tablist" aria-label="Pilot artifact views">
-            {(["evidence", "workflow", "plan", "review", "scorecard"] as View[]).map((item) => (
+            {(["evidence", "workflow", "plan", "review", "campaign", "scorecard"] as View[]).map((item) => (
               <button
                 type="button"
                 role="tab"
@@ -236,7 +236,7 @@ export function InternalPilotWorkspace() {
                 onClick={() => setView(item)}
                 key={item}
               >
-                {item === "plan" ? "7-day plan" : item === "review" ? "human review" : item}
+                {item === "plan" ? "7-day plan" : item === "review" ? "human review" : item === "campaign" ? "campaign test" : item}
               </button>
             ))}
           </div>
@@ -333,6 +333,22 @@ export function InternalPilotWorkspace() {
                       : `${reviewDecision === "EDIT" ? "Edited" : "Approved"} draft is ready for manual handoff and later outcome measurement.`
                     : "This product preview keeps the decision local. In staging, the same append-only contract is validated before it can be persisted."}
                 </p>
+              </div>
+            ) : null}
+
+            {view === "campaign" ? (
+              <div className="pilot-scorecard campaign-intelligence-demo">
+                <div className="scorecard-primary">
+                  <span>04 · Campaign Intelligence v1</span>
+                  <strong>Control → treatment</strong>
+                  <p>Turn an approved draft into a measurable test—without creating an audience, publishing creative, or spending budget.</p>
+                </div>
+                <ul>
+                  <li><span>Inputs</span><strong>Aggregate only · no PII</strong></li>
+                  <li><span>Comparison</span><strong>Holdout or randomized A/B</strong></li>
+                  <li><span>Output</span><strong>Observed lift · not causal attribution</strong></li>
+                  <li><span>Learning</span><strong>Quality-gated offline reranking feedback</strong></li>
+                </ul>
               </div>
             ) : null}
 

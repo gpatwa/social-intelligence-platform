@@ -27,17 +27,17 @@ const capabilities = [
   },
   {
     index: "03",
-    title: "Controlled experiments",
-    copy: "Turn only approved recommendations into planned control-versus-treatment tests with budget and margin guardrails.",
-    metric: "10%",
-    label: "default target lift",
+    title: "Campaign intelligence",
+    copy: "Turn only approved recommendations into aggregate control-versus-treatment test briefs with a human-owned handoff.",
+    metric: "No PII",
+    label: "aggregate measurement",
   },
   {
     index: "04",
-    title: "Commercial learning",
-    copy: "Measure adoption, win rate, incremental revenue, and contribution margin to improve the next recommendation.",
-    metric: "Closed",
-    label: "decision loop",
+    title: "Conservative learning",
+    copy: "Calculate observed lift, retain the measurement boundary, and feed only quality-gated results into offline ranking.",
+    metric: "Gated",
+    label: "offline feedback",
   },
 ];
 
@@ -221,7 +221,7 @@ export default function Home() {
               </article>
               <article className="score-card accent-coral">
                 <span>Serving marts</span>
-                <strong>16</strong>
+                <strong>22</strong>
                 <small>published to ANALYTICS</small>
               </article>
             </div>
@@ -241,12 +241,12 @@ export default function Home() {
         <p>Latest verified delivery</p>
         <div className="proof-metrics">
           <span>
-            <b>16</b> BA-facing marts
+            <b>22</b> BA-facing marts
           </span>
           <span>
             <b>1</b> guarded hourly path
           </span>
-          <span><b>86</b> automated checks</span>
+          <span><b>111</b> automated checks</span>
           <span>
             <b>100%</b> verified end-to-end run
           </span>
@@ -337,7 +337,7 @@ export default function Home() {
           <article>
             <span>03</span>
             <strong>Analyze</strong>
-            <p>BA users query 16 curated signal, evidence, and decision marts with a read-only role.</p>
+            <p>BA users query 22 curated signal, evidence, decision, and aggregate campaign marts with a read-only role.</p>
           </article>
         </div>
       </section>

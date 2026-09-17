@@ -48,7 +48,7 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
     recorder = audit or McpAuditRecorder()
     server = MCPServer(SERVER_NAME, instructions=(
         "Use tenant-scoped read tools to inspect governed opportunities, evidence, "
-        "metrics, pipeline status, ranked evidence, recommendation contexts, offline reranks, non-persisting human review/outcome artifacts, internal pilot plans, and "
+        "metrics, pipeline status, ranked evidence, recommendation contexts, offline reranks, non-persisting human review/outcome artifacts, aggregate Campaign Intelligence experiments and measurements, internal pilot plans, and "
         "evidence-linked agent stack recommendations. "
         "Drafts never persist and approvals are not available through MCP."
     ))
@@ -260,6 +260,51 @@ def create_mcp_server(provider: SocialIntelligenceDataProvider | None = None,
             unit=unit, observed_at=observed_at, measurement_source=measurement_source,
             reported_by=reported_by, idempotency_key=idempotency_key,
             measurement_window_days=measurement_window_days, baseline_value=baseline_value, confidence=confidence,
+        ))
+
+    @server.tool()
+    def create_campaign_experiment(
+        tenant_id: str, review: dict[str, Any], campaign_name: str, channel: str,
+        business_objective: str, primary_metric: str, control_definition: str,
+        treatment_definition: str, comparison_method: str, planned_start_at: str,
+        planned_end_at: str, created_by: str, idempotency_key: str,
+        target_lift_pct: float = 10.0,
+    ) -> dict[str, Any]:
+        """Compile a no-PII campaign experiment from an approved review; never launches or targets a campaign."""
+        return invoke("create_campaign_experiment", tenant_id, lambda: service.create_campaign_experiment(
+            tenant_id=tenant_id, review=review, campaign_name=campaign_name, channel=channel,
+            business_objective=business_objective, primary_metric=primary_metric,
+            control_definition=control_definition, treatment_definition=treatment_definition,
+            comparison_method=comparison_method, planned_start_at=planned_start_at,
+            planned_end_at=planned_end_at, created_by=created_by,
+            idempotency_key=idempotency_key, target_lift_pct=target_lift_pct,
+        ))
+
+    @server.tool()
+    def record_campaign_measurement(
+        tenant_id: str, experiment: dict[str, Any], observed_at: str,
+        measurement_source: str, reported_by: str, idempotency_key: str,
+        control_impressions: int, treatment_impressions: int, control_conversions: int,
+        treatment_conversions: int, control_value: float = 0.0, treatment_value: float = 0.0,
+        control_spend: float = 0.0, treatment_spend: float = 0.0,
+        measurement_window_days: int = 7,
+    ) -> dict[str, Any]:
+        """Compile aggregate control/treatment results and quality-gated offline feedback; never sends data to an ad platform."""
+        return invoke("record_campaign_measurement", tenant_id, lambda: service.record_campaign_measurement(
+            tenant_id=tenant_id, experiment=experiment, observed_at=observed_at,
+            measurement_source=measurement_source, reported_by=reported_by,
+            idempotency_key=idempotency_key, control_impressions=control_impressions,
+            treatment_impressions=treatment_impressions, control_conversions=control_conversions,
+            treatment_conversions=treatment_conversions, control_value=control_value,
+            treatment_value=treatment_value, control_spend=control_spend,
+            treatment_spend=treatment_spend, measurement_window_days=measurement_window_days,
+        ))
+
+    @server.tool()
+    def campaign_measurement_feedback(tenant_id: str, measurement: dict[str, Any]) -> dict[str, Any]:
+        """Extract only a quality-gated aggregate signal for a future offline rerank."""
+        return invoke("campaign_measurement_feedback", tenant_id, lambda: service.campaign_measurement_feedback(
+            tenant_id=tenant_id, measurement=measurement,
         ))
     return server
 
