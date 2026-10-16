@@ -61,8 +61,8 @@ returns an empty projection; it does not fall back to another tenant.
 
 Spend, publishing, lifecycle mutation, and arbitrary SQL are not MCP tools.
 Review and outcome artifacts are compile-only. Their append-only persistence
-uses a separate authenticated service with the supplied idempotency key, policy
-checks, and the explicit human approval record.
+uses the separate authenticated `social-intelligence-record-append` boundary, which
+verifies the idempotency key, tenant, lineage, and the explicit human approval record.
 
 ## Provider boundary
 

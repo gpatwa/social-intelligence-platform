@@ -36,4 +36,21 @@ social-intelligence-campaign-intelligence measurement measurement.json
 social-intelligence-campaign-intelligence feedback measurement-output.json
 ```
 
-The CLI and MCP tools compile validated artifacts only. An authenticated, idempotent append boundary is the next production-readiness slice before persisting real pilot decisions.
+The CLI and MCP tools compile validated artifacts only; they do not persist.
+
+## Persistence: authenticated append boundary
+
+`social-intelligence-record-append <review|outcome|experiment|measurement> artifact.json` is the single write path into the four append-only tables (`decision_recommendation_reviews`, `decision_recommendation_outcomes`, `decision_campaign_experiments`, `decision_campaign_measurements`). Implementation: `record_append.py`.
+
+For every call it:
+
+1. **Authenticates** a bearer token read from `SOCIAL_INTELLIGENCE_APPEND_TOKEN` (never an argument). `SOCIAL_INTELLIGENCE_APPEND_PRINCIPALS` holds a JSON list of `{actor_id, tenants, token_sha256}`; only SHA-256 digests are configured, never raw tokens. Missing or malformed configuration fails closed.
+2. **Authorizes the tenant** against the principal's tenant list.
+3. **Binds human attribution**: `reviewer_id`, `created_by`, or `reported_by` must equal the authenticated actor.
+4. **Re-verifies the artifact** instead of trusting it: the deterministic ID is recomputed from its idempotency inputs; unknown top-level fields are rejected; `mutation` and `causality_claim` must be `none`; approved reviews must carry evidence citations; experiments must keep every activation, audience-export, and spend right off; measurements are checked for aggregate-only arm fields, recomputed rates, lift, quality-gate result, and feedback eligibility.
+5. **Checks lineage in the same tenant**: outcomes and experiments require a stored *approved or edited* review for the same candidate; measurements require a stored experiment with matching review, candidate, method, and metric.
+6. **Appends once**. An identical replay returns `DUPLICATE` with no write; the same key with different content raises a conflict. `--dry-run` authenticates and validates without writing.
+
+`received_at` is assigned by the writer, not the caller. The Databricks store issues a parameterized insert-if-absent `MERGE` and re-reads the row to detect a concurrent conflicting writer. Required environment: `DATABRICKS_SERVER_HOSTNAME`, `DATABRICKS_HTTP_PATH`, `DATABRICKS_TOKEN`, optionally `SOCIAL_INTELLIGENCE_CATALOG` and `SOCIAL_INTELLIGENCE_SCHEMA`; install the `databricks` extra.
+
+Status: unit-tested with an in-memory store and a fake SQL cursor. It has **not** been run against a live Databricks workspace; verify against staging with `--dry-run` and a throwaway tenant before storing real pilot decisions. It is a CLI/library boundary, not a network service; a hosted endpoint, SSO-backed identity, token rotation, and an audit sink are later steps.

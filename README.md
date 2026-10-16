@@ -54,7 +54,8 @@ The repository contains a working, pilot-ready implementation:
 - **Internal Pilot Workspace** with workflow discovery, direct-link ranked
   evidence, a seven-day staging plan, explicit guardrails, and an outcome scorecard
 - **Live pipeline status** surfaced on the public product site from Databricks metrics
-- **110 platform tests and 4 product-site tests** in the current validated delivery
+- **Authenticated, idempotent append boundary** for reviewed pilot records (tenant-scoped, lineage-checked, aggregate-only; not yet validated against a live workspace)
+- **Platform and product-site test suites** run in CI; see the validation commands below
 
 The deterministic 943-event demo remains available for reproducible validation;
 live-provider ingestion uses the same contracts and downstream pipeline.

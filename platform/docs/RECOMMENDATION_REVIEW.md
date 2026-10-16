@@ -49,8 +49,9 @@ The review scorecard task materializes:
 
 Both Gold tables are included in the Snowflake publishing job, under
 `SOCIAL_INTELLIGENCE.ANALYTICS`, for BA queries. Writes into the append-only
-tables belong to the authenticated review-service boundary; MCP and the CLI
-compile and validate artifacts but do not persist them.
+tables go through the authenticated `social-intelligence-record-append`
+boundary (see [Campaign Intelligence](CAMPAIGN_INTELLIGENCE.md#persistence-authenticated-append-boundary));
+MCP and the compile CLIs validate artifacts but do not persist them.
 
 ## Internal-pilot gate
 
