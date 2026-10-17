@@ -432,5 +432,66 @@ spark.sql(
     """
 )
 
+# gold_opportunities is rebuilt on every refresh and opportunities roll off as
+# signals age, while recommendations persist. This history keeps every
+# opportunity ever published so recommendation lineage stays verifiable.
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`decision_opportunity_history` (
+      opportunity_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      opportunity_type STRING,
+      signal_type STRING,
+      signal_key STRING,
+      signal_ts TIMESTAMP,
+      product_id STRING,
+      title STRING,
+      evidence_ref STRING,
+      opportunity_score DOUBLE,
+      last_status STRING,
+      first_seen_at TIMESTAMP NOT NULL,
+      last_seen_at TIMESTAMP NOT NULL,
+      recorded_from STRING NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Every published opportunity, retained after it leaves gold_opportunities, for durable recommendation lineage'
+    """
+)
+
+# One-time backfill for recommendations created before the history existed.
+# Each was generated from an OPEN opportunity in gold_opportunities, so its
+# opportunity_id and evidence_ref are recorded as that lineage. The cutoff is
+# the first snapshot capture: recommendations created after it are never
+# backfilled, so a genuine lineage break still fails validation.
+spark.sql(
+    f"""
+    MERGE INTO {ns}.`decision_opportunity_history` AS target
+    USING (
+      SELECT
+        opportunity_id,
+        MIN(tenant_id) AS tenant_id,
+        MIN(product_id) AS product_id,
+        MIN(evidence_ref) AS evidence_ref,
+        MIN(created_at) AS first_seen_at,
+        MAX(created_at) AS last_seen_at
+      FROM {ns}.`decision_recommendations`
+      WHERE created_at < COALESCE(
+        (SELECT MIN(first_seen_at) FROM {ns}.`decision_opportunity_history`
+         WHERE recorded_from = 'gold_opportunities'),
+        TIMESTAMP '9999-12-31'
+      )
+      GROUP BY opportunity_id
+    ) AS legacy
+    ON target.opportunity_id = legacy.opportunity_id
+    WHEN NOT MATCHED THEN INSERT (
+      opportunity_id, tenant_id, product_id, evidence_ref,
+      first_seen_at, last_seen_at, recorded_from
+    ) VALUES (
+      legacy.opportunity_id, legacy.tenant_id, legacy.product_id, legacy.evidence_ref,
+      legacy.first_seen_at, legacy.last_seen_at, 'recommendation_backfill'
+    )
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")

@@ -49,11 +49,20 @@ social signal
 | Control | `control_product_catalog` | Commerce/catalog sync |
 | Control | `control_signal_product_map` | Product and marketing owners |
 | Gold | `gold_opportunities` | Rebuilt from governed signals |
+| Decision | `decision_opportunity_history` | Every published opportunity, kept after it leaves the rebuilt Gold table |
 | Decision | `decision_recommendations` | Durable workflow state |
 | Decision | `decision_experiments` | Durable execution state |
 | Decision | `decision_learnings` | Immutable outcome memory |
 | Gold | `gold_experiment_performance` | Read model for analysis |
 | Gold | `gold_pilot_scorecard` | Pilot success metrics |
+
+`gold_opportunities` is replaced on every refresh, and opportunities roll off as
+their signals age. Recommendations persist, so lineage is validated against
+`decision_opportunity_history`: the decision build records each snapshot
+there before proposing recommendations. Recommendations created before the
+history existed were backfilled once from their own `opportunity_id` and
+`evidence_ref` (`recorded_from = 'recommendation_backfill'`); anything created
+later must have a captured opportunity or validation fails.
 
 The Snowflake publisher exposes these tables to the read-only BA role. It does
 not expose Bronze payloads or allow analysts to mutate lifecycle state.

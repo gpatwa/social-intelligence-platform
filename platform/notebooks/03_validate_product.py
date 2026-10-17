@@ -108,7 +108,7 @@ checks = spark.sql(
                     COUNT_IF(recommendations.evidence_ref IS NULL OR opportunities.opportunity_id IS NULL),
                     ' invalid records')
       FROM {ns}.`decision_recommendations` recommendations
-      LEFT JOIN {ns}.`gold_opportunities` opportunities
+      LEFT JOIN {ns}.`decision_opportunity_history` opportunities
         ON recommendations.opportunity_id = opportunities.opportunity_id
 
       UNION ALL
