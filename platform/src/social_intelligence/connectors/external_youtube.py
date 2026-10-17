@@ -343,6 +343,8 @@ class ExternalYouTubeCollector:
             "active_rules": int(stats.get("active_rules", 0)),
             "videos_discovered": int(stats.get("videos_discovered", 0)),
             "events_emitted": int(stats.get("events_emitted", 0)),
+            "stats_enrichment_failures": int(stats.get("stats_enrichment_failures", 0)),
+            "videos_missing_stats": int(stats.get("videos_missing_stats", 0)),
             "search_calls_used": search_calls,
             "search_calls_remaining": max(
                 0, policy.usable_limit("search") - search_calls

@@ -90,8 +90,11 @@ class YouTubeConnectorTests(unittest.TestCase):
         search_call = next(call for call in transport.calls if call[0] == "search")
         video_call = next(call for call in transport.calls if call[0] == "videos")
         self.assertIn("snippet", search_call[1]["fields"])
-        self.assertEqual(video_call[1]["part"], "statistics")
-        self.assertEqual(video_call[1]["fields"], "items(id,statistics)")
+        self.assertEqual(video_call[1]["part"], "snippet,statistics")
+        self.assertEqual(
+            video_call[1]["fields"],
+            "items(id,snippet(defaultLanguage,defaultAudioLanguage),statistics)",
+        )
 
     def test_duplicate_video_across_rules_emits_one_logical_event(self):
         transport = FixtureTransport()
@@ -147,7 +150,32 @@ class YouTubeConnectorTests(unittest.TestCase):
         self.assertEqual([event.source_object_id for event in batch.events], ["video-001"])
         self.assertEqual(batch.events[0].payload["views"], 0)
         self.assertEqual(batch.statistics["stats_enrichment_failures"], 1)
+        self.assertEqual(batch.statistics["videos_missing_stats"], 1)
+        self.assertEqual(batch.events[0].payload["language"], "und")
         self.assertEqual(batch.checkpoint.quota["core_units"], 1)
+
+    def test_language_comes_from_video_details_not_configuration(self):
+        transport = FixtureTransport()
+
+        def portuguese_video(resource, params):
+            response = transport(resource, params)
+            if resource == "videos":
+                item = dict(response["items"][0])
+                item["snippet"] = {"defaultAudioLanguage": "pt-BR"}
+                return {"items": [item]}
+            return response
+
+        batch = self.connector(
+            portuguese_video, collect_comments=False, collect_replies=False
+        ).collect(
+            [CollectionRule("brand-acme", "keyword", "Acme")],
+            ConnectorCheckpoint.empty(NOW),
+        )
+        payload = batch.events[0].payload
+        self.assertEqual(payload["language"], "pt-BR")
+        self.assertEqual(payload["source_title"], "Testing the #GlowUpChallenge")
+        self.assertEqual(payload["views"], 12500)
+        self.assertEqual(batch.statistics["videos_missing_stats"], 0)
 
     def test_transient_search_failure_retries_and_consumes_each_attempt(self):
         transport = FixtureTransport()

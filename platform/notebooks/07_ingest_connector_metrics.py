@@ -49,6 +49,8 @@ metric_schema = T.StructType(
         T.StructField("reads_this_month", T.LongType()),
         T.StructField("reads_remaining_month", T.LongType()),
         T.StructField("read_budget_exhausted", T.LongType()),
+        T.StructField("stats_enrichment_failures", T.LongType()),
+        T.StructField("videos_missing_stats", T.LongType()),
         T.StructField("event_path", T.StringType()),
         T.StructField("error_type", T.StringType()),
     ]
@@ -75,6 +77,8 @@ else:
         "reads_this_month",
         "reads_remaining_month",
         "read_budget_exhausted",
+        "stats_enrichment_failures",
+        "videos_missing_stats",
     ):
         if column_name not in existing_columns:
             spark.sql(

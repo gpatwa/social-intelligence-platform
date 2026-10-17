@@ -257,6 +257,7 @@ class YouTubeConnector:
         cursors = dict(checkpoint.cursors)
         searched_video_ids: set[str] = set()
         stats_enrichment_failures = 0
+        videos_missing_stats = 0
         active_rules = [rule for rule in rules if rule.enabled]
 
         for rule in active_rules:
@@ -276,6 +277,7 @@ class YouTubeConnector:
                 rule_videos,
             )
             stats_enrichment_failures += int(stats_enrichment_failed)
+            videos_missing_stats += sum(1 for item in video_details if not item.get("statistics"))
             for item in video_details:
                 event = self._video_event(item, rule, started_at)
                 events[event.idempotency_key] = event
@@ -311,6 +313,7 @@ class YouTubeConnector:
                 "videos_discovered": len(searched_video_ids),
                 "events_emitted": len(events),
                 "stats_enrichment_failures": stats_enrichment_failures,
+                "videos_missing_stats": videos_missing_stats,
                 "search_calls": ledger.search_calls,
                 "core_units": ledger.core_units,
             },
@@ -393,9 +396,11 @@ class YouTubeConnector:
                 response = client.list(
                     "videos",
                     {
-                        "part": "statistics",
+                        # Same 1-unit call; snippet adds the creator-declared
+                        # language, which search results do not carry.
+                        "part": "snippet,statistics",
                         "id": ",".join(chunk),
-                        "fields": "items(id,statistics)",
+                        "fields": "items(id,snippet(defaultLanguage,defaultAudioLanguage),statistics)",
                     },
                     bucket="core",
                 )
@@ -404,17 +409,25 @@ class YouTubeConnector:
                     raise
                 response = {"items": []}
                 enrichment_failed = True
-            stats_by_id = {
-                str(item.get("id", "")).strip(): item.get("statistics", {})
+            details_by_id = {
+                str(item.get("id", "")).strip(): item
                 for item in response.get("items", [])
             }
             for video_id in chunk:
                 search_item = search_by_id[video_id]
+                detail = details_by_id.get(video_id, {})
                 results.append(
                     {
                         "id": video_id,
-                        "snippet": search_item.get("snippet", {}),
-                        "statistics": stats_by_id.get(video_id, {}),
+                        "snippet": {
+                            **search_item.get("snippet", {}),
+                            **{
+                                key: value
+                                for key, value in detail.get("snippet", {}).items()
+                                if key in ("defaultLanguage", "defaultAudioLanguage") and value
+                            },
+                        },
+                        "statistics": detail.get("statistics", {}),
                     }
                 )
         return results, enrichment_failed
@@ -546,10 +559,12 @@ class YouTubeConnector:
             "comments": _integer(statistics.get("commentCount")),
             "shares": 0,
             "saves": 0,
+            # relevanceLanguage only biases search ranking, so the configured
+            # language is not evidence of the video's language; use "und".
             "language": str(
                 snippet.get("defaultLanguage")
                 or snippet.get("defaultAudioLanguage")
-                or self.config.relevance_language
+                or "und"
             ),
             "geography": self.config.region_code,
             "brand": None,

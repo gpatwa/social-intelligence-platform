@@ -57,6 +57,8 @@ class FakeConnector:
                 "active_rules": 1,
                 "videos_discovered": 1,
                 "events_emitted": 1,
+                "stats_enrichment_failures": 1,
+                "videos_missing_stats": 1,
             },
         )
 
@@ -131,6 +133,8 @@ class ExternalYouTubeCollectorTests(unittest.TestCase):
         self.assertEqual(metric["status"], "SUCCESS")
         self.assertEqual(metric["search_calls_remaining"], 94)
         self.assertEqual(metric["core_units_remaining"], 9499)
+        self.assertEqual(metric["stats_enrichment_failures"], 1)
+        self.assertEqual(metric["videos_missing_stats"], 1)
 
         records = files.files[event_upload].decode("utf-8").splitlines()
         self.assertEqual(len(records), 1)
