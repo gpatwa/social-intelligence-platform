@@ -32,14 +32,15 @@ Decided 2026-10-17 by the product owner. Builds on
 | Window | 14-day evidence window; collectors look back 6 hours per run |
 | Exclude | crypto, giveaways, income claims without method, course promotions, reposts |
 
-## Proposed collector settings (not applied)
+## Collector settings
 
 These are GitHub repository variables. Changing them alters what the live
-collectors fetch and spend, so they are applied only on explicit approval.
+collectors fetch and spend, so they are applied only on explicit approval. `YOUTUBE_SEARCH_EXPRESSION`
+was applied on 2026-10-17; the rest are proposed and not applied.
 
 | Variable | Current | Proposed |
 |---|---|---|
-| `YOUTUBE_SEARCH_EXPRESSION` | `Acme\|GlowUpChallenge` (demo terms) | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"AI agents in production"\|"MCP server"\|"agent evaluation"` |
+| `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-10-17** (was `Acme\|GlowUpChallenge`) | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"AI agents in production"\|"MCP server"\|"agent evaluation"` |
 | `YOUTUBE_CHANNEL_IDS` | unset | the supplied channel IDs |
 | `X_SEARCH_EXPRESSION` | unset | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "agent evals" OR "MCP server") lang:en -is:retweet -is:reply` |
 | `X_ACCOUNT_HANDLES` | unset | the supplied handles |
@@ -64,8 +65,8 @@ otherwise keep the default and accept a few unrelated trend events.
 
 ## Verified on 2026-10-17
 
-- YouTube collector: last run `SUCCESS`, `HEALTHY`, 13 videos, but it is
-  searching the demo terms above, so its data is not pilot evidence.
+- YouTube collector: last run `SUCCESS`, `HEALTHY`, 13 videos, on the old demo
+  terms; data collected before the 2026-10-17 change is not pilot evidence.
 - X collector: skipped on schedule because `ENABLE_X_COLLECTOR` is not set,
   and no query, hashtag or account variables are configured.
 - Tenant: collectors write to tenant `demo`. Decide whether the pilot uses a
