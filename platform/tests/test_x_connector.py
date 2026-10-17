@@ -14,6 +14,7 @@ from social_intelligence.connectors.x import (
     XConnector,
     XConnectorConfig,
     XPaginationLimitReached,
+    XReadLedger,
 )
 
 
@@ -157,6 +158,117 @@ class XConnectorTests(unittest.TestCase):
         self.assertTrue(all(event.event_type == "social.trend.observed" for event in batch.events))
         self.assertEqual(batch.events[0].attributes["trend_rank"], "1")
         self.assertEqual(batch.events[0].attributes["trend_location"], "San Francisco")
+
+
+class XReadBudgetTests(unittest.TestCase):
+    def connector(self, transport, observer=None, **overrides):
+        values = {"tenant_id": "tenant-a", "source_id": "x-api"}
+        values.update(overrides)
+        return XConnector(
+            bearer_token="test-token",
+            config=XConnectorConfig(**values),
+            transport=transport,
+            clock=lambda: NOW,
+            sleeper=lambda _: None,
+            quota_observer=observer,
+        )
+
+    def spent(self, reads_today, reads_this_month=None, day="2026-08-08"):
+        quota = {
+            "x_read_day": day,
+            "x_read_month": day[:7],
+            "x_reads_today": reads_today,
+            "x_reads_this_month": reads_today if reads_this_month is None else reads_this_month,
+        }
+        return ConnectorCheckpoint(quota=quota, updated_at=NOW)
+
+    def test_page_size_shrinks_to_the_remaining_budget_and_reads_are_counted(self):
+        transport = FixtureTransport()
+        batch = self.connector(transport, daily_read_budget=50).collect(
+            [CollectionRule("brand", "keyword", "Acme")], ConnectorCheckpoint.empty(NOW)
+        )
+        self.assertEqual(transport.calls[0][1]["max_results"], "50")
+        self.assertEqual(batch.statistics["reads_used"], 1)
+        self.assertEqual(batch.statistics["reads_remaining_today"], 49)
+        self.assertEqual(batch.checkpoint.quota["x_reads_today"], 1)
+        self.assertEqual(batch.statistics["read_budget_exhausted"], 0)
+
+    def test_exhausted_budget_makes_no_request_and_keeps_the_cursor(self):
+        transport = FixtureTransport()
+        checkpoint = self.spent(1_995)
+        batch = self.connector(transport).collect(
+            [CollectionRule("brand", "keyword", "Acme")], checkpoint
+        )
+        self.assertEqual(transport.calls, [])
+        self.assertEqual(batch.events, ())
+        self.assertNotIn("brand", batch.checkpoint.cursors)
+        self.assertEqual(batch.statistics["read_budget_exhausted"], 1)
+
+    def test_monthly_budget_applies_across_days(self):
+        transport = FixtureTransport()
+        checkpoint = self.spent(0, reads_this_month=29_995)
+        batch = self.connector(transport).collect(
+            [CollectionRule("brand", "keyword", "Acme")], checkpoint
+        )
+        self.assertEqual(transport.calls, [])
+        self.assertEqual(batch.statistics["read_budget_exhausted"], 1)
+
+    def test_ledger_resets_daily_and_monthly(self):
+        quota = {"x_read_day": "2026-08-07", "x_read_month": "2026-08", "x_reads_today": 1_999, "x_reads_this_month": 5_000}
+        ledger = XReadLedger.from_quota(quota, NOW, daily_budget=2_000, monthly_budget=30_000)
+        self.assertEqual((ledger.reads_today, ledger.reads_this_month), (0, 5_000))
+        quota["x_read_month"] = "2026-07"
+        ledger = XReadLedger.from_quota(quota, NOW, daily_budget=2_000, monthly_budget=30_000)
+        self.assertEqual((ledger.reads_today, ledger.reads_this_month), (0, 0))
+
+    def test_later_rules_stop_when_the_budget_runs_out_mid_run(self):
+        transport = FixtureTransport()
+        batch = self.connector(transport, daily_read_budget=10).collect(
+            [CollectionRule("brand", "keyword", "Acme"), CollectionRule("owned", "account", "Acme")],
+            ConnectorCheckpoint.empty(NOW),
+        )
+        self.assertEqual(len(transport.calls), 1)
+        self.assertIn("brand", batch.checkpoint.cursors)
+        self.assertNotIn("owned", batch.checkpoint.cursors)
+        self.assertEqual(len(batch.events), 1)
+        self.assertEqual(batch.statistics["read_budget_exhausted"], 1)
+
+    def test_trends_are_capped_and_counted_and_skipped_when_exhausted(self):
+        trends = json.loads(TRENDS_FIXTURE.read_text())
+        calls = []
+
+        def transport(path, params):
+            calls.append(params)
+            return trends
+
+        batch = self.connector(
+            transport, trends_woeid=2487956, trends_location="San Francisco", daily_read_budget=5
+        ).collect([CollectionRule("sf-trends", "trend", "woeid:2487956")], ConnectorCheckpoint.empty(NOW))
+        self.assertEqual(calls[0]["max_trends"], "5")
+        self.assertEqual(batch.statistics["reads_used"], 3)
+
+        calls.clear()
+        batch = self.connector(
+            transport, trends_woeid=2487956, trends_location="San Francisco"
+        ).collect([CollectionRule("sf-trends", "trend", "woeid:2487956")], self.spent(2_000))
+        self.assertEqual(calls, [])
+        self.assertEqual(batch.statistics["read_budget_exhausted"], 1)
+
+    def test_billed_reads_are_persisted_before_a_later_failure(self):
+        snapshots = []
+        response = json.loads(FIXTURE.read_text())
+        response["meta"]["next_token"] = "next"
+        with self.assertRaises(XPaginationLimitReached):
+            self.connector(FixtureTransport(response), observer=snapshots.append).collect(
+                [CollectionRule("brand", "keyword", "Acme")], ConnectorCheckpoint.empty(NOW)
+            )
+        self.assertEqual(snapshots[-1]["x_reads_today"], 1)
+
+    def test_budget_configuration_is_validated(self):
+        with self.assertRaises(ValueError):
+            XConnectorConfig(tenant_id="t", source_id="s", daily_read_budget=100, monthly_read_budget=50)
+        with self.assertRaises(ValueError):
+            XConnectorConfig(tenant_id="t", source_id="s", monthly_read_budget=3_000_001)
 
 
 if __name__ == "__main__":

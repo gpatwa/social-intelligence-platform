@@ -113,6 +113,51 @@ class ExternalXCollectorTests(unittest.TestCase):
         self.assertEqual(metric["requests_remaining"], 8)
         self.assertEqual(json.loads(files.files[event_path]) ["source_object_id"], "post-1")
 
+    def test_environment_reads_budgets_page_size_and_disables_trends(self):
+        environment = {
+            "DATABRICKS_HOST": "https://dbc.example.com",
+            "DATABRICKS_TOKEN": "token",
+            "X_BEARER_TOKEN": "bearer-token",
+            "X_SEARCH_EXPRESSION": "LangGraph",
+            "X_TRENDS_WOEID": "none",
+            "X_TRENDS_LOCATION": "San Francisco",
+            "X_MAX_RESULTS_PER_PAGE": "50",
+            "X_DAILY_READ_BUDGET": "500",
+            "X_MONTHLY_READ_BUDGET": "9000",
+        }
+        config = ExternalXConfig.from_environment(environment)
+        self.assertIsNone(config.trends_woeid)
+        self.assertEqual([rule.rule_type for rule in config.collection_rules()], ["keyword"])
+        self.assertEqual((config.max_results_per_page, config.daily_read_budget, config.monthly_read_budget), (50, 500, 9000))
+        with self.assertRaises(ValueError):
+            ExternalXConfig.from_environment({**environment, "X_DAILY_READ_BUDGET": "10000"})
+
+    def test_metric_reports_read_spend_and_remaining_budget(self):
+        files = MemoryFiles()
+
+        class FakeConnector:
+            def collect(self, rules, checkpoint):
+                return ConnectorBatch(
+                    events=(),
+                    checkpoint=ConnectorCheckpoint(
+                        quota={
+                            "x_requests_used": 1, "x_requests_limit": 2,
+                            "x_reads_today": 120, "x_reads_this_month": 900,
+                            "x_daily_read_budget": 2000, "x_monthly_read_budget": 30000,
+                        },
+                        updated_at=NOW,
+                    ),
+                    statistics={"active_rules": 1, "reads_used": 20, "read_budget_exhausted": 0},
+                )
+
+        metric = ExternalXCollector(
+            self.config, files, connector_factory=lambda config, observer: FakeConnector(), clock=lambda: NOW
+        ).run()
+        self.assertEqual(metric["reads_used"], 20)
+        self.assertEqual(metric["reads_remaining_today"], 1880)
+        self.assertEqual(metric["reads_remaining_month"], 29100)
+        self.assertEqual(metric["read_budget_exhausted"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

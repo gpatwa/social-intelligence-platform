@@ -43,6 +43,12 @@ metric_schema = T.StructType(
         T.StructField("core_units_remaining", T.LongType()),
         T.StructField("requests_used", T.LongType()),
         T.StructField("requests_remaining", T.LongType()),
+        T.StructField("reads_used", T.LongType()),
+        T.StructField("reads_today", T.LongType()),
+        T.StructField("reads_remaining_today", T.LongType()),
+        T.StructField("reads_this_month", T.LongType()),
+        T.StructField("reads_remaining_month", T.LongType()),
+        T.StructField("read_budget_exhausted", T.LongType()),
         T.StructField("event_path", T.StringType()),
         T.StructField("error_type", T.StringType()),
     ]
@@ -63,6 +69,12 @@ else:
         "trends_discovered",
         "requests_used",
         "requests_remaining",
+        "reads_used",
+        "reads_today",
+        "reads_remaining_today",
+        "reads_this_month",
+        "reads_remaining_month",
+        "read_budget_exhausted",
     ):
         if column_name not in existing_columns:
             spark.sql(
