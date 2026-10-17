@@ -27,7 +27,7 @@ Decided 2026-10-17 by the product owner. Builds on
 |---|---|
 | Topics | agent framework selection; production agent reliability; agent evaluation and observability; MCP in the enterprise; agent governance and security |
 | Named frameworks | LangGraph, CrewAI, Microsoft Agent Framework, OpenAI Agents SDK, Google ADK, PydanticAI |
-| Accounts and channels | **To be supplied by the product owner** (5-10 trusted practitioners and channels). Not guessed. |
+| Accounts and channels | Starter set approved 2026-10-17; see Trusted sources below |
 | Language and geography | English, global (YouTube region code stays `US` for ranking) |
 | Window | 14-day evidence window; collectors look back 6 hours per run |
 | Exclude | crypto, giveaways, income claims without method, course promotions, reposts |
@@ -42,16 +42,53 @@ applied on 2026-10-17; channel IDs and account handles await the product owner.
 | Variable | Current | Proposed |
 |---|---|---|
 | `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-10-17 (v2)** | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"OpenAI Agents SDK"\|"agent evaluation"\|"AI agents in production"\|"enterprise MCP" -crypto -trading` |
-| `YOUTUBE_CHANNEL_IDS` | unset | the supplied channel IDs |
+| `YOUTUBE_CHANNEL_IDS` | **Applied 2026-10-17** | AI Engineer, LangChain (IDs below) |
 | `X_SEARCH_EXPRESSION` | **Applied 2026-10-17 (v2)** | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "OpenAI Agents SDK" OR "Google ADK" OR PydanticAI OR "agent evals" OR "agent evaluation" OR (MCP (enterprise OR production OR governance OR security))) lang:en -is:retweet -is:reply -has:cashtags -crypto -airdrop -giveaway -memecoin` |
-| `X_ACCOUNT_HANDLES` | unset | the supplied handles |
-| `X_MAX_REQUESTS_PER_RUN` | **Applied 2026-10-17** | `2` |
+| `X_ACCOUNT_HANDLES` | **Applied 2026-10-17** | 10 handles below |
+| `X_MAX_REQUESTS_PER_RUN` | **Applied 2026-10-17** | `11` (1 keyword search + 10 account searches) |
 | `ENABLE_X_COLLECTOR` | **Applied 2026-10-17** (budget accepted) | `true` |
 | `X_TRENDS_WOEID` | **Applied 2026-10-17** | `none` (San Francisco trends off) |
 | `X_DAILY_READ_BUDGET` / `X_MONTHLY_READ_BUDGET` | defaults since PR 21 | `2000` / `30000` |
 
 Trends were disabled with `X_TRENDS_WOEID=none` once the read-budget change
 (PR 21) made that possible, so both X requests per run go to search.
+
+## Trusted sources (starter set, approved 2026-10-17)
+
+Chosen for reach and practitioner credibility on agent stacks and evaluation.
+YouTube IDs and subscriber counts were read from the channel pages on
+2026-10-17. X handles come from public knowledge and were not checked against
+the X API; a handle that does not exist simply returns no posts.
+
+| YouTube channel | Channel ID | Subscribers |
+|---|---|---|
+| AI Engineer (conference talks) | `UCLKPca3kwwd-B59HNr-_lvA` | ~751K |
+| LangChain (framework maintainer) | `UCC-lyoTfSrcJzA1ab3APAgw` | ~208K |
+
+Held back for quota: DeepLearning.AI `UCcIXc5mJsHVYTZR1maL5l9w` (~734K),
+Latent Space `UCxBcwypKK-W3GHd_RZ9FZrQ` (~322K), Dave Ebbelaar
+`UCn8ujwUInbJkBhffxqAPBVQ` (~301K), Cole Medin `UCMwVTLZIRRUyyVrkjDpn4pA`
+(~229K), Sam Witteveen `UC55ODQSvARtgSyc8ThfiepQ` (~136K). Each channel costs
+one search call per run against roughly 95 usable search calls per day, so
+1 keyword + 2 channels at an hourly schedule (72/day) is the safe maximum.
+Adding more needs channel collection through uploads playlists (1 unit per
+call) instead of search.
+
+| X handle | Why |
+|---|---|
+| `hwchase17` | Harrison Chase, LangChain / LangGraph |
+| `joaomdmoura` | João Moura, CrewAI |
+| `samuel_colvin` | Samuel Colvin, Pydantic / PydanticAI |
+| `jerryjliu0` | Jerry Liu, LlamaIndex |
+| `simonw` | Simon Willison, hands-on LLM tooling and security |
+| `HamelHusain` | Hamel Husain, LLM evaluation practice |
+| `sh_reya` | Shreya Shankar, evaluation research |
+| `eugeneyan` | Eugene Yan, applied LLM systems |
+| `swyx` | swyx, AI Engineer / Latent Space |
+| `chipro` | Chip Huyen, AI engineering |
+
+Each handle is one search request per run, so `X_MAX_REQUESTS_PER_RUN` is 11.
+Spend stays bounded by the read budget (2,000 reads per day).
 
 ## Cost and quota
 
