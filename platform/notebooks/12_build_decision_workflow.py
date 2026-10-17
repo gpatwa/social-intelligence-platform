@@ -115,6 +115,31 @@ spark.sql(
     """
 )
 
+# Record every published opportunity before recommendations reference it, so
+# lineage survives the next CREATE OR REPLACE of gold_opportunities.
+spark.sql(
+    f"""
+    MERGE INTO {ns}.`decision_opportunity_history` AS target
+    USING {ns}.`gold_opportunities` AS snapshot
+    ON target.opportunity_id = snapshot.opportunity_id
+    WHEN MATCHED THEN UPDATE SET
+      last_seen_at = snapshot.refreshed_at,
+      last_status = snapshot.status,
+      opportunity_score = snapshot.opportunity_score
+    WHEN NOT MATCHED THEN INSERT (
+      opportunity_id, tenant_id, opportunity_type, signal_type, signal_key,
+      signal_ts, product_id, title, evidence_ref, opportunity_score,
+      last_status, first_seen_at, last_seen_at, recorded_from
+    ) VALUES (
+      snapshot.opportunity_id, snapshot.tenant_id, snapshot.opportunity_type,
+      snapshot.signal_type, snapshot.signal_key, snapshot.signal_ts,
+      snapshot.product_id, snapshot.title, snapshot.evidence_ref,
+      snapshot.opportunity_score, snapshot.status, snapshot.refreshed_at,
+      snapshot.refreshed_at, 'gold_opportunities'
+    )
+    """
+)
+
 # The generator proposes only mapped, material opportunities. A rerun can
 # refresh untouched proposals but cannot overwrite an approval or rejection.
 spark.sql(
