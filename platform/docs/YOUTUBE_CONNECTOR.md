@@ -39,6 +39,14 @@ control_source_registry + control_collection_rules
 - Authentication, malformed requests, disabled APIs, and exhausted provider
   quotas fail without retry loops.
 - Videos with comments disabled remain valid video-only results.
+- If `videos.list` reports `quotaExceeded`, videos are still emitted from search
+  metadata with zero engagement. Run metrics report
+  `stats_enrichment_failures` and `videos_missing_stats` so this degradation is
+  visible rather than silent.
+- `language` comes from the video's declared `defaultLanguage` or
+  `defaultAudioLanguage` (fetched in the same 1-unit `videos.list` call). When
+  neither is declared it is `und`; `relevanceLanguage` only biases search
+  ranking and is not used as a label.
 
 ## Quota controls
 
