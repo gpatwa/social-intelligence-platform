@@ -41,9 +41,9 @@ applied on 2026-10-17; channel IDs and account handles await the product owner.
 
 | Variable | Current | Proposed |
 |---|---|---|
-| `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-10-17** (was `Acme\|GlowUpChallenge`) | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"AI agents in production"\|"MCP server"\|"agent evaluation"` |
+| `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-10-17 (v2)** | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"OpenAI Agents SDK"\|"agent evaluation"\|"AI agents in production"\|"enterprise MCP" -crypto -trading` |
 | `YOUTUBE_CHANNEL_IDS` | unset | the supplied channel IDs |
-| `X_SEARCH_EXPRESSION` | **Applied 2026-10-17** | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "agent evals" OR "MCP server") lang:en -is:retweet -is:reply` |
+| `X_SEARCH_EXPRESSION` | **Applied 2026-10-17 (v2)** | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "OpenAI Agents SDK" OR "Google ADK" OR PydanticAI OR "agent evals" OR "agent evaluation" OR (MCP (enterprise OR production OR governance OR security))) lang:en -is:retweet -is:reply -has:cashtags -crypto -airdrop -giveaway -memecoin` |
 | `X_ACCOUNT_HANDLES` | unset | the supplied handles |
 | `X_MAX_REQUESTS_PER_RUN` | **Applied 2026-10-17** | `2` |
 | `ENABLE_X_COLLECTOR` | **Applied 2026-10-17** (budget accepted) | `true` |
@@ -73,3 +73,37 @@ needs a workflow change.
   first scheduled run (at :29) not yet checked.
 - Tenant: collectors write to tenant `demo`. Decide whether the pilot uses a
   separate tenant before storing reviewed records.
+
+## First evidence review (2026-10-17, v1 queries)
+
+Manual runs at 03:45 UTC, read from the landed event files. Judgments below are
+from keyword counts and reading samples, not a full hand-labelled set.
+
+**X** (2 requests, 93 billed reads):
+- 73 posts from 70 distinct authors, all English, no near-duplicates: good
+  diversity.
+- 39 of 73 posts matched only "MCP server", mostly generic tool chatter rather
+  than stack decisions. Named frameworks were rare (LangGraph 4, CrewAI 2,
+  Microsoft Agent Framework 1).
+- Noise: 4 crypto posts (including a token contract launch), engagement-bait
+  listicles; 32 of 73 posts had zero engagement.
+- 20 San Francisco trends (sports, wildfires, local news): irrelevant, about a
+  fifth of the reads.
+
+**YouTube** (6 search calls, 13 videos):
+- 13 distinct small channels, on-topic titles (MCP servers, CrewAI, Microsoft
+  Agent Framework, sandboxing), but low authority and a heavy MCP skew.
+- Statistics are empty for every video, so views and likes are recorded as 0
+  and ranking cannot use momentum. Needs investigation in the YouTube
+  connector's statistics call.
+- At least 3 titles are Portuguese or Vietnamese while the payload says `en`:
+  the language field is taken from configuration, not detected.
+
+**Changes made (v2 queries above):** dropped bare "MCP server" in favour of MCP
+with enterprise, production, governance or security terms; added OpenAI Agents
+SDK, Google ADK, PydanticAI and agent evaluation; excluded cashtags, crypto,
+airdrops, giveaways and memecoins on X, and crypto and trading on YouTube.
+
+**Still open:** disable San Francisco trends with `X_TRENDS_WOEID=none` once the
+read-budget PR merges; add trusted account handles and channel IDs; fix YouTube
+statistics; detect language instead of assuming it.
