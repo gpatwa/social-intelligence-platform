@@ -35,21 +35,23 @@ Decided 2026-10-17 by the product owner. Builds on
 ## Collector settings
 
 These are GitHub repository variables. Changing them alters what the live
-collectors fetch and spend, so they are applied only on explicit approval. `YOUTUBE_SEARCH_EXPRESSION`
-was applied on 2026-10-17; the rest are proposed and not applied.
+collectors fetch and spend, so they are applied only on explicit approval. `YOUTUBE_SEARCH_EXPRESSION`,
+`X_SEARCH_EXPRESSION`, `X_MAX_REQUESTS_PER_RUN` and `ENABLE_X_COLLECTOR` were
+applied on 2026-10-17; channel IDs and account handles await the product owner.
 
 | Variable | Current | Proposed |
 |---|---|---|
 | `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-10-17** (was `Acme\|GlowUpChallenge`) | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"AI agents in production"\|"MCP server"\|"agent evaluation"` |
 | `YOUTUBE_CHANNEL_IDS` | unset | the supplied channel IDs |
-| `X_SEARCH_EXPRESSION` | unset | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "agent evals" OR "MCP server") lang:en -is:retweet -is:reply` |
+| `X_SEARCH_EXPRESSION` | **Applied 2026-10-17** | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "agent evals" OR "MCP server") lang:en -is:retweet -is:reply` |
 | `X_ACCOUNT_HANDLES` | unset | the supplied handles |
-| `X_MAX_REQUESTS_PER_RUN` | unset (default 10) | `2` |
-| `ENABLE_X_COLLECTOR` | unset (collector skipped) | `true`, only after the budget below is accepted |
+| `X_MAX_REQUESTS_PER_RUN` | **Applied 2026-10-17** | `2` |
+| `ENABLE_X_COLLECTOR` | **Applied 2026-10-17** (budget accepted) | `true` |
 
-The proposed `X_SEARCH_EXPRESSION` drops X's default San Francisco trends. Set
-`X_TRENDS_WOEID` to empty only if the connector accepts an empty value;
-otherwise keep the default and accept a few unrelated trend events.
+The workflow falls back to San Francisco trends (`X_TRENDS_WOEID` default
+`2487956`) when the variable is empty, so each run also makes one trends
+request. With a cap of 2 that leaves one search page per run. Removing trends
+needs a workflow change.
 
 ## Cost and quota
 
@@ -67,7 +69,7 @@ otherwise keep the default and accept a few unrelated trend events.
 
 - YouTube collector: last run `SUCCESS`, `HEALTHY`, 13 videos, on the old demo
   terms; data collected before the 2026-10-17 change is not pilot evidence.
-- X collector: skipped on schedule because `ENABLE_X_COLLECTOR` is not set,
-  and no query, hashtag or account variables are configured.
+- X collector: enabled 2026-10-17 with the query above and a 2-request cap;
+  first scheduled run (at :29) not yet checked.
 - Tenant: collectors write to tenant `demo`. Decide whether the pilot uses a
   separate tenant before storing reviewed records.
