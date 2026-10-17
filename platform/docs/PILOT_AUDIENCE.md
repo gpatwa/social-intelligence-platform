@@ -47,20 +47,19 @@ applied on 2026-10-17; channel IDs and account handles await the product owner.
 | `X_ACCOUNT_HANDLES` | unset | the supplied handles |
 | `X_MAX_REQUESTS_PER_RUN` | **Applied 2026-10-17** | `2` |
 | `ENABLE_X_COLLECTOR` | **Applied 2026-10-17** (budget accepted) | `true` |
+| `X_TRENDS_WOEID` | **Applied 2026-10-17** | `none` (San Francisco trends off) |
+| `X_DAILY_READ_BUDGET` / `X_MONTHLY_READ_BUDGET` | defaults since PR 21 | `2000` / `30000` |
 
-The workflow falls back to San Francisco trends (`X_TRENDS_WOEID` default
-`2487956`) when the variable is empty, so each run also makes one trends
-request. With a cap of 2 that leaves one search page per run. Removing trends
-needs a workflow change.
+Trends were disabled with `X_TRENDS_WOEID=none` once the read-budget change
+(PR 21) made that possible, so both X requests per run go to search.
 
 ## Cost and quota
 
-- **X:** $0.005 per post read (docs.x.com, checked 2026-10-16). The collector runs
-  hourly with up to 100 posts per page. At the default of 10 requests per run
-  the worst case is 24,000 reads/day, about $120/day. At 2 requests per run the
-  worst case is 4,800 reads/day, about $24/day or $168/week. Narrow queries
-  return fewer posts, so real cost should be lower. Pay-per-use is capped at
-  3 million reads per month.
+- **X:** $0.005 per post read (docs.x.com, checked 2026-10-16). Since PR 21 the
+  collector enforces 2,000 reads per UTC day and 30,000 per UTC month, about
+  $10/day and $150/month at most, and reports reads used and remaining in each
+  run metric. Prepaid X credits remain the hard ceiling. The first pilot run
+  read 93 resources (73 posts, 20 trends), about $0.47.
 - **YouTube:** the collector used 5 search calls per run on 2026-10-17 with
   90 search calls remaining in its budget; one page per rule. Recheck quota
   after adding rules.
@@ -104,6 +103,9 @@ with enterprise, production, governance or security terms; added OpenAI Agents
 SDK, Google ADK, PydanticAI and agent evaluation; excluded cashtags, crypto,
 airdrops, giveaways and memecoins on X, and crypto and trading on YouTube.
 
-**Still open:** disable San Francisco trends with `X_TRENDS_WOEID=none` once the
-read-budget PR merges; add trusted account handles and channel IDs; fix YouTube
-statistics; detect language instead of assuming it.
+**Follow-up (2026-10-17):** trends disabled; PR 22 now reports YouTube stats
+failures (`stats_enrichment_failures`, `videos_missing_stats`) and labels
+undeclared video language `und`. The root cause of the empty statistics will
+show in the first run that finds videos. Still open: trusted account handles and
+channel IDs from the product owner; re-review evidence after 2-3 days of v2
+queries.
