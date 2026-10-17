@@ -43,4 +43,7 @@ jobs:
           X_LOOKBACK_HOURS: ${{ vars.X_LOOKBACK_HOURS || '6' }}
           X_MAX_SEARCH_PAGES_PER_RULE: ${{ vars.X_MAX_SEARCH_PAGES_PER_RULE || '1' }}
           X_MAX_REQUESTS_PER_RUN: ${{ vars.X_MAX_REQUESTS_PER_RUN || '10' }}
+          X_MAX_RESULTS_PER_PAGE: ${{ vars.X_MAX_RESULTS_PER_PAGE || '100' }}
+          X_DAILY_READ_BUDGET: ${{ vars.X_DAILY_READ_BUDGET || '2000' }}
+          X_MONTHLY_READ_BUDGET: ${{ vars.X_MONTHLY_READ_BUDGET || '30000' }}
         run: python -m social_intelligence.connectors.external_x

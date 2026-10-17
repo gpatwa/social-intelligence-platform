@@ -69,6 +69,9 @@ class ExternalXConfig:
     lookback_hours: int = 6
     max_search_pages_per_rule: int = 1
     max_requests_per_run: int = 100
+    max_results_per_page: int = 100
+    daily_read_budget: int = 2_000
+    monthly_read_budget: int = 30_000
 
     def __post_init__(self) -> None:
         for name, value in (("catalog", self.catalog), ("schema", self.schema)):
@@ -92,6 +95,12 @@ class ExternalXConfig:
             raise ValueError("X_MAX_SEARCH_PAGES_PER_RULE must be between 1 and 10")
         if not 1 <= self.max_requests_per_run <= 450:
             raise ValueError("X_MAX_REQUESTS_PER_RUN must be between 1 and 450")
+        if not 10 <= self.max_results_per_page <= 100:
+            raise ValueError("X_MAX_RESULTS_PER_PAGE must be between 10 and 100")
+        if not 1 <= self.daily_read_budget <= self.monthly_read_budget <= 3_000_000:
+            raise ValueError(
+                "X_DAILY_READ_BUDGET and X_MONTHLY_READ_BUDGET must satisfy 1 <= daily <= monthly <= 3,000,000"
+            )
         if self.trends_woeid is not None and self.trends_woeid <= 0:
             raise ValueError("X_TRENDS_WOEID must be positive")
         if self.trends_woeid is not None and not self.trends_location.strip():
@@ -117,6 +126,10 @@ class ExternalXConfig:
             value.strip() for value in values.get(name, "").split(",") if value.strip()
         )
         trends_woeid_raw = values.get("X_TRENDS_WOEID", "").strip()
+        # "none" lets the workflow disable trends; an empty variable falls back
+        # to the workflow default because GitHub expressions treat it as unset.
+        if trends_woeid_raw.lower() in {"none", "off"}:
+            trends_woeid_raw = ""
         try:
             trends_woeid = int(trends_woeid_raw) if trends_woeid_raw else None
         except ValueError as error:
@@ -138,6 +151,9 @@ class ExternalXConfig:
             lookback_hours=_integer(values, "X_LOOKBACK_HOURS", 6),
             max_search_pages_per_rule=_integer(values, "X_MAX_SEARCH_PAGES_PER_RULE", 1),
             max_requests_per_run=_integer(values, "X_MAX_REQUESTS_PER_RUN", 100),
+            max_results_per_page=_integer(values, "X_MAX_RESULTS_PER_PAGE", 100),
+            daily_read_budget=_integer(values, "X_DAILY_READ_BUDGET", 2_000),
+            monthly_read_budget=_integer(values, "X_MONTHLY_READ_BUDGET", 30_000),
         )
 
     @property
@@ -183,6 +199,9 @@ def _default_connector(
             lookback_hours=config.lookback_hours,
             max_search_pages_per_rule=config.max_search_pages_per_rule,
             max_requests_per_run=config.max_requests_per_run,
+            max_results_per_page=config.max_results_per_page,
+            daily_read_budget=config.daily_read_budget,
+            monthly_read_budget=config.monthly_read_budget,
             trends_woeid=config.trends_woeid,
             trends_location=config.trends_location,
             max_trends_per_run=config.max_trends_per_run,
@@ -322,6 +341,12 @@ class ExternalXCollector:
             quota_values.get("x_requests_limit"), self.config.max_requests_per_run
         )
         requests_used = _nonnegative_integer(quota_values.get("x_requests_used"), 0)
+        reads_today = _nonnegative_integer(quota_values.get("x_reads_today"), 0)
+        reads_this_month = _nonnegative_integer(quota_values.get("x_reads_this_month"), 0)
+        daily_budget = _nonnegative_integer(quota_values.get("x_daily_read_budget"), self.config.daily_read_budget)
+        monthly_budget = _nonnegative_integer(
+            quota_values.get("x_monthly_read_budget"), self.config.monthly_read_budget
+        )
         return {
             "run_id": run_id,
             "tenant_id": self.config.tenant_id,
@@ -337,6 +362,12 @@ class ExternalXCollector:
             "events_emitted": int(stats.get("events_emitted", 0)),
             "requests_used": requests_used,
             "requests_remaining": max(0, request_limit - requests_used),
+            "reads_used": int(stats.get("reads_used", 0)),
+            "reads_today": reads_today,
+            "reads_remaining_today": max(0, daily_budget - reads_today),
+            "reads_this_month": reads_this_month,
+            "reads_remaining_month": max(0, monthly_budget - reads_this_month),
+            "read_budget_exhausted": int(stats.get("read_budget_exhausted", 0)),
             "event_path": event_path,
             "error_type": error_type,
         }

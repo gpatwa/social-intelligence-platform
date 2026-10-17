@@ -25,6 +25,34 @@ through the external collector pattern.
   automatically fan out into broad post searches; that is an explicit future
   policy decision to prevent unpredictable spend.
 
+## Read budget
+
+X bills pay-per-use per resource returned, so request counts alone do not bound
+spend. The connector keeps a read ledger in its checkpoint and enforces it
+before every call:
+
+- Each returned post counts as one read. Each returned trend is also counted,
+  because trend pricing is not published separately; this errs toward
+  overcounting.
+- A search page is requested only if at least 10 reads remain (the API
+  minimum), and `max_results` is reduced to what remains, so a full page cannot
+  exceed the budget. Trends requests are capped the same way.
+- Billed reads are written to the checkpoint immediately after each response,
+  so a later failure in the same run cannot hide spend.
+- When the budget runs out, the run still succeeds and lands what it already
+  read. Rules that were not fully read keep their cursors, so their window is
+  collected once budget is available again. The run metric reports
+  `read_budget_exhausted = 1`.
+- Days and months are UTC calendar periods. The X billing cycle may differ, so
+  the prepaid credit balance in the X Developer Console remains the hard
+  ceiling. Keep automatic top-up off if a hard stop is required.
+- Run metrics include `reads_used`, `reads_today`, `reads_remaining_today`,
+  `reads_this_month`, `reads_remaining_month`, and `read_budget_exhausted`.
+
+With the defaults, worst-case spend is 2,000 reads per day and 30,000 per
+month; at $0.005 per post read (X pricing page, checked 2026-10-16) that is
+about $10 per day and $150 per month.
+
 ## Configure
 
 1. Create an approved X developer project and app, then retain its bearer token
@@ -46,12 +74,15 @@ through the external collector pattern.
    | `X_SEARCH_EXPRESSION` | empty |
    | `X_HASHTAGS` | empty comma-separated list |
    | `X_ACCOUNT_HANDLES` | empty comma-separated list |
-   | `X_TRENDS_WOEID` | `2487956` (San Francisco) |
+   | `X_TRENDS_WOEID` | `2487956` (San Francisco); set `none` to disable trends |
    | `X_TRENDS_LOCATION` | `San Francisco` |
    | `X_MAX_TRENDS_PER_RUN` | `20` |
    | `X_LOOKBACK_HOURS` | `6` |
    | `X_MAX_SEARCH_PAGES_PER_RULE` | `1` |
    | `X_MAX_REQUESTS_PER_RUN` | `10` |
+   | `X_MAX_RESULTS_PER_PAGE` | `100` (10-100) |
+   | `X_DAILY_READ_BUDGET` | `2000` reads per UTC day |
+   | `X_MONTHLY_READ_BUDGET` | `30000` reads per UTC calendar month (at most 3,000,000) |
 
    Supply at least one query, hashtag, account handle, or trends WOEID. Keep
    `ENABLE_X_COLLECTOR` unset until a manual run has passed validation.

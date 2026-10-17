@@ -90,6 +90,69 @@ class XPaginationLimitReached(RuntimeError):
     """Fail closed instead of advancing a cursor beyond an unpaged result set."""
 
 
+class XReadBudgetExhausted(RuntimeError):
+    """The daily or monthly read budget cannot cover another request."""
+
+    def __init__(self, message: str, posts: Sequence[Mapping[str, Any]] = ()) -> None:
+        super().__init__(message)
+        self.posts = list(posts)
+
+
+# X bills pay-per-use per resource returned, so the ledger counts returned posts
+# and trends, not requests. Days and months are UTC calendar periods; the X
+# billing cycle may not align, so prepaid credits remain the hard ceiling.
+SEARCH_MIN_RESULTS = 10
+
+
+@dataclass
+class XReadLedger:
+    day: str
+    month: str
+    reads_today: int
+    reads_this_month: int
+    daily_budget: int
+    monthly_budget: int
+
+    @classmethod
+    def from_quota(
+        cls,
+        quota: Mapping[str, Any],
+        now: datetime,
+        *,
+        daily_budget: int,
+        monthly_budget: int,
+    ) -> "XReadLedger":
+        day = now.astimezone(timezone.utc).date().isoformat()
+        month = day[:7]
+        same_month = quota.get("x_read_month") == month
+        return cls(
+            day=day,
+            month=month,
+            reads_today=_integer(quota.get("x_reads_today")) if same_month and quota.get("x_read_day") == day else 0,
+            reads_this_month=_integer(quota.get("x_reads_this_month")) if same_month else 0,
+            daily_budget=daily_budget,
+            monthly_budget=monthly_budget,
+        )
+
+    @property
+    def remaining(self) -> int:
+        return max(0, min(self.daily_budget - self.reads_today, self.monthly_budget - self.reads_this_month))
+
+    def charge(self, reads: int) -> None:
+        self.reads_today += reads
+        self.reads_this_month += reads
+
+    def to_quota(self) -> dict[str, int | str]:
+        return {
+            "x_read_day": self.day,
+            "x_read_month": self.month,
+            "x_reads_today": self.reads_today,
+            "x_reads_this_month": self.reads_this_month,
+            "x_daily_read_budget": self.daily_budget,
+            "x_monthly_read_budget": self.monthly_budget,
+        }
+
+
 Transport = Callable[[str, Mapping[str, str]], Mapping[str, Any]]
 
 
@@ -195,10 +258,14 @@ class XConnectorConfig:
     trends_woeid: int | None = None
     trends_location: str = ""
     max_trends_per_run: int = 20
+    daily_read_budget: int = 2_000
+    monthly_read_budget: int = 30_000
 
     def __post_init__(self) -> None:
         if not self.tenant_id.strip() or not self.source_id.strip():
             raise ValueError("tenant_id and source_id are required")
+        if not 1 <= self.daily_read_budget <= self.monthly_read_budget <= 3_000_000:
+            raise ValueError("read budgets must satisfy 1 <= daily <= monthly <= 3,000,000")
         if not 1 <= self.lookback_hours <= 168:
             raise ValueError("lookback_hours must be between 1 and 168")
         if not 0 <= self.overlap_minutes <= 60:
@@ -253,11 +320,28 @@ class XConnector:
             raise ValueError("Connector clock must return a timezone-aware datetime")
         started_at = started_at.astimezone(timezone.utc)
         quota = dict(checkpoint.quota)
+        ledger = XReadLedger.from_quota(
+            quota,
+            started_at,
+            daily_budget=self.config.daily_read_budget,
+            monthly_budget=self.config.monthly_read_budget,
+        )
+        reads_at_start = ledger.reads_today
+        quota.update(ledger.to_quota())
+
+        def persist() -> None:
+            if self._quota_observer is not None:
+                self._quota_observer(dict(quota))
 
         def persist_request(used: int) -> None:
             quota.update({"x_requests_used": used, "x_requests_limit": self.config.max_requests_per_run})
-            if self._quota_observer is not None:
-                self._quota_observer(dict(quota))
+            persist()
+
+        def charge(reads: int) -> None:
+            # Persist billed reads immediately so a later failure cannot hide spend.
+            ledger.charge(reads)
+            quota.update(ledger.to_quota())
+            persist()
 
         client = XApiClient(
             bearer_token=self._bearer_token,
@@ -276,27 +360,40 @@ class XConnector:
             raise ValueError("X trend rules require trends_woeid connector configuration")
         discovered_ids: set[str] = set()
         trend_events: list[SocialEventEnvelope] = []
+        budget_exhausted = False
 
         for rule in post_rules:
-            posts = self._search_posts(client, rule, checkpoint, started_at)
+            try:
+                posts = self._search_posts(client, rule, checkpoint, started_at, ledger, charge)
+            except XReadBudgetExhausted as error:
+                # Keep posts that were already billed, but leave this rule's
+                # cursor unadvanced so the unread window is collected later.
+                budget_exhausted = True
+                posts = error.posts
             for post in posts:
                 event = self._post_event(post, rule, started_at)
                 discovered_ids.add(event.source_object_id)
                 events[event.idempotency_key] = event
+            if budget_exhausted:
+                break
             # The timestamp watermark has a deliberate overlap. It only advances
             # after every page was read, while event-file landing remains the
             # responsibility of the external runtime.
             cursors[rule.rule_id] = _format_timestamp(started_at)
 
-        if self.config.trends_woeid is not None:
-            trend_events = self._collect_trends(client, started_at)
-            if trend_rules:
-                cursors[trend_rules[0].rule_id] = _format_timestamp(started_at)
+        if self.config.trends_woeid is not None and not budget_exhausted:
+            if ledger.remaining < 1:
+                budget_exhausted = True
+            else:
+                trend_events = self._collect_trends(client, started_at, ledger.remaining, charge)
+                if trend_rules:
+                    cursors[trend_rules[0].rule_id] = _format_timestamp(started_at)
 
         quota.update(
             {
                 "x_requests_used": client.requests_used,
                 "x_requests_limit": self.config.max_requests_per_run,
+                **ledger.to_quota(),
             }
         )
         next_checkpoint = ConnectorCheckpoint(
@@ -324,6 +421,12 @@ class XConnector:
                 "events_emitted": len(events) + len(trend_events),
                 "requests_used": client.requests_used,
                 "requests_remaining": self.config.max_requests_per_run - client.requests_used,
+                "reads_used": ledger.reads_today - reads_at_start,
+                "reads_today": ledger.reads_today,
+                "reads_remaining_today": max(0, ledger.daily_budget - ledger.reads_today),
+                "reads_this_month": ledger.reads_this_month,
+                "reads_remaining_month": max(0, ledger.monthly_budget - ledger.reads_this_month),
+                "read_budget_exhausted": int(budget_exhausted),
             },
         )
 
@@ -333,6 +436,8 @@ class XConnector:
         rule: CollectionRule,
         checkpoint: ConnectorCheckpoint,
         started_at: datetime,
+        ledger: XReadLedger,
+        charge: Callable[[int], None],
     ) -> list[Mapping[str, Any]]:
         if rule.rule_type not in self.capabilities.supported_rule_types:
             raise ValueError(f"Unsupported X rule type: {rule.rule_type}")
@@ -347,11 +452,20 @@ class XConnector:
         posts: dict[str, Mapping[str, Any]] = {}
         page_token: str | None = None
         for page in range(self.config.max_search_pages_per_rule):
+            # Size the page so even a full response stays within the budget.
+            if ledger.remaining < SEARCH_MIN_RESULTS:
+                raise XReadBudgetExhausted(
+                    f"X read budget cannot cover another search page for {rule.rule_id}",
+                    list(posts.values()),
+                )
             request_params = dict(params)
+            request_params["max_results"] = str(min(self.config.max_results_per_page, ledger.remaining))
             if page_token:
                 request_params["next_token"] = page_token
             response = client.recent_search(request_params)
-            for item in response.get("data", []):
+            items = response.get("data", [])
+            charge(len(items))
+            for item in items:
                 post_id = str(item.get("id", "")).strip()
                 if post_id:
                     posts.setdefault(post_id, item)
@@ -369,16 +483,23 @@ class XConnector:
         self,
         client: XApiClient,
         collected_at: datetime,
+        reads_available: int,
+        charge: Callable[[int], None],
     ) -> list[SocialEventEnvelope]:
         if self.config.trends_woeid is None:
             return []
+        max_trends = min(self.config.max_trends_per_run, reads_available)
         response = client.trends_by_woeid(
             woeid=self.config.trends_woeid,
-            max_trends=self.config.max_trends_per_run,
+            max_trends=max_trends,
         )
+        # Trend pricing is not published separately; count each returned trend
+        # as a read so the budget errs toward overcounting spend.
+        returned = list(response.get("data", []))
+        charge(len(returned))
         trends = [
             item
-            for item in response.get("data", [])
+            for item in returned
             if str(item.get("trend_name", "")).strip()
         ]
         trends.sort(
