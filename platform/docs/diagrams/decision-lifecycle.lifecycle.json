@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Decision Lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1085,
+      566
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Evidence to outcome"
+    },
+    {
+      "id": "exits",
+      "label": "Loop and exits"
+    }
+  ],
+  "states": [
+    {
+      "id": "opportunity",
+      "type": "start",
+      "label": "Opportunity",
+      "sublabel": "OPEN, score ≥ 45",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "cited signal"
+    },
+    {
+      "id": "recommendation",
+      "type": "active",
+      "label": "Recommendation",
+      "sublabel": "PROPOSED draft",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "evidence ref"
+    },
+    {
+      "id": "review",
+      "type": "decision",
+      "label": "Human review",
+      "sublabel": "APPROVE · EDIT · REJECT",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "approval gate"
+    },
+    {
+      "id": "experiment",
+      "type": "active",
+      "label": "Experiment",
+      "sublabel": "DRAFT, aggregate only",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "no activation"
+    },
+    {
+      "id": "go",
+      "type": "success",
+      "label": "GO",
+      "sublabel": "target met, safe",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "outcome"
+    },
+    {
+      "id": "iterate",
+      "type": "failure",
+      "label": "ITERATE",
+      "sublabel": "one target missed",
+      "lane": "exits",
+      "col": 1,
+      "tag": "recoverable"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Rejected",
+      "sublabel": "reviewer declined",
+      "lane": "exits",
+      "col": 0,
+      "tag": "terminal"
+    },
+    {
+      "id": "stop",
+      "type": "failure",
+      "label": "STOP",
+      "sublabel": "no benefit or unsafe",
+      "lane": "exits",
+      "col": 2,
+      "tag": "terminal"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "reject",
+      "from": "review",
+      "to": "rejected",
+      "label": "REJECT",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "miss",
+      "from": "experiment",
+      "to": "iterate",
+      "label": "miss",
+      "labelDy": 24
+    },
+    {
+      "id": "revise",
+      "from": "iterate",
+      "to": "recommendation",
+      "label": "revise brief",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          479,
+          307
+        ],
+        [
+          479,
+          100
+        ],
+        [
+          248,
+          100
+        ]
+      ],
+      "labelAt": [
+        364,
+        100
+      ]
+    },
+    {
+      "id": "halt",
+      "from": "experiment",
+      "to": "stop",
+      "label": "STOP",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Main path",
+      "items": [
+        "OPEN opportunities scoring ≥ 45 become evidence-cited recommendations"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Human gate",
+      "items": [
+        "A named reviewer approves before any experiment; activation and spend stay off"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Outcomes",
+      "items": [
+        "Aggregate-only, never causal; ITERATE revises the brief, Rejected and STOP end it"
+      ]
+    }
+  ]
+}

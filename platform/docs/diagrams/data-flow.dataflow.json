@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Social Intelligence Data Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1070,
+      490
+    ]
+  },
+  "stages": [
+    {
+      "label": "Sources"
+    },
+    {
+      "label": "Collect"
+    },
+    {
+      "label": "Lakehouse"
+    },
+    {
+      "label": "Decide"
+    },
+    {
+      "label": "Serve"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "youtube",
+      "type": "external",
+      "label": "YouTube Data API",
+      "sublabel": "keyword + channel rules",
+      "stage": 0,
+      "row": 0,
+      "tag": "daily quota"
+    },
+    {
+      "id": "x-api",
+      "type": "external",
+      "label": "X API v2",
+      "sublabel": "recent search",
+      "stage": 0,
+      "row": 2,
+      "tag": "pay per read"
+    },
+    {
+      "id": "collectors",
+      "type": "backend",
+      "label": "Collectors",
+      "sublabel": "GitHub Actions, hourly",
+      "stage": 1,
+      "row": 1,
+      "tag": "budgets enforced"
+    },
+    {
+      "id": "raw-volume",
+      "type": "database",
+      "label": "Raw volume",
+      "sublabel": "immutable NDJSON",
+      "stage": 2,
+      "row": 0,
+      "tag": "at-least-once"
+    },
+    {
+      "id": "medallion",
+      "type": "database",
+      "label": "Bronze → Gold",
+      "sublabel": "validated, idempotent",
+      "stage": 2,
+      "row": 2,
+      "tag": "Databricks"
+    },
+    {
+      "id": "evidence",
+      "type": "backend",
+      "label": "Ranked evidence",
+      "sublabel": "cited source links",
+      "stage": 3,
+      "row": 0,
+      "tag": "deterministic"
+    },
+    {
+      "id": "opportunities",
+      "type": "database",
+      "label": "Opportunities",
+      "sublabel": "+ durable history",
+      "stage": 3,
+      "row": 1,
+      "tag": "lineage"
+    },
+    {
+      "id": "review",
+      "type": "security",
+      "label": "Human review",
+      "sublabel": "authenticated append",
+      "stage": 3,
+      "row": 2,
+      "tag": "approval gate"
+    },
+    {
+      "id": "mcp",
+      "type": "frontend",
+      "label": "MCP read tools",
+      "sublabel": "tenant-scoped",
+      "stage": 4,
+      "row": 0,
+      "tag": "no mutation"
+    },
+    {
+      "id": "snowflake",
+      "type": "database",
+      "label": "Snowflake marts",
+      "sublabel": "read-only BA role",
+      "stage": 4,
+      "row": 1,
+      "tag": "curated"
+    }
+  ],
+  "flows": [
+    {
+      "id": "videos",
+      "from": "youtube",
+      "to": "collectors",
+      "label": "videos + stats",
+      "variant": "default"
+    },
+    {
+      "id": "posts",
+      "from": "x-api",
+      "to": "collectors",
+      "label": "posts",
+      "classification": "billed per read",
+      "variant": "default"
+    },
+    {
+      "id": "land",
+      "from": "collectors",
+      "to": "raw-volume",
+      "label": "event batches",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingest",
+      "from": "raw-volume",
+      "to": "medallion",
+      "label": "Auto Loader",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "rank",
+      "from": "medallion",
+      "to": "evidence",
+      "label": "posts + metrics",
+      "variant": "emphasis",
+      "route": "vertical-channel",
+      "channelX": 680,
+      "labelAt": [
+        680,
+        214
+      ]
+    },
+    {
+      "id": "signals",
+      "from": "medallion",
+      "to": "opportunities",
+      "label": "signal feed",
+      "variant": "default"
+    },
+    {
+      "id": "propose",
+      "from": "opportunities",
+      "to": "review",
+      "label": "cited drafts",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "read",
+      "from": "evidence",
+      "to": "mcp",
+      "label": "read-only",
+      "variant": "default"
+    },
+    {
+      "id": "publish",
+      "from": "opportunities",
+      "to": "snowflake",
+      "label": "curated marts",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Collection",
+      "items": [
+        "Collectors run outside Databricks Free Edition and land immutable batches before moving cursors",
+        "X spend is capped at 2,000 reads per day; YouTube search calls are budgeted per day"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Governance",
+      "items": [
+        "Recommendations are evidence-cited drafts; a human approves before anything external happens",
+        "The append boundary authenticates the reviewer, checks tenant and lineage, and writes once"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Serving",
+      "items": [
+        "Databricks is the system of record; Snowflake serves curated read-only marts",
+        "MCP tools read tenant-scoped evidence and never mutate state"
+      ]
+    }
+  ]
+}
