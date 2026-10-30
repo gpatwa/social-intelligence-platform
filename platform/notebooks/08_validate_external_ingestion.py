@@ -8,10 +8,14 @@ dbutils.widgets.text("catalog", "dev")
 dbutils.widgets.text("schema", "social_intelligence_dev")
 dbutils.widgets.text("tenant_id", "demo")
 dbutils.widgets.text("source_id", "youtube-api-v3")
+dbutils.widgets.text("max_collection_age_minutes", "180")
 catalog = dbutils.widgets.get("catalog")
 schema = dbutils.widgets.get("schema")
 tenant_id = dbutils.widgets.get("tenant_id")
 source_id = dbutils.widgets.get("source_id")
+max_age_minutes = int(dbutils.widgets.get("max_collection_age_minutes"))
+if not 15 <= max_age_minutes <= 2880:
+    raise ValueError("max_collection_age_minutes must be between 15 and 2880")
 
 for identifier in (catalog, schema):
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", identifier):
@@ -34,7 +38,7 @@ checks = spark.sql(
       UNION ALL
       SELECT
         'latest_collection_succeeded',
-        COUNT_IF(status = 'SUCCESS' AND run_age_minutes <= 180) = 1,
+        COUNT_IF(status = 'SUCCESS' AND run_age_minutes <= {max_age_minutes}) = 1,
         CONCAT_WS(', ',
           CONCAT('status=', COALESCE(MAX(status), 'missing')),
           CONCAT('age_minutes=', COALESCE(MAX(run_age_minutes), -1))

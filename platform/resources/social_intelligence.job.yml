@@ -88,10 +88,13 @@ resources:
               catalog: ${var.catalog}
               schema: ${var.schema}
 
+      # PAUSED: this demo job resets the raw data plane (see 01_generate_demo_data)
+      # and must not run on a schedule next to live collectors. Run it manually
+      # with `databricks bundle run social_intelligence_mvp` for demos.
       schedule:
         quartz_cron_expression: 0 30 7 * * ?
         timezone_id: America/Los_Angeles
-        pause_status: UNPAUSED
+        pause_status: PAUSED
 
       tags:
         product: social-intelligence

@@ -14,6 +14,7 @@ dbutils.widgets.text("catalog", "main")
 dbutils.widgets.text("schema", "social_intelligence_dev")
 dbutils.widgets.text("lookback_hours", "72")
 dbutils.widgets.text("tenant_id", "demo")
+dbutils.widgets.text("allow_destructive_reset", "false")
 
 catalog = dbutils.widgets.get("catalog")
 schema = dbutils.widgets.get("schema")
@@ -31,8 +32,28 @@ if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,62}", tenant_id):
 namespace = f"`{catalog}`.`{schema}`"
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {namespace}")
 spark.sql(f"CREATE VOLUME IF NOT EXISTS {namespace}.`raw_social`")
+
 # The generator is a demo-only source, so each run starts the raw data plane
-# clean. A real connector keeps both event tables and checkpoints for replay.
+# clean. That also destroys anything a live collector landed in the same
+# volume, so refuse to run while connector batches are present. Collector
+# batches are named <platform>-<run_id>.json; demo output is Spark part files.
+LIVE_BATCH_PREFIXES = ("youtube-", "x-", "instagram-", "reddit-")
+_landing_for_guard = f"/Volumes/{catalog}/{schema}/raw_social/events"
+try:
+    live_batches = [
+        entry.name for entry in dbutils.fs.ls(_landing_for_guard)
+        if entry.name.startswith(LIVE_BATCH_PREFIXES)
+    ]
+except Exception:  # the landing directory does not exist yet
+    live_batches = []
+if live_batches and dbutils.widgets.get("allow_destructive_reset").strip().lower() != "true":
+    raise RuntimeError(
+        f"Refusing to reset the raw data plane: {len(live_batches)} live collector "
+        f"batch(es) exist in {_landing_for_guard} (for example {live_batches[0]}). "
+        "Run again with allow_destructive_reset=true only if that data may be deleted."
+    )
+
+# A real connector keeps both event tables and checkpoints for replay.
 spark.sql(f"DROP TABLE IF EXISTS {namespace}.`bronze_social_events`")
 spark.sql(f"DROP TABLE IF EXISTS {namespace}.`bronze_dead_letter_events`")
 spark.sql(f"DROP TABLE IF EXISTS {namespace}.`bronze_social_posts`")

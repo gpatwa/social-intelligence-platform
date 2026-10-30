@@ -25,6 +25,9 @@ variables:
   tenant_id:
     description: Tenant partition used by the demo source and serving tables
     default: demo
+  collection_max_age_minutes:
+    description: Oldest successful collection the ingestion gate accepts, in minutes
+    default: "180"
   youtube_source_id:
     description: Control-plane identifier for the YouTube connector
     default: youtube-api-v3
@@ -124,6 +127,10 @@ targets:
       # Production remains opt-in through its own target configuration.
       snowflake_account: zcpwqmj-hd11049
       snowflake_publish_enabled: "true"
+      # GitHub-hosted hourly schedules are best effort; on 2026-10-22..30 the
+      # YouTube collector's median gap was ~5 hours (max ~7.5). Production
+      # keeps the strict 180-minute default.
+      collection_max_age_minutes: "720"
   prod:
     mode: production
     workspace:

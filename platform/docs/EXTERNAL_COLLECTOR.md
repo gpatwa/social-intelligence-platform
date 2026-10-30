@@ -42,6 +42,31 @@ The initialization notebook creates these durable paths:
 /Volumes/dev/social_intelligence_dev/raw_social/operations
 ```
 
+### The demo job resets the raw data plane
+
+`social_intelligence_mvp` (the demo job) generates synthetic events, and its
+first notebook drops the Bronze event tables and deletes everything under
+`raw_social/events` and `raw_social/checkpoints/events`. That would destroy live
+collector batches, so:
+
+- its schedule is `PAUSED`; run it manually for demos only;
+- `01_generate_demo_data` refuses to run while any `youtube-*`, `x-*`,
+  `instagram-*` or `reddit-*` batch is in the landing volume, unless it is run
+  with `allow_destructive_reset=true`.
+
+Do not run the demo job in a workspace that holds pilot evidence you want to
+keep. Before 2026-10-30 the schedule was unpaused and wiped the landing volume
+and Bronze events daily at 14:30 UTC; evidence collected before that date was lost.
+
+### Collection freshness gate
+
+`validate_external_ingestion` requires a successful collection no older than
+`collection_max_age_minutes` (bundle variable; default 180 for production, 720
+for `dev`). GitHub-hosted hourly schedules are best effort: from 2026-10-22 to
+2026-10-30 the YouTube collector's median gap was about 5 hours and its longest
+about 7.5, so a 180-minute gate failed most runs and blocked the Snowflake
+publish. Tighten the value only with a more reliable trigger.
+
 ## GitHub secrets
 
 Add these Actions secrets under **Settings > Secrets and variables > Actions**.

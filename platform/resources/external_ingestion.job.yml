@@ -91,6 +91,7 @@ resources:
               schema: ${var.schema}
               tenant_id: ${var.tenant_id}
               source_id: ${var.youtube_source_id}
+              max_collection_age_minutes: ${var.collection_max_age_minutes}
 
         - task_key: build_campaign_intelligence
           depends_on:
