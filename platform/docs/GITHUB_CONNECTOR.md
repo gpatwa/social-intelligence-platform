@@ -22,7 +22,10 @@ Only the operator's watchlist, set in `GH_REPOSITORIES` as comma-separated
 
 It does not read contributors, issues, commits, pull requests, or user
 profiles. The only person-like field is the public owner login, kept as the
-author. Topic search is a later step; `keyword` rules are rejected.
+author. Release notes are scrubbed before landing: `@handle` mentions, "by @user"
+credits and the "New Contributors" section are removed. The first live run
+(2026-11-03) landed 13 releases whose notes still had handles; the scrub was
+added after reading that file. Topic search is a later step; `keyword` rules are rejected.
 
 ## Event mapping
 

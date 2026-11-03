@@ -32,6 +32,13 @@ GITHUB_API_ROOT = "https://api.github.com"
 GITHUB_API_VERSION = "2022-11-28"
 REPOSITORY_PATTERN = re.compile(r"[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}")
 RELEASE_BODY_LIMIT = 2000
+# Auto-generated release notes credit contributors by handle. Those handles are
+# personal data the product does not need, so they are removed before landing.
+NEW_CONTRIBUTORS_SECTION = re.compile(
+    r"^#+\s*New Contributors\b.*?(?=^#|\Z)", re.IGNORECASE | re.MULTILINE | re.DOTALL
+)
+CREDIT_PHRASE = re.compile(r"\s+by\s+@[A-Za-z0-9][A-Za-z0-9-]*", re.IGNORECASE)
+HANDLE = re.compile(r"(?<![\w.])@[A-Za-z0-9][A-Za-z0-9-]{0,38}")
 
 CAPABILITIES = ConnectorCapabilities(
     platform="github",
@@ -88,6 +95,13 @@ def _parse_timestamp(value: str) -> datetime:
 
 def _format_timestamp(value: datetime) -> str:
     return value.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def scrub_release_text(text: str) -> str:
+    """Remove contributor credits and @handles from release notes."""
+    text = NEW_CONTRIBUTORS_SECTION.sub("", text)
+    text = CREDIT_PHRASE.sub("", text)
+    return HANDLE.sub("", text)
 
 
 def _integer(value: Any) -> int:
@@ -289,7 +303,7 @@ class GitHubConnector:
         full_name = str(repo["full_name"])
         published = _parse_timestamp(str(release["published_at"]))
         title = str(release.get("name") or release.get("tag_name") or "")
-        body = str(release.get("body") or "")[:RELEASE_BODY_LIMIT]
+        body = scrub_release_text(str(release.get("body") or ""))[:RELEASE_BODY_LIMIT]
         post_id = f"{full_name}#release-{release['id']}"
         payload = self._payload(
             post_id=post_id,

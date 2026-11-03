@@ -13,6 +13,7 @@ from social_intelligence.connectors.github import (
     GitHubConnector,
     GitHubConnectorConfig,
     RequestBudgetExceeded,
+    scrub_release_text,
 )
 from social_intelligence.connectors.retry import RetryPolicy
 
@@ -154,6 +155,39 @@ class GitHubConnectorTests(unittest.TestCase):
         )
         for event in batch.events:
             self.assertEqual(event.payload["author_id"], "langchain-ai")
+
+
+class ReleaseScrubbingTests(unittest.TestCase):
+    NOTES = (
+        "## What's Changed\n"
+        "* Fix routing by @alice-dev in https://github.com/x/y/pull/1\n"
+        "* Thanks @bob for the report; mail a@b.com\n"
+        "## New Contributors\n"
+        "* @carol made their first contribution in https://github.com/x/y/pull/2\n"
+        "## Full Changelog\n"
+        "https://github.com/x/y/compare/v1...v2\n"
+    )
+
+    def test_handles_credits_and_new_contributors_are_removed(self):
+        cleaned = scrub_release_text(self.NOTES)
+        for handle in ("alice-dev", "bob", "carol"):
+            self.assertNotIn(handle, cleaned)
+        self.assertNotIn("New Contributors", cleaned)
+        self.assertIn("Fix routing", cleaned)
+        self.assertIn("a@b.com", cleaned)
+        self.assertIn("Full Changelog", cleaned)
+
+    def test_landed_release_events_contain_no_handles(self):
+        releases = [dict(RELEASES[0], body=self.NOTES)]
+
+        def transport(path):
+            return releases if path.split("?")[0].endswith("/releases") else REPO
+
+        batch = connector(transport).collect([rule()], ConnectorCheckpoint.empty(NOW))
+        release = next(
+            e for e in batch.events if e.attributes["resource_type"] == "release"
+        )
+        self.assertNotRegex(release.payload["content_text"], r"(?<![\w.])@\w")
 
 
 class MemoryFiles:
