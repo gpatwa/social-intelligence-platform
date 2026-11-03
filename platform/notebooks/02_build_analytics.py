@@ -292,6 +292,7 @@ spark.sql(
       source_title,
       source_author,
       author_id,
+      event_attributes['rule_id'] AS collection_rule_id,
       author_followers,
       content_text,
       hashtags,

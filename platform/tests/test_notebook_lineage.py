@@ -37,5 +37,28 @@ class OpportunityLineageTests(unittest.TestCase):
         self.assertIn("WHEN NOT MATCHED THEN INSERT", source[backfill - 2000 : backfill])
 
 
+class CollectionRuleAttributionTests(unittest.TestCase):
+    """Static guards: the rule that fetched a post must reach Silver so rule
+    yield can be measured, and the yield query must stay tenant-scoped."""
+
+    def test_silver_carries_the_collection_rule_id_from_bronze(self):
+        source = read("02_build_analytics.py")
+        self.assertIn("event_attributes['rule_id'] AS collection_rule_id", source)
+        self.assertLess(
+            source.index("CREATE OR REPLACE TABLE {ns}.`silver_social_posts`"),
+            source.index("event_attributes['rule_id'] AS collection_rule_id"),
+        )
+
+    def test_handle_yield_query_is_read_only_and_tenant_scoped(self):
+        raw = (NOTEBOOKS.parent / "sql" / "x_handle_yield.sql").read_text(encoding="utf-8")
+        query = "\n".join(line for line in raw.splitlines() if not line.lstrip().startswith("--"))
+        for keyword in ("INSERT", "UPDATE", "DELETE", "DROP", "MERGE", "CREATE", "ALTER"):
+            self.assertNotRegex(query.upper(), rf"\b{keyword}\b", keyword)
+        # silver posts, gold evidence, and collection rules are each tenant-filtered
+        self.assertEqual(query.count("tenant_id = '${tenant_id}'"), 3)
+        for table in ("silver_social_posts", "gold_ranked_evidence", "control_collection_rules"):
+            self.assertIn(table, query)
+
+
 if __name__ == "__main__":
     unittest.main()

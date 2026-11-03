@@ -146,3 +146,57 @@ undeclared video language `und`. The root cause of the empty statistics will
 show in the first run that finds videos. Still open: trusted account handles and
 channel IDs from the product owner; re-review evidence after 2-3 days of v2
 queries.
+
+## Measuring X rule yield
+
+`silver_social_posts.collection_rule_id` records which collection rule fetched
+each post (the keyword search or one account handle). Join it to
+`control_collection_rules` to name the handle. Run
+[`sql/x_handle_yield.sql`](../sql/x_handle_yield.sql) to compare rules by posts
+landed, estimated cost, distinct authors, on-topic share, and posts that reach
+the top five of ranked evidence.
+
+Read it with these limits in mind:
+
+- Posts are deduplicated per logical post, so one returned by two rules is
+  credited to only one; overlap undercounts a handle.
+- Cost is estimated at the documented $0.005 per post read; the X console is
+  the authority.
+- `on_topic_share` is a keyword heuristic. Hand-label a sample of about 20 posts
+  per rule before keeping or dropping a handle.
+- Rows ingested before this column existed show an unattributed rule.
+
+Proposed review rule (to agree before use): after about 7 days or 300 reads,
+keep a handle whose estimated cost per on-topic post is no worse than the
+keyword search; drop or swap one with under about 30% on-topic share or no
+posts in the top five of ranked evidence.
+
+## Choosing X handles
+
+The audience is engineering and platform leads choosing an agent stack. Handles
+are evidence sources, not the audience. Every handle gets a category so the
+evidence mix stays balanced.
+
+| Category | What it gives the pilot | Candidates (unverified) |
+|---|---|---|
+| Framework builders | First-hand releases and design trade-offs | `hwchase17`, `joaomdmoura`, `samuel_colvin`, `jerryjliu0` |
+| Evals and quality | How to test and trust agents, a selection criterion | `HamelHusain`, `sh_reya` |
+| Hands-on practitioners | Real-world results, bugs, security issues | `simonw`, `eugeneyan` |
+| Ecosystem and community | Cross-vendor trend and event signals | `swyx`, `chipro` |
+| Vendors and platforms | Official announcements and pricing changes | none yet |
+| Adopters and analysts | Enterprise deployment experience | none yet |
+
+Selection rules:
+
+1. At most 1-2 handles per category, so no single voice dominates.
+2. A handle must post on topic a few times a week with links or specifics.
+3. Keep the set to 4-5 handles at the current budget; each costs one search
+   per run.
+4. Fill the empty categories from authors the keyword search keeps surfacing,
+   not from memory.
+5. After about 7 days or 300 reads, apply the review rule above. Replace a
+   failing handle from the same category.
+6. Changing `X_ACCOUNT_HANDLES` changes live collection and spend; it needs
+   explicit approval and is recorded here once applied.
+
+Category assignments and activity levels are judgements, not verified data.
