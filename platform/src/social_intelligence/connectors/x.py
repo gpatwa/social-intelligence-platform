@@ -65,6 +65,9 @@ def _integer(value: Any) -> int:
         return 0
 
 
+RECENT_SEARCH_WINDOW = timedelta(days=7)
+RECENT_SEARCH_MARGIN = timedelta(hours=1)
+
 class XApiError(RuntimeError):
     """Sanitized X API failure that never includes the bearer token."""
 
@@ -558,7 +561,11 @@ class XConnector:
             watermark = _parse_timestamp(cursor)
         else:
             watermark = started_at - timedelta(hours=self.config.lookback_hours)
-        return watermark - timedelta(minutes=self.config.overlap_minutes)
+        watermark -= timedelta(minutes=self.config.overlap_minutes)
+        # Recent search rejects a start_time older than 7 days with HTTP 400, so
+        # a cursor left over from a long outage is clamped to the oldest allowed
+        # time. Posts older than that window cannot be fetched anyway.
+        return max(watermark, started_at - RECENT_SEARCH_WINDOW + RECENT_SEARCH_MARGIN)
 
     def _query(self, rule: CollectionRule) -> str:
         expression = rule.expression.strip()
