@@ -146,3 +146,27 @@ undeclared video language `und`. The root cause of the empty statistics will
 show in the first run that finds videos. Still open: trusted account handles and
 channel IDs from the product owner; re-review evidence after 2-3 days of v2
 queries.
+
+## Measuring X rule yield
+
+`silver_social_posts.collection_rule_id` records which collection rule fetched
+each post (the keyword search or one account handle). Join it to
+`control_collection_rules` to name the handle. Run
+[`sql/x_handle_yield.sql`](../sql/x_handle_yield.sql) to compare rules by posts
+landed, estimated cost, distinct authors, on-topic share, and posts that reach
+the top five of ranked evidence.
+
+Read it with these limits in mind:
+
+- Posts are deduplicated per logical post, so one returned by two rules is
+  credited to only one; overlap undercounts a handle.
+- Cost is estimated at the documented $0.005 per post read; the X console is
+  the authority.
+- `on_topic_share` is a keyword heuristic. Hand-label a sample of about 20 posts
+  per rule before keeping or dropping a handle.
+- Rows ingested before this column existed show an unattributed rule.
+
+Proposed review rule (to agree before use): after about 7 days or 300 reads,
+keep a handle whose estimated cost per on-topic post is no worse than the
+keyword search; drop or swap one with under about 30% on-topic share or no
+posts in the top five of ranked evidence.
