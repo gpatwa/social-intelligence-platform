@@ -35,10 +35,10 @@ jobs:
           DATABRICKS_CATALOG: ${{ vars.DATABRICKS_CATALOG || 'dev' }}
           DATABRICKS_SCHEMA: ${{ vars.DATABRICKS_SCHEMA || 'social_intelligence_dev' }}
           SOCIAL_TENANT_ID: ${{ vars.SOCIAL_TENANT_ID || 'demo' }}
-          GITHUB_SOURCE_ID: ${{ vars.GITHUB_SOURCE_ID || 'github-rest-api' }}
-          GITHUB_REPOSITORIES: ${{ vars.GITHUB_REPOSITORIES }}
-          GITHUB_MAX_REQUESTS_PER_RUN: ${{ vars.GITHUB_MAX_REQUESTS_PER_RUN || '40' }}
-          GITHUB_RELEASES_PER_REPO: ${{ vars.GITHUB_RELEASES_PER_REPO || '5' }}
-          GITHUB_RELEASE_LOOKBACK_DAYS: ${{ vars.GITHUB_RELEASE_LOOKBACK_DAYS || '30' }}
+          GITHUB_SOURCE_ID: ${{ vars.GH_SOURCE_ID || 'github-rest-api' }}
+          GITHUB_REPOSITORIES: ${{ vars.GH_REPOSITORIES }}
+          GITHUB_MAX_REQUESTS_PER_RUN: ${{ vars.GH_MAX_REQUESTS_PER_RUN || '40' }}
+          GITHUB_RELEASES_PER_REPO: ${{ vars.GH_RELEASES_PER_REPO || '5' }}
+          GITHUB_RELEASE_LOOKBACK_DAYS: ${{ vars.GH_RELEASE_LOOKBACK_DAYS || '30' }}
           PIPELINE_STATUS_OUTPUT: ${{ runner.temp }}/pipeline-status.json
         run: python -m social_intelligence.connectors.external_github

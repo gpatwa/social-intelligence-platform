@@ -12,7 +12,7 @@ GitHub REST API is free for public data.
 
 ## What it collects
 
-Only the operator's watchlist, set in `GITHUB_REPOSITORIES` as comma-separated
+Only the operator's watchlist, set in `GH_REPOSITORIES` as comma-separated
 `owner/repo` names. Two requests per repository per run:
 
 | Request | Used for |
@@ -49,7 +49,7 @@ retried.
 
 ## Controls
 
-- **Request cap:** `GITHUB_MAX_REQUESTS_PER_RUN` (default 40). The run fails
+- **Request cap:** `GH_MAX_REQUESTS_PER_RUN` (default 40). The run fails
   closed before exceeding it, and the config requires at least two per repo.
 - **Rate limits:** 403 and 429 are not retried; the run fails and the next
   scheduled run tries again. Only 5xx and transport errors use bounded backoff.
@@ -61,21 +61,27 @@ retried.
   `GITHUB_API_TOKEN`. No new secret is needed. Unauthenticated access also
   works for a small list, at a lower rate limit.
 
-## Variables (none set yet)
+## Variables
+
+Repository variable names start with `GH_` because GitHub rejects the
+`GITHUB_` prefix. The workflow maps them to the worker's `GITHUB_*` environment
+names.
+
 
 | Variable | Proposed |
 |---|---|
 | `ENABLE_GITHUB_COLLECTOR` | `true` only after approval |
-| `GITHUB_REPOSITORIES` | See the starter watchlist below |
-| `GITHUB_MAX_REQUESTS_PER_RUN` | `40` |
-| `GITHUB_RELEASES_PER_REPO` | `5` |
-| `GITHUB_RELEASE_LOOKBACK_DAYS` | `30` on the first run |
+| `GH_REPOSITORIES` | See the starter watchlist below |
+| `GH_MAX_REQUESTS_PER_RUN` | `40` |
+| `GH_RELEASES_PER_REPO` | `5` |
+| `GH_RELEASE_LOOKBACK_DAYS` | `30` on the first run |
 
-Starter watchlist, chosen from general knowledge and not verified against the
-API: `langchain-ai/langgraph`, `crewAIInc/crewAI`, `pydantic/pydantic-ai`,
-`openai/openai-agents-python`, `google/adk-python`,
-`microsoft/agent-framework`, `modelcontextprotocol/servers`. Confirm each name
-exists before enabling; a wrong name is skipped as `repos_not_found`.
+Starter watchlist (all 7 confirmed to exist, not archived and recently pushed
+through the public API on 2026-11-02): `langchain-ai/langgraph`,
+`crewAIInc/crewAI`, `pydantic/pydantic-ai`, `openai/openai-agents-python`,
+`google/adk-python`, `microsoft/agent-framework`,
+`modelcontextprotocol/servers`. A name that later disappears is skipped as
+`repos_not_found`.
 
 ## Scoring decision (2026-11-02)
 
@@ -111,4 +117,4 @@ data: ingestion is stalled and the collector is not enabled.
   cadence to raw counts.
 - **Shared runner:** this worker repeats the YouTube worker's structure.
   Extracting one runner is a follow-up.
-- **Not verified:** no live API call was made. The tests use a fake transport.
+- **Not verified:** the connector itself has not run against the live API; only the repository names were checked. The tests use a fake transport.
