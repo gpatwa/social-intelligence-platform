@@ -83,7 +83,7 @@ class XConnectorTests(unittest.TestCase):
         self.assertEqual(request["query"], "from:Acme")
         self.assertEqual(request["start_time"], "2026-08-08T11:45:00Z")
 
-    def test_stale_cursor_is_clamped_inside_the_seven_day_search_window(self):
+    def test_stale_cursor_restarts_from_the_normal_lookback(self):
         transport = FixtureTransport()
         checkpoint = ConnectorCheckpoint(
             cursors={"owned": "2026-07-20T00:00:00Z"}, updated_at=NOW
@@ -91,9 +91,10 @@ class XConnectorTests(unittest.TestCase):
         self.connector(transport).collect(
             [CollectionRule("owned", "account", "@Acme")], checkpoint
         )
-        # NOW is 2026-08-08T12:00Z; X rejects anything older than 7 days (400).
+        # NOW is 2026-08-08T12:00Z; X rejects anything older than 7 days (400),
+        # so a stale cursor restarts from the 6-hour lookback (minus overlap).
         self.assertEqual(
-            transport.calls[0][1]["start_time"], "2026-08-01T13:00:00Z"
+            transport.calls[0][1]["start_time"], "2026-08-08T05:55:00Z"
         )
 
     def test_recent_cursor_is_not_moved_by_the_clamp(self):

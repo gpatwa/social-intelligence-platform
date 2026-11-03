@@ -557,15 +557,17 @@ class XConnector:
         started_at: datetime,
     ) -> datetime:
         cursor = checkpoint.cursors.get(rule.rule_id)
-        if cursor:
-            watermark = _parse_timestamp(cursor)
-        else:
-            watermark = started_at - timedelta(hours=self.config.lookback_hours)
-        watermark -= timedelta(minutes=self.config.overlap_minutes)
-        # Recent search rejects a start_time older than 7 days with HTTP 400, so
-        # a cursor left over from a long outage is clamped to the oldest allowed
-        # time. Posts older than that window cannot be fetched anyway.
-        return max(watermark, started_at - RECENT_SEARCH_WINDOW + RECENT_SEARCH_MARGIN)
+        fresh_start = started_at - timedelta(hours=self.config.lookback_hours)
+        if not cursor:
+            return fresh_start - timedelta(minutes=self.config.overlap_minutes)
+        watermark = _parse_timestamp(cursor) - timedelta(minutes=self.config.overlap_minutes)
+        # Recent search rejects a start_time older than 7 days (HTTP 400). After a
+        # long outage the saved cursor is that old; restart from the normal
+        # lookback instead of paging through a week of backlog the budget cannot
+        # cover (a multi-page backlog fails closed and is re-read every run).
+        if watermark < started_at - RECENT_SEARCH_WINDOW + RECENT_SEARCH_MARGIN:
+            return fresh_start - timedelta(minutes=self.config.overlap_minutes)
+        return watermark
 
     def _query(self, rule: CollectionRule) -> str:
         expression = rule.expression.strip()
