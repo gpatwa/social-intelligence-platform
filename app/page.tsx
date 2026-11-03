@@ -73,13 +73,19 @@ const connectorRoadmap = [
     name: "YouTube",
     status: "Live",
     tone: "live",
-    detail: "Discovery events are flowing into the governed Databricks pipeline.",
+    detail: "Hourly discovery collection lands governed, replayable events for the Databricks pipeline.",
   },
   {
     name: "X",
     status: "Live",
     tone: "live",
-    detail: "San Francisco trend snapshots and targeted recent-search monitoring are operational.",
+    detail: "Budget-capped recent search and curated account monitoring land governed events; trend snapshots are switched off.",
+  },
+  {
+    name: "GitHub",
+    status: "Live",
+    tone: "live",
+    detail: "Daily repository snapshots and releases for a curated agent-framework watchlist, kept as an adoption signal separate from post scoring.",
   },
   {
     name: "Instagram",
@@ -179,7 +185,7 @@ export default function Home() {
             </a>
           </div>
           <p className="access-note">
-            YouTube and X collection are live. The curated serving layer is
+            YouTube, X and GitHub collection are live. The curated serving layer is
             available in Snowflake for authorized analysts.
           </p>
         </div>
@@ -441,7 +447,7 @@ export default function Home() {
             </div>
             <ul>
               <li>Trend and challenge detection</li>
-              <li>Live YouTube discovery ingestion</li>
+              <li>Live YouTube, X and GitHub collection</li>
               <li>Durable checkpoints and replayable events</li>
               <li>Quota controls, retries, and source health</li>
               <li>Scheduled Databricks analytics workflow</li>
@@ -503,7 +509,7 @@ export default function Home() {
           <b>Social Intelligence</b>
         </div>
         <p>
-          Live YouTube and X collection, governed Databricks analytics, and
+          Live YouTube, X and GitHub collection, governed Databricks analytics, and
           Snowflake BA serving—with an evidence-linked advisor for enterprise AI
           automation and agent architecture.
         </p>
