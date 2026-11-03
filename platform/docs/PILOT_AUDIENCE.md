@@ -170,3 +170,33 @@ Proposed review rule (to agree before use): after about 7 days or 300 reads,
 keep a handle whose estimated cost per on-topic post is no worse than the
 keyword search; drop or swap one with under about 30% on-topic share or no
 posts in the top five of ranked evidence.
+
+## Choosing X handles
+
+The audience is engineering and platform leads choosing an agent stack. Handles
+are evidence sources, not the audience. Every handle gets a category so the
+evidence mix stays balanced.
+
+| Category | What it gives the pilot | Candidates (unverified) |
+|---|---|---|
+| Framework builders | First-hand releases and design trade-offs | `hwchase17`, `joaomdmoura`, `samuel_colvin`, `jerryjliu0` |
+| Evals and quality | How to test and trust agents, a selection criterion | `HamelHusain`, `sh_reya` |
+| Hands-on practitioners | Real-world results, bugs, security issues | `simonw`, `eugeneyan` |
+| Ecosystem and community | Cross-vendor trend and event signals | `swyx`, `chipro` |
+| Vendors and platforms | Official announcements and pricing changes | none yet |
+| Adopters and analysts | Enterprise deployment experience | none yet |
+
+Selection rules:
+
+1. At most 1-2 handles per category, so no single voice dominates.
+2. A handle must post on topic a few times a week with links or specifics.
+3. Keep the set to 4-5 handles at the current budget; each costs one search
+   per run.
+4. Fill the empty categories from authors the keyword search keeps surfacing,
+   not from memory.
+5. After about 7 days or 300 reads, apply the review rule above. Replace a
+   failing handle from the same category.
+6. Changing `X_ACCOUNT_HANDLES` changes live collection and spend; it needs
+   explicit approval and is recorded here once applied.
+
+Category assignments and activity levels are judgements, not verified data.
