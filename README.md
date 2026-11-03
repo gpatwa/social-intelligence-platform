@@ -98,6 +98,7 @@ services when scale, security, residency, or team ownership requires it. See the
 | YouTube Data API v3 | Live | Keyword/channel discovery, video metrics, optional comments and replies |
 | X API v2 | Live | Recent search, hashtags, accounts, and San Francisco trend discovery |
 | Instagram Graph API | Authorization-ready | Page-linked Business media and permitted hashtag discovery |
+| GitHub REST API | Draft, not live | Watchlist repo snapshots and releases; see [design](platform/docs/GITHUB_CONNECTOR.md) |
 | Reddit | Approval pending | Connector contract and onboarding planned after API approval |
 
 All implemented connectors share the same event envelope, checkpoint, retry,
