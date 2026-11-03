@@ -83,6 +83,31 @@ class XConnectorTests(unittest.TestCase):
         self.assertEqual(request["query"], "from:Acme")
         self.assertEqual(request["start_time"], "2026-08-08T11:45:00Z")
 
+    def test_stale_cursor_is_clamped_inside_the_seven_day_search_window(self):
+        transport = FixtureTransport()
+        checkpoint = ConnectorCheckpoint(
+            cursors={"owned": "2026-07-20T00:00:00Z"}, updated_at=NOW
+        )
+        self.connector(transport).collect(
+            [CollectionRule("owned", "account", "@Acme")], checkpoint
+        )
+        # NOW is 2026-08-08T12:00Z; X rejects anything older than 7 days (400).
+        self.assertEqual(
+            transport.calls[0][1]["start_time"], "2026-08-01T13:00:00Z"
+        )
+
+    def test_recent_cursor_is_not_moved_by_the_clamp(self):
+        transport = FixtureTransport()
+        checkpoint = ConnectorCheckpoint(
+            cursors={"owned": "2026-08-07T00:00:00Z"}, updated_at=NOW
+        )
+        self.connector(transport).collect(
+            [CollectionRule("owned", "account", "@Acme")], checkpoint
+        )
+        self.assertEqual(
+            transport.calls[0][1]["start_time"], "2026-08-06T23:55:00Z"
+        )
+
     def test_retryable_failure_retries_and_each_attempt_counts_against_budget(self):
         transport = FixtureTransport()
         attempts = 0
