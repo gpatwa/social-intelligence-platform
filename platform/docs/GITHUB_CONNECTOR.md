@@ -1,7 +1,9 @@
 # GitHub repository connector
 
-**Status: draft, not live.** The code and workflow exist on a branch. Nothing
-has been deployed, no repository variable is set, and no run has happened.
+**Status: collecting.** Enabled 2026-11-02 (Pacific). The first live run landed 34
+events (7 snapshots, 27 releases) using 14 of 40 requests. Landed files are not
+yet loaded into Bronze (Databricks run triggers are disabled), and the Silver
+and Gold changes below are merged but not deployed.
 
 ## Why
 

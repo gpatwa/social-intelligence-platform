@@ -216,3 +216,10 @@ v2 for rollback: `"agent framework"|LangGraph|CrewAI|"Microsoft Agent Framework"
 Not yet verified: whether v3 raises the high-fit share. Re-label a fresh 50
 posts after a day of runs and compare with 10%. YouTube negation is fuzzy and
 may hide a good video that mentions "tutorial".
+
+## Collector status (2026-11-02, Pacific)
+
+- **X:** credits restored; two connector fixes merged (PR 34, 35) for HTTP 400 after the outage (stale cursor beyond X's 7-day search window). `X_DAILY_READ_BUDGET=200` and `X_MONTHLY_READ_BUDGET=900` applied on 2026-11-02 to keep spend under the $5 balance. First good run: 85 posts, 85 reads; the failed run before the fix also cost 100 reads. Handles and search expression are unchanged.
+- **GitHub:** `GH_REPOSITORIES` (7 repos) and `ENABLE_GITHUB_COLLECTOR=true` applied; see [GITHUB_CONNECTOR.md](GITHUB_CONNECTOR.md).
+- **YouTube:** query v3 applied; a fresh 50-post re-label is scheduled to compare with the 10% high-fit baseline.
+- **Not verified:** none of the new data has been loaded into Databricks, because workspace run triggers are disabled.
