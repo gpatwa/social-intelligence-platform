@@ -37,11 +37,11 @@ Decided 2026-10-17 by the product owner. Builds on
 These are GitHub repository variables. Changing them alters what the live
 collectors fetch and spend, so they are applied only on explicit approval. `YOUTUBE_SEARCH_EXPRESSION`,
 `X_SEARCH_EXPRESSION`, `X_MAX_REQUESTS_PER_RUN` and `ENABLE_X_COLLECTOR` were
-applied on 2026-10-17; channel IDs and account handles await the product owner.
+applied on 2026-10-17 (the YouTube expression was changed to v3 on 2026-11-03); channel IDs and account handles await the product owner.
 
 | Variable | Current | Proposed |
 |---|---|---|
-| `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-10-17 (v2)** | `"agent framework"\|LangGraph\|CrewAI\|"Microsoft Agent Framework"\|"OpenAI Agents SDK"\|"agent evaluation"\|"AI agents in production"\|"enterprise MCP" -crypto -trading` |
+| `YOUTUBE_SEARCH_EXPRESSION` | **Applied 2026-11-03 (v3)** | `"agent evaluation"\|"AI agents in production"\|"production agents"\|"agent observability"\|"agent guardrails"\|"agent governance"\|"enterprise MCP"\|"agent reliability"\|"LangGraph production" -crypto -trading -beginner -beginners -tutorial -"crash course" -"full course"` |
 | `YOUTUBE_CHANNEL_IDS` | **Applied 2026-10-17** | AI Engineer, LangChain (IDs below) |
 | `X_SEARCH_EXPRESSION` | **Applied 2026-10-17 (v2)** | `("agent framework" OR LangGraph OR CrewAI OR "Microsoft Agent Framework" OR "OpenAI Agents SDK" OR "Google ADK" OR PydanticAI OR "agent evals" OR "agent evaluation" OR (MCP (enterprise OR production OR governance OR security))) lang:en -is:retweet -is:reply -has:cashtags -crypto -airdrop -giveaway -memecoin` |
 | `X_ACCOUNT_HANDLES` | **Applied 2026-10-17** | 10 handles below |
@@ -200,3 +200,19 @@ Selection rules:
    explicit approval and is recorded here once applied.
 
 Category assignments and activity levels are judgements, not verified data.
+
+## YouTube query v3 (2026-11-03)
+
+A 50-post random sample of landed YouTube posts was labelled from titles by a
+model (not human-verified): 5 were high audience fit (10%), 13 medium, 32 low.
+The bare terms `LangGraph`, `CrewAI` and `"agent framework"` pulled mostly
+beginner explainers. v3 swaps them for production-intent phrases (evals,
+observability, guardrails, governance, reliability) and excludes tutorial
+words. It is still one keyword rule, so search quota is unchanged. Framework
+news is still covered by the AI Engineer and LangChain channel rules.
+
+v2 for rollback: `"agent framework"|LangGraph|CrewAI|"Microsoft Agent Framework"|"OpenAI Agents SDK"|"agent evaluation"|"AI agents in production"|"enterprise MCP" -crypto -trading`
+
+Not yet verified: whether v3 raises the high-fit share. Re-label a fresh 50
+posts after a day of runs and compare with 10%. YouTube negation is fuzzy and
+may hide a good video that mentions "tutorial".
