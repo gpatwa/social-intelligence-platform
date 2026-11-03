@@ -1,0 +1,44 @@
+name: GitHub collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Repo metrics move slowly, so one run a day is enough.
+    - cron: "43 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_GITHUB_COLLECTOR == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install connector package
+        run: python -m pip install ./platform
+      - name: Collect and land GitHub events
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          # Built-in read-only token; it reads public repository metadata only.
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABRICKS_CATALOG: ${{ vars.DATABRICKS_CATALOG || 'dev' }}
+          DATABRICKS_SCHEMA: ${{ vars.DATABRICKS_SCHEMA || 'social_intelligence_dev' }}
+          SOCIAL_TENANT_ID: ${{ vars.SOCIAL_TENANT_ID || 'demo' }}
+          GITHUB_SOURCE_ID: ${{ vars.GITHUB_SOURCE_ID || 'github-rest-api' }}
+          GITHUB_REPOSITORIES: ${{ vars.GITHUB_REPOSITORIES }}
+          GITHUB_MAX_REQUESTS_PER_RUN: ${{ vars.GITHUB_MAX_REQUESTS_PER_RUN || '40' }}
+          GITHUB_RELEASES_PER_REPO: ${{ vars.GITHUB_RELEASES_PER_REPO || '5' }}
+          GITHUB_RELEASE_LOOKBACK_DAYS: ${{ vars.GITHUB_RELEASE_LOOKBACK_DAYS || '30' }}
+          PIPELINE_STATUS_OUTPUT: ${{ runner.temp }}/pipeline-status.json
+        run: python -m social_intelligence.connectors.external_github
