@@ -280,6 +280,7 @@ spark.sql(
         AND platform IS NOT NULL
         AND created_at IS NOT NULL
         AND views >= 0
+        AND platform <> 'github'
     )
     SELECT
       event_id,
@@ -330,6 +331,130 @@ spark.sql(
       ingested_at
     FROM deduplicated
     WHERE row_num = 1
+    """
+)
+
+# GitHub repository rows are adoption signals, not posts: they have no views, so
+# the post score, sentiment and topic rules do not apply. They are kept out of
+# silver_social_posts and read only by the adoption view below.
+spark.sql(
+    f"""
+    CREATE OR REPLACE TABLE {ns}.`silver_repo_activity`
+    COMMENT 'GitHub watchlist repo snapshots and releases; stars are saves, forks are shares'
+    AS
+    WITH deduplicated AS (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY tenant_id, platform, post_id
+        ORDER BY collected_at DESC, ingested_at DESC
+      ) AS row_num
+      FROM {ns}.`bronze_social_posts`
+      WHERE post_id IS NOT NULL
+        AND platform = 'github'
+        AND created_at IS NOT NULL
+    )
+    SELECT
+      tenant_id,
+      source_id,
+      event_attributes['resource_type'] AS resource_type,
+      event_attributes['rule_id'] AS collection_rule_id,
+      split(split(post_id, '@')[0], '#')[0] AS repo_full_name,
+      post_id,
+      source_url,
+      source_title,
+      content_text,
+      created_at,
+      CAST(created_at AS DATE) AS snapshot_date,
+      collected_at,
+      saves AS stars,
+      shares AS forks,
+      source_payload,
+      ingested_at
+    FROM deduplicated
+    WHERE row_num = 1
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE OR REPLACE TABLE {ns}.`gold_repo_adoption`
+    COMMENT 'Per-repo adoption trend: star and fork growth between daily snapshots and release cadence; growth is NULL until enough history exists'
+    AS
+    WITH snapshots AS (
+      SELECT tenant_id, repo_full_name, snapshot_date, stars, forks, source_url,
+             ROW_NUMBER() OVER (
+               PARTITION BY tenant_id, repo_full_name ORDER BY snapshot_date DESC
+             ) AS recency
+      FROM {ns}.`silver_repo_activity`
+      WHERE resource_type = 'repo_snapshot'
+    ),
+    latest AS (
+      SELECT * FROM snapshots WHERE recency = 1
+    ),
+    baseline_7d AS (
+      SELECT tenant_id, repo_full_name, stars, forks
+      FROM (
+        SELECT older.tenant_id, older.repo_full_name, older.stars, older.forks,
+               ROW_NUMBER() OVER (
+                 PARTITION BY older.tenant_id, older.repo_full_name
+                 ORDER BY older.snapshot_date DESC
+               ) AS pick
+        FROM {ns}.`silver_repo_activity` older
+        JOIN latest ON older.tenant_id = latest.tenant_id
+          AND older.repo_full_name = latest.repo_full_name
+        WHERE older.resource_type = 'repo_snapshot'
+          AND older.snapshot_date <= date_sub(latest.snapshot_date, 7)
+      ) WHERE pick = 1
+    ),
+    baseline_30d AS (
+      SELECT tenant_id, repo_full_name, stars, forks
+      FROM (
+        SELECT older.tenant_id, older.repo_full_name, older.stars, older.forks,
+               ROW_NUMBER() OVER (
+                 PARTITION BY older.tenant_id, older.repo_full_name
+                 ORDER BY older.snapshot_date DESC
+               ) AS pick
+        FROM {ns}.`silver_repo_activity` older
+        JOIN latest ON older.tenant_id = latest.tenant_id
+          AND older.repo_full_name = latest.repo_full_name
+        WHERE older.resource_type = 'repo_snapshot'
+          AND older.snapshot_date <= date_sub(latest.snapshot_date, 30)
+      ) WHERE pick = 1
+    ),
+    releases AS (
+      SELECT tenant_id, repo_full_name, source_title, source_url, created_at,
+             ROW_NUMBER() OVER (
+               PARTITION BY tenant_id, repo_full_name ORDER BY created_at DESC
+             ) AS recency
+      FROM {ns}.`silver_repo_activity`
+      WHERE resource_type = 'release'
+    )
+    SELECT
+      latest.tenant_id,
+      latest.repo_full_name,
+      latest.snapshot_date AS latest_snapshot_date,
+      latest.stars,
+      latest.forks,
+      latest.stars - baseline_7d.stars AS stars_growth_7d,
+      latest.forks - baseline_7d.forks AS forks_growth_7d,
+      latest.stars - baseline_30d.stars AS stars_growth_30d,
+      latest.forks - baseline_30d.forks AS forks_growth_30d,
+      (SELECT COUNT(*) FROM {ns}.`silver_repo_activity` recent
+        WHERE recent.tenant_id = latest.tenant_id
+          AND recent.repo_full_name = latest.repo_full_name
+          AND recent.resource_type = 'release'
+          AND CAST(recent.created_at AS DATE) > date_sub(latest.snapshot_date, 30)
+      ) AS releases_30d,
+      releases.source_title AS last_release_title,
+      releases.source_url AS last_release_url,
+      releases.created_at AS last_release_at,
+      datediff(latest.snapshot_date, CAST(releases.created_at AS DATE)) AS days_since_last_release,
+      latest.source_url AS repo_url
+    FROM latest
+    LEFT JOIN baseline_7d USING (tenant_id, repo_full_name)
+    LEFT JOIN baseline_30d USING (tenant_id, repo_full_name)
+    LEFT JOIN releases ON releases.tenant_id = latest.tenant_id
+      AND releases.repo_full_name = latest.repo_full_name
+      AND releases.recency = 1
     """
 )
 
@@ -717,6 +842,8 @@ for table_name in (
     "bronze_social_posts",
     "bronze_social_trends",
     "silver_social_posts",
+    "silver_repo_activity",
+    "gold_repo_adoption",
     "gold_content_performance",
     "gold_creator_performance",
     "gold_trending_topics",

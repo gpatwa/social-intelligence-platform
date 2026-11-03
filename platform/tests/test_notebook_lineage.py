@@ -60,5 +60,36 @@ class CollectionRuleAttributionTests(unittest.TestCase):
             self.assertIn(table, query)
 
 
+class GitHubAdoptionBoundaryTests(unittest.TestCase):
+    """Static guards: GitHub repo rows are adoption signals and must not reach
+    the post score or any post-based Gold table."""
+
+    def test_post_table_excludes_github_and_repo_table_includes_only_github(self):
+        source = read("02_build_analytics.py")
+        posts = source[source.index("`silver_social_posts`\n    COMMENT"):]
+        posts = posts[: posts.index("FROM deduplicated")]
+        self.assertIn("AND platform <> 'github'", posts)
+        repo = source[source.index("`silver_repo_activity`\n    COMMENT"):]
+        repo = repo[: repo.index("FROM deduplicated")]
+        self.assertIn("AND platform = 'github'", repo)
+
+    def test_only_the_adoption_view_reads_repo_activity(self):
+        source = read("02_build_analytics.py")
+        start = source.index("CREATE OR REPLACE TABLE {ns}.`gold_repo_adoption`")
+        end = source.index("CREATE OR REPLACE TABLE {ns}.`gold_content_performance`")
+        outside = source[:start] + source[end:]
+        # the validation count list names the table; no SQL reads it elsewhere
+        self.assertNotIn("FROM {ns}.`silver_repo_activity`", outside)
+        self.assertNotIn("JOIN {ns}.`silver_repo_activity`", outside)
+
+    def test_adoption_view_is_tenant_partitioned_and_growth_is_not_imputed(self):
+        source = read("02_build_analytics.py")
+        view = source[source.index("`gold_repo_adoption`\n    COMMENT"):]
+        view = view[: view.index("FROM latest")]
+        self.assertIn("PARTITION BY tenant_id, repo_full_name", view)
+        self.assertNotIn("COALESCE(latest.stars - baseline", view)
+        self.assertNotIn("score", view.lower().replace("snapshot", ""))
+
+
 if __name__ == "__main__":
     unittest.main()
