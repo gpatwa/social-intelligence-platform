@@ -72,6 +72,7 @@ class ExternalXConfig:
     max_results_per_page: int = 100
     daily_read_budget: int = 2_000
     monthly_read_budget: int = 30_000
+    on_page_cap: str = "fail"
 
     def __post_init__(self) -> None:
         for name, value in (("catalog", self.catalog), ("schema", self.schema)):
@@ -97,6 +98,8 @@ class ExternalXConfig:
             raise ValueError("X_MAX_REQUESTS_PER_RUN must be between 1 and 450")
         if not 10 <= self.max_results_per_page <= 100:
             raise ValueError("X_MAX_RESULTS_PER_PAGE must be between 10 and 100")
+        if self.on_page_cap not in ("fail", "truncate"):
+            raise ValueError("X_ON_PAGE_CAP must be 'fail' or 'truncate'")
         if not 1 <= self.daily_read_budget <= self.monthly_read_budget <= 3_000_000:
             raise ValueError(
                 "X_DAILY_READ_BUDGET and X_MONTHLY_READ_BUDGET must satisfy 1 <= daily <= monthly <= 3,000,000"
@@ -154,6 +157,7 @@ class ExternalXConfig:
             max_results_per_page=_integer(values, "X_MAX_RESULTS_PER_PAGE", 100),
             daily_read_budget=_integer(values, "X_DAILY_READ_BUDGET", 2_000),
             monthly_read_budget=_integer(values, "X_MONTHLY_READ_BUDGET", 30_000),
+            on_page_cap=values.get("X_ON_PAGE_CAP", "fail").strip().lower() or "fail",
         )
 
     @property
@@ -202,6 +206,7 @@ def _default_connector(
             max_results_per_page=config.max_results_per_page,
             daily_read_budget=config.daily_read_budget,
             monthly_read_budget=config.monthly_read_budget,
+            on_page_cap=config.on_page_cap,
             trends_woeid=config.trends_woeid,
             trends_location=config.trends_location,
             max_trends_per_run=config.max_trends_per_run,
@@ -368,6 +373,7 @@ class ExternalXCollector:
             "reads_this_month": reads_this_month,
             "reads_remaining_month": max(0, monthly_budget - reads_this_month),
             "read_budget_exhausted": int(stats.get("read_budget_exhausted", 0)),
+            "rules_truncated": int(stats.get("rules_truncated", 0)),
             "event_path": event_path,
             "error_type": error_type,
         }

@@ -13,8 +13,9 @@ through the external collector pattern.
 - Recent Search covers the provider's rolling seven-day window. It is not a
   backfill service.
 - Each cursor uses a timestamp watermark with a five-minute replay overlap.
-- Pagination must complete before the checkpoint moves; reaching the configured
-  page cap fails the run rather than losing posts.
+- Pagination must complete before the checkpoint moves; by default, reaching the
+  configured page cap fails the run rather than losing posts (see Page cap for
+  the `truncate` alternative).
 - The initial implementation is polling. Filtered-stream delivery is a later,
   separately operated connector mode.
 - The external worker has a conservative per-run request budget. Configure it
@@ -24,6 +25,25 @@ through the external collector pattern.
   observations per hourly run, and makes one Trends API request. It does **not**
   automatically fan out into broad post searches; that is an explicit future
   policy decision to prevent unpredictable spend.
+
+## Page cap
+
+Search returns newest posts first. When a rule has more pages than
+`X_MAX_SEARCH_PAGES_PER_RULE` allows, `X_ON_PAGE_CAP` decides what happens:
+
+- `fail` (default): the run fails and the cursor does not move, so the whole
+  window is retried. Reads already billed are not refunded, and a rule that
+  keeps producing more than one page fails on every run.
+- `truncate`: the posts already read are landed and the cursor advances. The
+  gap is recorded, not hidden: the run metric reports `rules_truncated`, and the
+  checkpoint metadata `last_truncated_rules` lists each rule with its
+  `window_start` and `unread_before`. Posts older than `unread_before` and newer
+  than `window_start` were not read and are not retried.
+
+If a page is small because the read budget is nearly spent (the page was sized
+to the remaining reads), the connector never fails the run. It lands the posts it
+paid for and holds the rule's cursor, like any other budget stop, whatever the
+policy. Before this change that case failed with `XPaginationLimitReached`.
 
 ## Read budget
 
@@ -81,6 +101,7 @@ about $10 per day and $150 per month.
    | `X_MAX_SEARCH_PAGES_PER_RULE` | `1` |
    | `X_MAX_REQUESTS_PER_RUN` | `10` |
    | `X_MAX_RESULTS_PER_PAGE` | `100` (10-100) |
+   | `X_ON_PAGE_CAP` | `fail` (or `truncate`; see Page cap) |
    | `X_DAILY_READ_BUDGET` | `2000` reads per UTC day |
    | `X_MONTHLY_READ_BUDGET` | `30000` reads per UTC calendar month (at most 3,000,000) |
 

@@ -297,5 +297,79 @@ class XReadBudgetTests(unittest.TestCase):
             XConnectorConfig(tenant_id="t", source_id="s", monthly_read_budget=3_000_001)
 
 
+class XPageCapTests(unittest.TestCase):
+    """A search that has more pages than max_search_pages_per_rule."""
+
+    def paged(self, next_token="more"):
+        response = json.loads(FIXTURE.read_text())
+        response["meta"]["next_token"] = next_token
+        return response
+
+    def connector(self, transport, **overrides):
+        values = {"tenant_id": "tenant-a", "source_id": "x-api"}
+        values.update(overrides)
+        return XConnector(
+            bearer_token="test-token",
+            config=XConnectorConfig(**values),
+            transport=transport,
+            clock=lambda: NOW,
+            sleeper=lambda _: None,
+        )
+
+    def test_truncate_policy_lands_posts_advances_cursor_and_records_the_gap(self):
+        batch = self.connector(FixtureTransport(self.paged()), on_page_cap="truncate").collect(
+            [CollectionRule("brand", "keyword", "Acme")], ConnectorCheckpoint.empty(NOW)
+        )
+        self.assertEqual(len(batch.events), 1)
+        self.assertEqual(batch.checkpoint.cursors["brand"], "2026-08-08T12:00:00Z")
+        self.assertEqual(batch.statistics["rules_truncated"], 1)
+        gap = batch.checkpoint.metadata["last_truncated_rules"][0]
+        self.assertEqual(gap["rule_id"], "brand")
+        self.assertEqual(gap["unread_before"], "2026-08-08T11:55:00.000Z")
+        self.assertEqual(gap["window_start"], "2026-08-08T05:55:00Z")
+
+    def test_untruncated_search_reports_no_gap(self):
+        batch = self.connector(FixtureTransport(), on_page_cap="truncate").collect(
+            [CollectionRule("brand", "keyword", "Acme")], ConnectorCheckpoint.empty(NOW)
+        )
+        self.assertEqual(batch.statistics["rules_truncated"], 0)
+        self.assertEqual(batch.checkpoint.metadata["last_truncated_rules"], [])
+
+    def test_default_policy_still_fails_closed_without_advancing_the_cursor(self):
+        with self.assertRaises(XPaginationLimitReached):
+            self.connector(FixtureTransport(self.paged())).collect(
+                [CollectionRule("brand", "keyword", "Acme")], ConnectorCheckpoint.empty(NOW)
+            )
+
+    def test_truncate_with_no_posts_read_still_fails_closed(self):
+        response = self.paged()
+        response["data"] = []
+        with self.assertRaises(XPaginationLimitReached):
+            self.connector(FixtureTransport(response), on_page_cap="truncate").collect(
+                [CollectionRule("brand", "keyword", "Acme")], ConnectorCheckpoint.empty(NOW)
+            )
+
+    def test_budget_limited_page_lands_posts_and_holds_the_cursor_even_by_default(self):
+        # 15 reads left: the page is sized to 15, X reports more, and the old code
+        # failed the whole run after the reads were billed.
+        checkpoint = ConnectorCheckpoint(
+            quota={"x_read_day": "2026-08-08", "x_read_month": "2026-08", "x_reads_today": 185, "x_reads_this_month": 185},
+            updated_at=NOW,
+        )
+        transport = FixtureTransport(self.paged())
+        batch = self.connector(transport, daily_read_budget=200, monthly_read_budget=900).collect(
+            [CollectionRule("brand", "keyword", "Acme")], checkpoint
+        )
+        self.assertEqual(transport.calls[0][1]["max_results"], "15")
+        self.assertEqual(len(batch.events), 1)
+        self.assertNotIn("brand", batch.checkpoint.cursors)
+        self.assertEqual(batch.statistics["read_budget_exhausted"], 1)
+        self.assertEqual(batch.statistics["rules_truncated"], 0)
+
+    def test_policy_is_validated(self):
+        with self.assertRaises(ValueError):
+            XConnectorConfig(tenant_id="t", source_id="s", on_page_cap="ignore")
+
+
 if __name__ == "__main__":
     unittest.main()
