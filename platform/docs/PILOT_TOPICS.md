@@ -1,153 +1,260 @@
-# Pilot topics: design draft
+# Pilot topics: design draft (revision 2)
 
-**Status: design only.** Nothing here is implemented or deployed.
+**Status: design only.** Nothing here is implemented or deployed. Revision 2
+folds in a Staff-engineer review of revision 1; the review's code claims were
+checked against the repository where marked "verified", and the rest are
+labelled "inferred".
 
 ## Problem
 
 Silver `topic` is a hard-coded `CASE` from the original demo (`battery_issue`,
-`glow_up_challenge`, `product_tips`, `lifestyle`). Every pilot post lands in
-`lifestyle` or `product_tips`, so topic-level ranking, trend detection and the
-evidence key `decision_id = 'topic:<topic>'` say nothing about enterprise AI.
-We cannot answer "which topic matters most" (frameworks, evals, reliability,
-cost) until posts carry pilot topics.
+`glow_up_challenge`, `product_tips`, `lifestyle`; `02_build_analytics.py`). On
+live pilot posts it says nothing about enterprise AI, so topic-level ranking,
+trend detection and the evidence key `decision_id = 'topic:<topic>'` cannot
+answer "which topic matters most" (frameworks, evals, reliability, governance).
+
+Measured on 2026-11-05 in the dev workspace, live sources only (`source_id` in
+`youtube-api-v3`, `x-api-v2`; the demo job's synthetic rows share
+`platform = 'youtube'` and must be excluded), 306 posts:
+
+| Platform | Posts | `lifestyle` | `product_tips` | `battery_issue` |
+|---|---|---|---|---|
+| YouTube | 221 | 193 | 24 | 4 |
+| X | 85 | 80 | 1 | 4 |
+
+So 273 of 306 (89%) fall to the `lifestyle` default and 8 (2.6%) land in
+`battery_issue` because the legacy rule matches the substrings `problem` and
+`issue` anywhere. `battery_issue` rows feed `gold_trending_topics`, and
+`signal_key = topic` feeds the opportunity workflow, so the pilot can already
+emit a "battery issue" opportunity from an enterprise-AI post. Small today, but
+a defect. Also: every live YouTube row has `language = 'und'` (221 of 221, set by
+PR 22 when no language is declared), so `language` cannot filter English.
 
 `topic` cannot simply be replaced. It is used by `gold_topic_hourly`,
-`gold_ranked_evidence` (decision key and momentum cohort), the human-label
-scorecard (`04_model_governance.py`) and demo validation. Changing it in place
-would break those.
+`gold_ranked_evidence` (decision key at `13_build_ranked_evidence.py:33` and the
+momentum cohort), the human-label scorecard (`04_model_governance.py:88` compares
+`reviewed_topic` to `topic`) and demo validation.
 
 ## Constraints that shape the design
 
 - **No package in the analytics notebooks.** `02_build_analytics.py` and
-  `13_build_ranked_evidence.py` run in the external-ingestion job with no wheel
-  attached, so they cannot import `social_intelligence`. Matching has to be
-  Spark SQL, or the job must gain a library (a larger change).
+  `13_build_ranked_evidence.py` run with no wheel attached and cannot import
+  `social_intelligence`. Matching has to be Spark SQL, or the job must gain a
+  library (a larger change). Python at notebook time is allowed.
 - **Additive only.** Keep `topic` and every existing Gold table working.
+- **Silver grain is one row per `tenant_id, platform, post_id`.** Content
+  performance, creator counts and ranked evidence assume it (verified for the
+  joins at `13:63-66`). Nothing here may change it.
 - **Explainable.** A topic must be traceable to the rule that matched it.
-- **Human-governed.** Rules are reviewed, versioned and measured against human
-  labels before anything ranks on them.
-- **Tenant-scoped.** Rules belong to a tenant; no cross-tenant sharing.
-- **Text only.** Rules read title, description and channel text already
-  collected. No new data and no identity resolution.
+- **Human-governed.** Rules are reviewed, versioned and measured against held-out
+  human labels before anything ranks on them.
+- **Tenant-scoped.** Rules and labels belong to a tenant; no cross-tenant sharing.
+- **Text only.** Rules read text already collected. No new data, no identity
+  resolution.
 
 ## Proposed design
 
 ### 1. Rules as data: `control_topic_rules`
 
-A small Delta table seeded in `00_initialize_platform.py`, next to the existing
-collection-rule seed.
+A small Delta table seeded in `00_initialize_platform.py`, using the same MERGE
+seed pattern as the existing control tables.
 
 | Column | Meaning |
 |---|---|
 | `tenant_id` | owner |
-| `taxonomy_version` | for example `pilot-topics-v1` |
+| `taxonomy_version` | for example `pilot-topics-v1`; one active version per tenant |
 | `topic_id` | stable snake_case id, for example `evals` |
-| `rule_id` | `topic_id` plus a short suffix, unique per tenant and version |
-| `pattern` | case-insensitive regular expression over title and content text |
+| `rule_id` | `topic_id` plus a short suffix; unique per (`tenant_id`, `taxonomy_version`) and the MERGE key |
+| `priority` | integer; lower wins when several topics match (see 3) |
+| `pattern` | case-insensitive regex, restricted to a portable subset (below) |
 | `enabled` | rules can be switched off without a deploy |
 | `created_at`, `note` | audit and rationale |
 
-Editing rules is a data change with a PR and review, not a notebook edit.
+Editing rules is a data change through a PR and review, not a notebook edit.
 
-### 2. Additive Silver columns
+**Portable pattern subset.** Spark uses Java regex and the unit tests would use
+Python `re`; they differ on inline flags and `\p{}` classes. Rules may use only
+literals, alternation, groups, character classes and `\b`. A validator rejects
+anything else, patterns over a length cap, and patterns that do not compile.
 
-`silver_social_posts` gains, without touching `topic`:
+### 2. Matching: build the expression at notebook time, no cross join
 
-- `pilot_topics ARRAY<STRING>`: every topic whose rules matched. A post can be
-  both `evals` and `reliability`; forcing one label hides real overlap.
-- `pilot_topic_primary STRING`: the first match in a fixed priority order, or
-  `other` when nothing matched. One stable value for grouping and cohorts.
-- `pilot_topic_rule_ids ARRAY<STRING>`: which rules fired, for explanation.
-- `pilot_taxonomy_version STRING`: so a re-run under a new taxonomy is
-  distinguishable.
+The notebook reads the enabled rules for the tenant's active version (a few dozen
+rows) with `spark.table(...).collect()`, validates each pattern, and builds one
+`FILTER(ARRAY(...))` / `CASE` expression over the post text. This keeps matching
+in Spark SQL, removes the posts x rules join and its fan-out risk, and avoids
+per-row regex recompilation. One malformed rule row is skipped and counted, it
+must not abort the whole Silver build (which would stop every downstream table).
 
-Matching is a `LEFT JOIN` of posts to enabled rules on
-`lower(title || ' ' || content_text) RLIKE pattern`, grouped back per post. It
-works in plain SQL and needs no library.
+**Matching text, defined.** Silver `content_text` is the title plus a newline plus
+the description for YouTube (`youtube.py`), and the full post text for X, where
+`source_title` is only its first 160 characters. Channel name is `source_author`,
+a separate column and not matched. Match on `lower(<normalized title> || ' ' ||
+<first N characters of normalized description>)` where N (proposed 500) keeps long
+promotional descriptions, which restate a channel's whole topic list, from
+inflating false positives. N and the title-only alternative are both scored on the
+labelled set before one is chosen.
 
-### 3. Evidence and ranking
+**Normalization, once, in a CTE.** Landed YouTube titles are HTML-escaped and
+sometimes double-escaped (`&#39;`, `&amp;amp;`, `&quot;`). Unescape these, then
+lowercase. Word-boundary `\b` patterns are required for short tokens (`mcp`,
+`eval`) so they do not match inside other words. `\b` is ASCII-oriented in Java by
+default, so non-ASCII text is matched on the lowered form only.
 
-`gold_ranked_evidence` keeps `decision_id = 'topic:<topic>'` for the legacy
-demo topics. Pilot topics get their own key, `pilot_topic:<topic_id>`, built
-from `pilot_topic_primary`, so existing decisions, validation and the
-recommendation workflow are unaffected. Moving the workflow to pilot topics is
-a later step with its own review.
+### 3. Where results live
 
-GitHub rows are excluded as today (`silver_repo_activity`); adoption is a
-separate view.
+Silver keeps one row per post. Two additive changes:
 
-### 4. Quality gate
+- **Columns on `silver_social_posts`, for display and explanation only:**
+  `pilot_topic_primary STRING`, `pilot_topic_rule_ids ARRAY<STRING>`,
+  `pilot_taxonomy_version STRING`. No existing column changes, including `topic`.
+- **A long table `silver_post_topics(tenant_id, platform, post_id, topic_id,
+  rule_id, taxonomy_version)`**, one row per matched topic. Multi-label counting,
+  joins and audits use this table, not arrays, so a regrouping bug cannot corrupt
+  Silver's grain.
 
-Do not rank on the taxonomy until it is measured.
+**Primary topic.** The matched rule with the lowest `priority` wins; ties break on
+`rule_id` (deterministic). Priority is by specificity, not by frequency: narrow
+topics (`evals`, `governance_security`, `mcp`) outrank the broad `framework`, which
+otherwise swallows most posts. `other` means on-topic evidence with no rule match.
 
-- Use the human-labelled sample (the 50-post YouTube sample, then more) as the
-  gold set. `silver_human_labels` already has `reviewed_topic`.
-- Report per-topic precision and recall for the rules, and the share of posts
-  that fall to `other`.
-- Proposed gate: each topic that is ranked needs at least 20 human-labelled
-  examples and precision of at least 0.7. Topics below the gate are shown but
-  not ranked. These numbers are a starting proposal, not a tested standard.
+**Counting rule.** Ranking and any per-topic total use the primary topic only.
+Any multi-label view must say "posts mentioning the topic; totals exceed the post
+count". The build asserts that `COUNT(*)` and `COUNT(DISTINCT post_id)` of Silver
+are unchanged by this step.
+
+**Legacy `topic`.** It stays computed. Decision for the owner: whether pilot-tenant
+rows should stop using the legacy `problem|issue` rule (the 8 mislabelled posts
+above). Recommended: yes, route them to the pilot taxonomy and leave the demo rules
+for demo data.
+
+### 4. Evidence and ranking
+
+`gold_ranked_evidence` keeps `decision_id = 'topic:<topic>'` for legacy topics.
+Pilot topics get `pilot_topic:<topic_id>` built from `pilot_topic_primary`. That
+needs a UNION in the cohort CTE and the topic-platform corroboration step
+(`13_build_ranked_evidence.py`), and a `taxonomy_version` column on the evidence
+rows so a version change does not silently rewrite history.
+
+`decision_id` is a caller-supplied contract (MCP service, review scorecard,
+campaign intelligence), not an in-notebook join (verified: `12_build_decision_
+workflow.py` derives opportunities from `signal_key`, not from ranked evidence).
+Before slice 5, list every consumer that must accept `pilot_topic:*` ids. The same
+post appears under a legacy and a pilot decision id by design; the Snowflake
+publish (a replace) and any distinct-evidence counts must tolerate that.
+
+With sparse pilot data most topics are single-platform, so the cross-platform
+corroboration term will be flat. Expect that; do not read it as a defect.
+
+The quality gate is a table, not a convention: `gold_topic_quality(tenant_id,
+taxonomy_version, topic_id, labelled_n, precision_lower_bound, rankable)`, and
+ranking joins `rankable`.
+
+GitHub rows stay excluded as today; adoption is a separate view.
+
+### 5. Quality gate
+
+Do not rank on the taxonomy until it is measured on data no rule author has seen.
+
+- **Labels get their own table.** `silver_human_labels.reviewed_topic` holds the
+  legacy vocabulary and the scorecard compares it to `topic`; reusing it would
+  silently report about zero accuracy for pilot labels. Add
+  `reviewed_pilot_topic` (keyed `tenant_id, platform, post_id`, with an `on_topic`
+  flag, labeller and date) and a loader for the existing label CSVs, which live
+  untracked in the repo root. The loader is idempotent on the key.
+- **No circularity.** Write rules from a training set (the 50-post v2 sample and the
+  27-post v3 sample). Score only on a fresh random held-out set, frozen before
+  scoring, and record which post ids were used for authoring.
+- **Precision gate.** Each ranked topic needs at least 40 held-out labelled
+  examples and a Wilson lower bound on precision of at least 0.7. At 20 examples a
+  0.7 point estimate cannot distinguish a true 0.6 from 0.7 (reviewer's estimate,
+  not run), so 20 was too weak. These numbers are a proposal, not a tested standard.
+- **Recall.** Label a random sample of all posts, including ones that matched
+  nothing, and measure recall against that. Per-topic recall from about 25
+  title-only labels is not meaningful; report only the `other` share until the
+  sample is larger.
+- **Agreement.** A second reviewer labels 20 posts so agreement can be estimated.
+
+### 6. Observability and rollback
+
+- `gold_topic_rule_yield(tenant_id, taxonomy_version, rule_id, matches, last_match)`
+  plus the `other` share per run, parallel to the existing collection-rule yield
+  query. A run whose `other` share crosses a threshold fails loudly.
+- **Backfill and version changes are a rerun**, not a migration: Silver is rebuilt
+  by `CREATE OR REPLACE` on every run (verified in the notebook and its tests).
+- **Rollback:** set `enabled = false` on the rules (or the version) and rerun
+  Silver. The additive columns can stay.
 
 ## Taxonomy v1 (draft)
 
-Derived from one model-labelled sample of 50 YouTube posts (titles only, not
-human-verified). Counts are rough.
+Two model-labelled YouTube samples (titles only, not human-verified), both too
+small to trust. The counts swing hard between them, which is itself the finding:
+the mix is not yet stable.
 
-| `topic_id` | Meaning | Seen in sample |
-|---|---|---|
-| `framework` | agent frameworks and SDKs (LangGraph, CrewAI, Agents SDK, ADK, Pydantic AI) | 14 |
-| `evals` | agent evaluation, benchmarks, grading | 2 |
-| `reliability` | production agents, failure handling, observability, state | 6 |
-| `mcp` | Model Context Protocol, tool integration | 2 |
-| `governance_security` | guardrails, approvals, access control, compliance | 2 |
-| `build_vs_buy` | choosing platforms, vendors, frameworks | 1 |
-| `cost` | token cost, latency, model choice for cost | 0 (hypothesis) |
-| `design_patterns` | memory, context engineering, multi-agent patterns | candidate: appeared in titles, not yet labelled |
-| `other` | on topic, no rule matched | 19 |
+| `topic_id` | Meaning | v2 sample (n=50) | v3 sample (n=27) |
+|---|---|---|---|
+| `framework` | agent frameworks and SDKs (LangGraph, CrewAI, Agents SDK, ADK, Pydantic AI) | 14 | 2 |
+| `evals` | agent evaluation, benchmarks, grading | 2 | 3 |
+| `reliability` | production agents, failure handling, observability, state | 6 | 4 |
+| `mcp` | Model Context Protocol, tool integration | 2 | 1 |
+| `governance_security` | guardrails, approvals, access control, compliance | 2 | 10 |
+| `build_vs_buy` | choosing platforms, vendors, frameworks | 1 | 4 |
+| `other` | on topic, no rule matched | 19 | 2 |
 
-`cost` stays a hypothesis: it had zero hits. `design_patterns` is a candidate
-added from reading titles; confirm it with the next labelled sample before
-ranking it. Starter patterns come from the rule vocabulary already used in the
-collection queries; they must be written and tested against the labelled set,
-not guessed.
+**Cut from v1:** `cost` (0 hits in the first sample, 1 in the second) and
+`design_patterns` (no labelled support). Add either only when the held-out set
+holds at least 20 labelled examples. Starter patterns must be written and tested
+against the training set, not guessed.
+
+**Language.** Live YouTube rows are all `und`, so `language` cannot gate matching.
+Patterns are English. Posts that are not English are mapped to `other`, flagged
+`language_unsupported` by a cheap script-detection heuristic, and counted. No
+translated rules in v1.
 
 ## What counts as "most important topic"
 
-Ranking by volume alone would crown `framework`, the noisiest topic. The
-summary view should show, per topic and week: post count, distinct authors and
-platforms, the human-labelled high-fit share, and engagement normalised within
-platform. A topic is "important" only when demand and evidence quality both
-hold. This is a reporting view, not a recommendation, and is out of scope for
-the first slice.
+Ranking by volume alone would crown `framework`, the noisiest topic. A summary view
+should combine demand and evidence quality, but it is **out of scope for v1**; it
+depends on a trustworthy taxonomy first.
 
 ## Proposed slices (each its own PR)
 
-1. **Rules table and seed.** `control_topic_rules`, v1 patterns, static tests.
-2. **Silver columns.** The join and the four additive columns, lineage tests,
-   a check that `topic` is unchanged.
-3. **Quality report.** Precision, recall and `other` share against human
-   labels, as a read-only query.
-4. **Evidence key.** `pilot_topic:<id>` in `gold_ranked_evidence`, behind the
-   quality gate.
-5. **Summary view.** The weekly topic view above.
+1. **Labels first.** `reviewed_pilot_topic` table and idempotent loader.
+   Acceptance: reloading the same CSV changes no rows; a static test asserts tenant
+   scoping.
+2. **Rules table and validator.** `control_topic_rules`, priority, MERGE seed,
+   pattern validator. Acceptance: static tests for the tenant predicate and the
+   uniqueness key; Python tests of the portable patterns against fixture titles.
+3. **Normalization and matching in Silver.** Added columns and the long table.
+   Acceptance: Silver row count and `topic` unchanged, with a guard that
+   `COUNT(*)` equals `COUNT(DISTINCT post_id)`.
+4. **Quality report and rule yield.** Read-only, Wilson bounds, held-out split.
+   Acceptance: runs cleanly when there are no labels.
+5. **Evidence key behind the gate.** `rankable`, `taxonomy_version`, consumer list.
 
-## Open decisions
+## Open decisions (recommendations for the owner to confirm)
 
-- **Multi-label or single:** this draft keeps both (`pilot_topics` and a
-  primary). Confirm that the primary priority order is acceptable.
-- **Is `design_patterns` in v1?** Needs the next labelled sample.
-- **Is `cost` in v1?** Keep as a hypothesis or drop it.
-- **Reviewer:** who labels more posts and signs off the gate. Pilot reviewer is
-  still unnamed.
-- **Language:** patterns are English; many sampled posts are not. Decide
-  whether non-English posts are `other` or get their own handling.
-- **Regex limits:** rules over titles miss intent and match noise (for example
-  "agent evaluation" in a beginner video). Rules improve recall cheaply but do
-  not replace a model; revisit once the labelled set is large enough to
-  evaluate one.
+1. **Multi-label plus primary:** recommended yes, as a long table with explicit
+   `priority`; rank on primary only in v1.
+2. **`design_patterns` and `cost`:** recommended cut from v1.
+3. **Reviewer:** one named person (recommended: the pilot owner) before slice 3,
+   plus a second labeller on 20 posts. Without a named reviewer the gate cannot be
+   enforced. Still unnamed.
+4. **Non-English:** recommended `other` plus a flag and a count.
+5. **Legacy rules for pilot-tenant rows:** recommended stop applying `problem|issue`
+   to them.
+6. **Matching text:** description length N, and title-only versus title plus
+   description. Decide by scoring both on the training set.
+
+Also unresolved: which tenant owns the rules and how a second tenant gets a
+taxonomy; who may edit rules and how a PR becomes an `enabled` data change; how X
+posts, which have no real title, are matched; and the retention treatment of
+labelled posts.
 
 ## Not verified
 
-No rule has been written or tested. The topic counts come from a single
-model-labelled sample of 50 titles. The job and notebook constraints were read
-from the repository, not from a deployed run.
+No rule has been written or tested. Topic counts come from two model-labelled
+samples. The distribution table in Problem is a read-only query on the dev
+workspace on 2026-11-05. Code references were read from the repository, not from a
+deployed run. The reviewer's regex and statistical points (Java versus Python
+behavior, the n=20 power estimate, the cross-join cost) are inferred, not run.
