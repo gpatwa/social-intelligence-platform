@@ -93,6 +93,27 @@ class XPaginationLimitReached(RuntimeError):
     """Fail closed instead of advancing a cursor beyond an unpaged result set."""
 
 
+PAGE_CAP_POLICIES = frozenset({"fail", "truncate"})
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    """Posts read for one rule, plus the gap left when the page cap truncated it.
+
+    ``unread_before`` is the oldest ``created_at`` among the posts read. Search
+    returns newest first, so posts between the window start and that instant
+    were not read.
+    """
+
+    posts: list[Mapping[str, Any]]
+    unread_before: str = ""
+    window_start: str = ""
+
+    @property
+    def truncated(self) -> bool:
+        return bool(self.unread_before)
+
+
 class XReadBudgetExhausted(RuntimeError):
     """The daily or monthly read budget cannot cover another request."""
 
@@ -263,10 +284,13 @@ class XConnectorConfig:
     max_trends_per_run: int = 20
     daily_read_budget: int = 2_000
     monthly_read_budget: int = 30_000
+    on_page_cap: str = "fail"
 
     def __post_init__(self) -> None:
         if not self.tenant_id.strip() or not self.source_id.strip():
             raise ValueError("tenant_id and source_id are required")
+        if self.on_page_cap not in PAGE_CAP_POLICIES:
+            raise ValueError("on_page_cap must be 'fail' or 'truncate'")
         if not 1 <= self.daily_read_budget <= self.monthly_read_budget <= 3_000_000:
             raise ValueError("read budgets must satisfy 1 <= daily <= monthly <= 3,000,000")
         if not 1 <= self.lookback_hours <= 168:
@@ -364,10 +388,20 @@ class XConnector:
         discovered_ids: set[str] = set()
         trend_events: list[SocialEventEnvelope] = []
         budget_exhausted = False
+        truncated_rules: list[dict[str, str]] = []
 
         for rule in post_rules:
             try:
-                posts = self._search_posts(client, rule, checkpoint, started_at, ledger, charge)
+                result = self._search_posts(client, rule, checkpoint, started_at, ledger, charge)
+                posts = result.posts
+                if result.truncated:
+                    # Land what was read and record the unread gap instead of
+                    # failing after the reads were already billed.
+                    truncated_rules.append({
+                        "rule_id": rule.rule_id,
+                        "window_start": result.window_start,
+                        "unread_before": result.unread_before,
+                    })
             except XReadBudgetExhausted as error:
                 # Keep posts that were already billed, but leave this rule's
                 # cursor unadvanced so the unread window is collected later.
@@ -409,6 +443,7 @@ class XConnector:
                 "last_batch_event_count": len(events),
                 "last_batch_post_count": len(discovered_ids),
                 "last_batch_trend_count": len(trend_events),
+                "last_truncated_rules": truncated_rules,
                 "trends_woeid": self.config.trends_woeid or "",
                 "trends_location": self.config.trends_location,
             },
@@ -430,6 +465,7 @@ class XConnector:
                 "reads_this_month": ledger.reads_this_month,
                 "reads_remaining_month": max(0, ledger.monthly_budget - ledger.reads_this_month),
                 "read_budget_exhausted": int(budget_exhausted),
+                "rules_truncated": len(truncated_rules),
             },
         )
 
@@ -441,7 +477,7 @@ class XConnector:
         started_at: datetime,
         ledger: XReadLedger,
         charge: Callable[[int], None],
-    ) -> list[Mapping[str, Any]]:
+    ) -> SearchResult:
         if rule.rule_type not in self.capabilities.supported_rule_types:
             raise ValueError(f"Unsupported X rule type: {rule.rule_type}")
         watermark = self._watermark(rule, checkpoint, started_at)
@@ -462,7 +498,9 @@ class XConnector:
                     list(posts.values()),
                 )
             request_params = dict(params)
-            request_params["max_results"] = str(min(self.config.max_results_per_page, ledger.remaining))
+            page_size = min(self.config.max_results_per_page, ledger.remaining)
+            budget_shrunk_page = page_size < self.config.max_results_per_page
+            request_params["max_results"] = str(page_size)
             if page_token:
                 request_params["next_token"] = page_token
             response = client.recent_search(request_params)
@@ -477,10 +515,26 @@ class XConnector:
             if not page_token:
                 break
             if page + 1 == self.config.max_search_pages_per_rule:
+                if budget_shrunk_page or ledger.remaining < SEARCH_MIN_RESULTS:
+                    # More posts exist than the budget let us read: the page
+                    # was shrunk to the remaining reads, not capped by
+                    # max_search_pages_per_rule. Same contract as any other
+                    # budget stop: keep the posts, hold the cursor.
+                    raise XReadBudgetExhausted(
+                        f"X read budget cannot cover the next search page for {rule.rule_id}",
+                        list(posts.values()),
+                    )
+                if self.config.on_page_cap == "truncate" and posts:
+                    created = [str(item.get("created_at", "")) for item in posts.values() if item.get("created_at")]
+                    return SearchResult(
+                        list(posts.values()),
+                        unread_before=min(created) if created else _format_timestamp(started_at),
+                        window_start=params["start_time"],
+                    )
                 raise XPaginationLimitReached(
                     f"X search for {rule.rule_id} exceeded max_search_pages_per_rule"
                 )
-        return list(posts.values())
+        return SearchResult(list(posts.values()))
 
     def _collect_trends(
         self,

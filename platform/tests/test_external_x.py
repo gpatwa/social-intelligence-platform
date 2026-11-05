@@ -124,8 +124,13 @@ class ExternalXCollectorTests(unittest.TestCase):
             "X_MAX_RESULTS_PER_PAGE": "50",
             "X_DAILY_READ_BUDGET": "500",
             "X_MONTHLY_READ_BUDGET": "9000",
+            "X_ON_PAGE_CAP": "Truncate",
         }
         config = ExternalXConfig.from_environment(environment)
+        self.assertEqual(config.on_page_cap, "truncate")
+        self.assertEqual(ExternalXConfig.from_environment({**environment, "X_ON_PAGE_CAP": ""}).on_page_cap, "fail")
+        with self.assertRaises(ValueError):
+            ExternalXConfig.from_environment({**environment, "X_ON_PAGE_CAP": "skip"})
         self.assertIsNone(config.trends_woeid)
         self.assertEqual([rule.rule_type for rule in config.collection_rules()], ["keyword"])
         self.assertEqual((config.max_results_per_page, config.daily_read_budget, config.monthly_read_budget), (50, 500, 9000))
@@ -147,7 +152,7 @@ class ExternalXCollectorTests(unittest.TestCase):
                         },
                         updated_at=NOW,
                     ),
-                    statistics={"active_rules": 1, "reads_used": 20, "read_budget_exhausted": 0},
+                    statistics={"active_rules": 1, "reads_used": 20, "read_budget_exhausted": 0, "rules_truncated": 1},
                 )
 
         metric = ExternalXCollector(
@@ -157,6 +162,7 @@ class ExternalXCollectorTests(unittest.TestCase):
         self.assertEqual(metric["reads_remaining_today"], 1880)
         self.assertEqual(metric["reads_remaining_month"], 29100)
         self.assertEqual(metric["read_budget_exhausted"], 0)
+        self.assertEqual(metric["rules_truncated"], 1)
 
 
 if __name__ == "__main__":
