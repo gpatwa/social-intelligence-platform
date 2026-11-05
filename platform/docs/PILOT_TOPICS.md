@@ -1,6 +1,6 @@
 # Pilot topics: design draft (revision 2)
 
-**Status: design only.** Nothing here is implemented or deployed. Revision 2
+**Status: design only, decisions accepted 2026-11-05.** Nothing here is implemented or deployed. Revision 2
 folds in a Staff-engineer review of revision 1; the review's code claims were
 checked against the repository where marked "verified", and the rest are
 labelled "inferred".
@@ -232,24 +232,26 @@ depends on a trustworthy taxonomy first.
    Acceptance: runs cleanly when there are no labels.
 5. **Evidence key behind the gate.** `rankable`, `taxonomy_version`, consumer list.
 
-## Open decisions (recommendations for the owner to confirm)
+## Decisions (accepted by the pilot owner, 2026-11-05)
 
-1. **Multi-label plus primary:** recommended yes, as a long table with explicit
-   `priority`; rank on primary only in v1.
-2. **`design_patterns` and `cost`:** recommended cut from v1.
-3. **Reviewer:** one named person (recommended: the pilot owner) before slice 3,
-   plus a second labeller on 20 posts. Without a named reviewer the gate cannot be
-   enforced. Still unnamed.
-4. **Non-English:** recommended `other` plus a flag and a count.
-5. **Legacy rules for pilot-tenant rows:** recommended stop applying `problem|issue`
-   to them.
-6. **Matching text:** description length N, and title-only versus title plus
-   description. Decide by scoring both on the training set.
+1. **Multi-label plus primary:** yes. A long table with explicit `priority`; rank on
+   the primary topic only in v1.
+2. **`design_patterns` and `cost`:** cut from v1; add each only when the held-out
+   set holds at least 20 labelled examples.
+3. **Reviewer:** the pilot owner labels and signs off the gate, and a second
+   labeller (not yet named) labels 20 posts to estimate agreement. Slice 3 does not
+   start until that second labeller is named.
+4. **Non-English:** mapped to `other`, flagged `language_unsupported` and counted;
+   no translated rules in v1.
+5. **Legacy rules for pilot-tenant rows:** stop applying the demo `problem|issue`
+   rule to them; the demo rules stay for demo data.
+6. **Matching text:** the description length N and title-only versus title plus
+   description are settled by scoring both on the training set, not by argument.
 
-Also unresolved: which tenant owns the rules and how a second tenant gets a
+Still unresolved: which tenant owns the rules and how a second tenant gets a
 taxonomy; who may edit rules and how a PR becomes an `enabled` data change; how X
-posts, which have no real title, are matched; and the retention treatment of
-labelled posts.
+posts, which have no real title, are matched; the retention treatment of labelled
+posts; and the name of the second labeller.
 
 ## Not verified
 
