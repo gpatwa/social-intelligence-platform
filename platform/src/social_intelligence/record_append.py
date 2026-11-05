@@ -35,6 +35,7 @@ REVIEWS = "decision_recommendation_reviews"
 OUTCOMES = "decision_recommendation_outcomes"
 EXPERIMENTS = "decision_campaign_experiments"
 MEASUREMENTS = "decision_campaign_measurements"
+PILOT_LABELS = "reviewed_pilot_topic"
 
 PRINCIPALS_ENV = "SOCIAL_INTELLIGENCE_APPEND_PRINCIPALS"
 TOKEN_ENV = "SOCIAL_INTELLIGENCE_APPEND_TOKEN"
@@ -127,7 +128,7 @@ class InMemoryRecordStore:
         self.tables.setdefault(table, {}).setdefault(str(row[id_column]), dict(row))
 
 
-TIMESTAMP_COLUMNS = frozenset({"reviewed_at", "observed_at", "planned_start_at", "planned_end_at", "received_at"})
+TIMESTAMP_COLUMNS = frozenset({"reviewed_at", "observed_at", "planned_start_at", "planned_end_at", "received_at", "labelled_at"})
 
 
 class DatabricksSqlRecordStore:
@@ -206,7 +207,13 @@ class DatabricksSqlRecordStore:
 
 # --- artifact specifications -------------------------------------------------
 
-TABLE_ID_COLUMNS = {REVIEWS: "review_id", OUTCOMES: "outcome_id", EXPERIMENTS: "experiment_id", MEASUREMENTS: "measurement_id"}
+TABLE_ID_COLUMNS = {
+    REVIEWS: "review_id",
+    OUTCOMES: "outcome_id",
+    EXPERIMENTS: "experiment_id",
+    MEASUREMENTS: "measurement_id",
+    PILOT_LABELS: "label_id",
+}
 
 # Exact top-level keys each compiler emits. Unknown keys are rejected so nothing
 # identity-like or provider-specific can ride along with an artifact.

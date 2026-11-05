@@ -493,5 +493,31 @@ spark.sql(
     """
 )
 
+# Human (and, clearly marked, model) labels of pilot posts against the pilot topic
+# vocabulary. They are the gold set the topic rules are scored on, so a row says
+# who labelled it and whether that was a human. A post can carry one label per
+# labeller, which is what lets a second labeller measure agreement. No post text,
+# title or author is stored here, only the identifiers needed to join to Silver.
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`reviewed_pilot_topic` (
+      label_id STRING NOT NULL,
+      tenant_id STRING NOT NULL,
+      platform STRING NOT NULL,
+      post_id STRING NOT NULL,
+      labeller_id STRING NOT NULL,
+      label_source STRING NOT NULL,
+      topic_label STRING NOT NULL,
+      on_topic BOOLEAN NOT NULL,
+      audience_fit STRING NOT NULL,
+      note STRING,
+      labelled_at TIMESTAMP NOT NULL,
+      received_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Append-only pilot topic labels, one per post and labeller; label_source separates human from model labels'
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")
