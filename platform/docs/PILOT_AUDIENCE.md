@@ -48,7 +48,8 @@ applied on 2026-10-17 (the YouTube expression was changed to v3 on 2026-11-02); 
 | `X_MAX_REQUESTS_PER_RUN` | **Applied 2026-10-17** | `11` (1 keyword search + 10 account searches) |
 | `ENABLE_X_COLLECTOR` | **Applied 2026-10-17** (budget accepted) | `true` |
 | `X_TRENDS_WOEID` | **Applied 2026-10-17** | `none` (San Francisco trends off) |
-| `X_DAILY_READ_BUDGET` / `X_MONTHLY_READ_BUDGET` | defaults since PR 21 | `2000` / `30000` |
+| `X_DAILY_READ_BUDGET` / `X_MONTHLY_READ_BUDGET` | **Applied 2026-11-03** | `200` / `900` |
+| `X_ON_PAGE_CAP` | **Applied 2026-11-06** | `truncate`: land what a search read and record the unread gap (`rules_truncated`) instead of failing; see `X_CONNECTOR.md` |
 
 Trends were disabled with `X_TRENDS_WOEID=none` once the read-budget change
 (PR 21) made that possible, so both X requests per run go to search.

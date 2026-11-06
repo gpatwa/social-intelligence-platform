@@ -519,5 +519,74 @@ spark.sql(
     """
 )
 
+# Pilot topic rules: data, not notebook code. Matching in Silver (a later slice)
+# reads the enabled rules of the tenant's active taxonomy version. The seed below
+# is the source of truth: a rerun updates rules that changed and disables rules
+# that were removed from it. The reference implementation and a parity test live
+# in social_intelligence/topic_rules.py (this notebook cannot import the package).
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`control_topic_rules` (
+      tenant_id STRING NOT NULL,
+      taxonomy_version STRING NOT NULL,
+      topic_id STRING NOT NULL,
+      rule_id STRING NOT NULL,
+      priority INT NOT NULL,
+      pattern STRING NOT NULL,
+      exclude_pattern STRING NOT NULL,
+      enabled BOOLEAN NOT NULL,
+      note STRING,
+      created_at TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Tenant-scoped, versioned topic rules; lowest priority wins; exclude_pattern is empty when unused'
+    """
+)
+
+TOPIC_RULE_SEED = [
+    ("pilot-topics-v1", "governance_security", "governance_security_terms", 10, r"\b(governance|guardrails?|compliance|prompt injection|access control|permissions?|audit(ing|able)?|policy|policies|sandbox(ed|ing)?|security|secure|safe|safety|approv(e|es|ed|al|als)|human[- ]in[- ]the[- ]loop|trust(ed|worthy)?)\b", "", True, "controls, risk and trust"),
+    ("pilot-topics-v1", "evals", "evals_terms", 20, r"\b(evals?|evaluat(e|es|ed|ing|ion|ions)|benchmarks?|graders?|grading|llm[- ]as[- ]a[- ]judge)\b", "", True, "evaluation and measurement of agents"),
+    ("pilot-topics-v1", "mcp", "mcp_terms", 30, r"\b(mcp|model context protocol)\b", "", True, "Model Context Protocol"),
+    ("pilot-topics-v1", "reliability", "reliability_terms", 40, r"\b(reliab(le|ility)|observability|tracing|monitoring|retr(y|ies)|fallbacks?|failures?|checkpoint(s|ing)?|in production|production[- ](ready|grade)|debugging|latency)\b", "", True, "running agents in production"),
+    ("pilot-topics-v1", "build_vs_buy", "build_vs_buy_terms", 50, r"\b(build vs\.? buy|buy vs\.? build|build or buy|buy or build|acquires?|acquired|acquisition|series [a-d]|which (agent )?framework|how to choose|choosing (a|an|the|your)|alternatives? to)\b", "", True, "choosing between platforms, vendors and frameworks; narrow on purpose, bare 'vs' matches framework comparisons"),
+    ("pilot-topics-v1", "framework", "framework_terms", 60, r"\b(langgraph|crewai|autogen|langchain|llamaindex|pydantic ?ai|agents? sdk|google adk|semantic kernel|agent framework|multi[- ]agent)\b", r"\b(tutorials?|beginners?|courses?|crash course|from scratch|step by step|for dummies|learn|bootcamp|class)\b", True, "agent frameworks and SDKs; broadest, so lowest precedence; beginner material is excluded"),
+]
+
+spark.createDataFrame(
+    [(tenant_id, *row) for row in TOPIC_RULE_SEED],
+    "tenant_id STRING, taxonomy_version STRING, topic_id STRING, rule_id STRING, priority INT, "
+    "pattern STRING, exclude_pattern STRING, enabled BOOLEAN, note STRING",
+).createOrReplaceTempView("incoming_topic_rules")
+
+spark.sql(
+    f"""
+    MERGE INTO {ns}.`control_topic_rules` AS target
+    USING incoming_topic_rules AS incoming
+    ON target.tenant_id = incoming.tenant_id
+       AND target.taxonomy_version = incoming.taxonomy_version
+       AND target.rule_id = incoming.rule_id
+    WHEN MATCHED THEN UPDATE SET
+      topic_id = incoming.topic_id,
+      priority = incoming.priority,
+      pattern = incoming.pattern,
+      exclude_pattern = incoming.exclude_pattern,
+      enabled = incoming.enabled,
+      note = incoming.note,
+      updated_at = CURRENT_TIMESTAMP()
+    WHEN NOT MATCHED THEN INSERT (
+      tenant_id, taxonomy_version, topic_id, rule_id, priority, pattern,
+      exclude_pattern, enabled, note, created_at, updated_at
+    ) VALUES (
+      incoming.tenant_id, incoming.taxonomy_version, incoming.topic_id, incoming.rule_id,
+      incoming.priority, incoming.pattern, incoming.exclude_pattern, incoming.enabled,
+      incoming.note, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()
+    )
+    WHEN NOT MATCHED BY SOURCE AND target.tenant_id = '{tenant_id}' THEN UPDATE SET
+      enabled = false,
+      updated_at = CURRENT_TIMESTAMP()
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")

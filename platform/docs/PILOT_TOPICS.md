@@ -67,6 +67,7 @@ seed pattern as the existing control tables.
 | `rule_id` | `topic_id` plus a short suffix; unique per (`tenant_id`, `taxonomy_version`) and the MERGE key |
 | `priority` | integer; lower wins when several topics match (see 3) |
 | `pattern` | case-insensitive regex, restricted to a portable subset (below) |
+| `exclude_pattern` | optional, same subset; the rule does not fire when it matches (for example beginner tutorials and courses on the broad framework rule); empty when unused |
 | `enabled` | rules can be switched off without a deploy |
 | `created_at`, `note` | audit and rationale |
 
@@ -231,15 +232,56 @@ depends on a trustworthy taxonomy first.
    the same posts; titles, authors and URLs are never stored; a static test asserts
    the tenant column and the key. Both real sample files parse (50 and 27 rows).
    Not yet run against the workspace: the table is created on the next deploy.
-2. **Rules table and validator.** `control_topic_rules`, priority, MERGE seed,
-   pattern validator. Acceptance: static tests for the tenant predicate and the
-   uniqueness key; Python tests of the portable patterns against fixture titles.
+2. **Rules table and validator (built).** `control_topic_rules` with `priority` and
+   `exclude_pattern`, a MERGE seed that is the source of truth (changed rules are
+   updated, removed rules are disabled, never deleted, only within the seeded
+   tenant), and the reference implementation `social_intelligence/topic_rules.py`
+   (portable-pattern validator, HTML normalization, matching, deterministic
+   primary topic). The notebook cannot import the package, so a test parses the
+   notebook's seed literal and requires it to equal the reference rules. Tested on
+   hand-written fixtures, not on the sampled titles. Matching in Silver is slice 3.
 3. **Normalization and matching in Silver.** Added columns and the long table.
    Acceptance: Silver row count and `topic` unchanged, with a guard that
    `COUNT(*)` equals `COUNT(DISTINCT post_id)`.
 4. **Quality report and rule yield.** Read-only, Wilson bounds, held-out split.
    Acceptance: runs cleanly when there are no labels.
 5. **Evidence key behind the gate.** `rankable`, `taxonomy_version`, consumer list.
+
+## v1 rules and their first measurement
+
+Six rules, by priority (lowest wins): `governance_security` 10, `evals` 20, `mcp` 30,
+`reliability` 40, `build_vs_buy` 50, `framework` 60. They were written and tuned
+only against the 77 model-labelled **training** posts (50 + 27, `label_source =
+model`); the held-out sheets were drawn afterwards and no rule has seen them.
+
+Measured on the 73 on-topic training posts, so these numbers are optimistic by
+construction and are not a quality estimate:
+
+| Topic | Labelled | Predicted | Precision | Recall |
+|---|---|---|---|---|
+| `governance_security` | 12 | 16 | 0.75 | 1.00 |
+| `evals` | 5 | 3 | 1.00 | 0.60 |
+| `mcp` | 3 | 5 | 0.60 | 1.00 |
+| `reliability` | 10 | 5 | 0.80 | 0.40 |
+| `framework` | 16 | 25 | 0.48 | 0.75 |
+| `build_vs_buy` | 5 | 0 | n/a | 0.00 |
+| `other` | 21 | 19 | 0.42 | 0.38 |
+
+Primary accuracy 58% (n = 73); none of the 4 `off_topic` posts fired a rule. What
+the errors taught:
+
+- **`build_vs_buy` is a business-strategy topic, not a vocabulary one.** The labelled
+  examples are "train your own models", an acquisition, a funding round. A bare `vs`
+  rule fired on framework comparisons the labeller called `framework`, so the rule
+  is narrow on purpose and currently matches nothing in the training set. It will
+  almost certainly miss the quality gate; show it, do not rank it.
+- **`framework` versus `other` is inconsistently labelled.** Some LangGraph
+  tutorials are `framework`, others `other`. Rules cannot fix inconsistent labels;
+  a written labelling rubric and the second labeller's agreement check can.
+- Non-English titles (Spanish, Japanese) fall to `other` by design; some are
+  `reliability` to a human reader.
+- Titles that list many technologies ("... + langchain + langgraph + mcp") match
+  `mcp` or `framework` although the label is `other`.
 
 ## Decisions (accepted by the pilot owner, 2026-11-05)
 
@@ -256,6 +298,14 @@ depends on a trustworthy taxonomy first.
    rule to them; the demo rules stay for demo data.
 6. **Matching text:** the description length N and title-only versus title plus
    description are settled by scoring both on the training set, not by argument.
+
+7. **Tenant (2026-11-06):** keep `demo` for collectors, labels and rules until the first
+   real review record is stored; then revisit.
+8. **Held-out sample (2026-11-06):** drawn with a fixed seed, never labelled and never
+   used to write or tune a rule: `pilot_holdout_youtube.csv` (40 posts) and
+   `pilot_holdout_x.csv` (20 posts), local untracked files in the repo root with id,
+   title and link only. The pilot owner labels them; load with
+   `social-intelligence-pilot-labels --label-source human`.
 
 Still unresolved: which tenant owns the rules and how a second tenant gets a
 taxonomy; who may edit rules and how a PR becomes an `enabled` data change; how X
