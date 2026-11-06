@@ -301,6 +301,31 @@ are both models, so their errors are correlated; human-to-human agreement would 
 lower. n = 20 is small. It shows the rubric is usable, not that the labels are
 right. The primary labeller marked 15 of 60 rows "unsure".
 
+### Senior reviewer labels (2026-11-06)
+
+At the owner's request a third agent, `agent_reviewer_01` (Opus-class model),
+labelled all 60 held-out posts as a senior reviewer. It was given the rubric
+below **with the proposed tie-breaks applied**, so some of its differences from the
+first two labellers come from the rubric change, not from judgement. It is loaded
+with `label_source = model`: the owner asked for a stronger reviewer to stand in for
+human labels, but a model's judgement is not a person's, so it is not recorded as
+`human` and the human-only gate is still unmet. Treating this labeller as the gold
+set is an explicit gate setting for slice 4 (a configurable set of accepted
+labellers, default human only), to be chosen by the owner, not a relabelling of
+provenance.
+
+Agreement of the reviewer with `agent_labeller_01` on all 60 posts: topic 87%
+(kappa 0.83), on-topic 92%, audience fit exactly 92%. With `agent_labeller_02` on
+the 20 shared posts: topic 80% (kappa 0.75), on-topic 95%, fit exactly 95%. The
+earlier pair scored 85% (kappa 0.81). The reviewer and `agent_labeller_01` are the
+same model family, so their agreement is the least independent of the three
+pairs. Where they differ the cases are `other` versus `off_topic` (4 posts) and
+`other` versus `design_patterns` (2); remaining ambiguities the reviewer reported:
+accuracy-improvement case studies between `evals` and `reliability`, talks on where
+agents run between `other` and `build_vs_buy`, news of attacks carried out by
+agents between `governance_security` and `off_topic`, and cheap-model releases
+between `off_topic` and `cost`.
+
 ### Labelling rubric v1 (as given to the labellers)
 
 One primary topic per post from the title text alone: `framework`, `evals`,
