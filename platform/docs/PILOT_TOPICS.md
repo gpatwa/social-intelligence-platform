@@ -283,15 +283,64 @@ the errors taught:
 - Titles that list many technologies ("... + langchain + langgraph + mcp") match
   `mcp` or `framework` although the label is `other`.
 
+## Held-out labels and agreement (2026-11-06)
+
+Two independent agents, with no shared context, labelled the held-out sheets from
+titles only: `agent_labeller_01` (Opus-class model) labelled all 60 posts (40
+YouTube, 20 X) and `agent_labeller_02` (a different model) labelled a hash-selected
+20-post subset (12 YouTube, 8 X). Both are loaded into `reviewed_pilot_topic` with
+`label_source = model`, tenant `demo`, labelled on 2026-11-06. The 77 earlier
+training labels are `model_run_01`. No human labels exist yet.
+
+Agreement on the 20 shared posts: topic 85% (Cohen's kappa 0.81), on-topic versus
+off-topic 90%, audience fit exactly 90% and within one level 100%. Disagreements:
+one `framework` versus `reliability`, two `other` versus `off_topic`.
+
+**Read this number with care.** Both labellers followed the same written rubric and
+are both models, so their errors are correlated; human-to-human agreement would be
+lower. n = 20 is small. It shows the rubric is usable, not that the labels are
+right. The primary labeller marked 15 of 60 rows "unsure".
+
+### Labelling rubric v1 (as given to the labellers)
+
+One primary topic per post from the title text alone: `framework`, `evals`,
+`reliability`, `mcp`, `governance_security`, `build_vs_buy`, `cost`,
+`design_patterns`, `other` (about agents, no topic is the main subject), or
+`off_topic`. Decide on the main subject, not every keyword; a list of many
+technologies is usually `other`. `audience_fit` is how useful the post is to an
+engineering or platform lead choosing an agent stack: high informs a decision with
+substance, medium is relevant but shallow, promotional or news-like, low is
+beginner, off-focus or noise.
+
+### Rubric ambiguities both labellers hit (proposed tie-breaks, for the owner to confirm)
+
+- `mcp` versus `governance_security`, for example MCP supply-chain checks: label by
+  the concern. A security control wins, so `governance_security`.
+- `framework` versus `reliability`, for example one framework's checkpointing or
+  error handling: label by the main subject; a framework-specific how-to is
+  `framework`, a general production practice is `reliability`.
+- `framework` versus `build_vs_buy`, for example a build tutorial on a managed
+  platform: a tutorial is `framework`; `build_vs_buy` is reserved for the decision
+  itself or for vendor news.
+- `cost` versus `build_vs_buy`, for example self-hosting a model versus paying for
+  APIs: `cost` when money or latency is the argument, otherwise `build_vs_buy`.
+- `other` versus `off_topic`, for example vague AI hype or AI-attack news shorts:
+  `off_topic` unless agents are the subject.
+- `audience_fit` has no rule for beginner tutorials on on-topic subjects; the
+  labellers rated them `low`. Make that explicit.
+
 ## Decisions (accepted by the pilot owner, 2026-11-05)
 
 1. **Multi-label plus primary:** yes. A long table with explicit `priority`; rank on
    the primary topic only in v1.
 2. **`design_patterns` and `cost`:** cut from v1; add each only when the held-out
    set holds at least 20 labelled examples.
-3. **Reviewer:** the pilot owner labels and signs off the gate, and a second
-   labeller (not yet named) labels 20 posts to estimate agreement. Slice 3 does not
-   start until that second labeller is named.
+3. **Reviewer:** the pilot owner signs off the gate. Updated 2026-11-06: the owner
+   chose to have AI agents label the held-out sheets instead of labelling by hand,
+   and to use a second agent as the second labeller (see Held-out labels below).
+   Those are **model** labels, so the human-only gate in the quality section is not
+   met by them; the owner can review or correct any rows, which would then be loaded
+   as human labels.
 4. **Non-English:** mapped to `other`, flagged `language_unsupported` and counted;
    no translated rules in v1.
 5. **Legacy rules for pilot-tenant rows:** stop applying the demo `problem|issue`
