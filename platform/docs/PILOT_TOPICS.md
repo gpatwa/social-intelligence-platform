@@ -158,10 +158,13 @@ Do not rank on the taxonomy until it is measured on data no rule author has seen
 
 - **Labels get their own table.** `silver_human_labels.reviewed_topic` holds the
   legacy vocabulary and the scorecard compares it to `topic`; reusing it would
-  silently report about zero accuracy for pilot labels. Add
-  `reviewed_pilot_topic` (keyed `tenant_id, platform, post_id`, with an `on_topic`
-  flag, labeller and date) and a loader for the existing label CSVs, which live
-  untracked in the repo root. The loader is idempotent on the key.
+  silently report about zero accuracy for pilot labels. `reviewed_pilot_topic`
+  (slice 1, built) is keyed by tenant, platform, post **and labeller**, not by post
+  alone: the second labeller must label the same posts for the agreement check, and
+  the earlier draft key would have forbidden that. Every row records `label_source`
+  (`human` or `model`, always explicit, never defaulted) and the quality gate counts
+  `human` rows only. The existing label CSVs are model-labelled and live untracked in
+  the repo root; load them as `model`.
 - **No circularity.** Write rules from a training set (the 50-post v2 sample and the
   27-post v3 sample). Score only on a fresh random held-out set, frozen before
   scoring, and record which post ids were used for authoring.
@@ -219,9 +222,15 @@ depends on a trustworthy taxonomy first.
 
 ## Proposed slices (each its own PR)
 
-1. **Labels first.** `reviewed_pilot_topic` table and idempotent loader.
-   Acceptance: reloading the same CSV changes no rows; a static test asserts tenant
-   scoping.
+1. **Labels first (built).** `reviewed_pilot_topic` table
+   (`00_initialize_platform.py`) and the idempotent loader
+   (`social_intelligence/pilot_labels.py`, CLI `social-intelligence-pilot-labels`).
+   Acceptance, tested: reloading the same CSV changes no rows (`received_at` is
+   excluded from the comparison and the labelling day is an explicit argument); a
+   changed label is refused before anything is written; a second labeller can label
+   the same posts; titles, authors and URLs are never stored; a static test asserts
+   the tenant column and the key. Both real sample files parse (50 and 27 rows).
+   Not yet run against the workspace: the table is created on the next deploy.
 2. **Rules table and validator.** `control_topic_rules`, priority, MERGE seed,
    pattern validator. Acceptance: static tests for the tenant predicate and the
    uniqueness key; Python tests of the portable patterns against fixture titles.
