@@ -252,8 +252,19 @@ depends on a trustworthy taxonomy first.
    dev: Silver row count and distinct posts equal (1,583), legacy `topic`
    unchanged, and Spark's output equals the Python reference on all 640 live posts
    (primary topic, matched rule ids and the non-English flag) with 0 mismatches.
-4. **Quality report and rule yield.** Read-only, Wilson bounds, held-out split.
-   Acceptance: runs cleanly when there are no labels.
+4. **Quality report and rule yield (built).** `16_build_topic_quality.py` (a job task
+   after `refresh_analytics`; nothing depends on it) writes `gold_topic_quality`
+   (per topic: labelled, predicted, true positives, precision, Wilson lower bound,
+   recall, `meets_sample_size`, `meets_precision`, `rankable`),
+   `gold_topic_quality_summary` and `gold_topic_rule_yield` (including rules that
+   never fire). It is read-only reporting: it changes nothing ranking reads.
+   Gold labels are human labels (always accepted) plus labellers listed in
+   `control_gold_labellers`, which holds `agent_reviewer_01` by the owner's decision
+   of 2026-11-06 (the seed is the source of truth; removing the row revokes it). Gate
+   parameters are job widgets (`min_labelled` 40, `min_precision_lower_bound` 0.7).
+   Reference implementation `social_intelligence/topic_quality.py`; on dev, Spark's
+   output equals it on all 10 topic rows and the summary, and the job passes all 12
+   tasks.
 5. **Evidence key behind the gate.** `rankable`, `taxonomy_version`, consumer list.
 
 ## v1 rules and their first measurement
@@ -362,6 +373,41 @@ beginner, off-focus or noise.
   `off_topic` unless agents are the subject.
 - `audience_fit` has no rule for beginner tutorials on on-topic subjects; the
   labellers rated them `low`. Make that explicit.
+
+## First held-out result (2026-11-06)
+
+The rules scored against the 60 held-out posts, with `agent_reviewer_01` as gold
+(51 on-topic, 9 `off_topic`):
+
+| Topic | Gold | Predicted | Precision | Lower bound | Recall |
+|---|---|---|---|---|---|
+| `framework` | 23 | 22 | 0.64 | 0.46 | 0.61 |
+| `evals` | 5 | 6 | 0.67 | 0.35 | 0.80 |
+| `governance_security` | 4 | 5 | 0.20 | 0.05 | 0.25 |
+| `mcp` | 3 | 3 | 0.33 | 0.08 | 0.33 |
+| `reliability` | 2 | 3 | 0.33 | 0.08 | 0.50 |
+| `build_vs_buy` | 1 | 1 | 1.00 | 0.27 | 1.00 |
+| `other` | 8 | 20 | 0.25 | 0.13 | 0.62 |
+| `cost`, `design_patterns` | 5 | 0 | n/a | n/a | 0.00 |
+
+Primary accuracy on on-topic posts is **53%** (58% on the training set), and rules
+fired on 4 of the 9 `off_topic` posts. **No topic is rankable:** the gate needs 40
+gold examples per topic (`framework` has 23, the largest) and a precision lower
+bound of 0.7 (the best is 0.46). With 60 gold posts the sample-size half of the gate
+cannot be met for any topic, so a larger gold set is a precondition, not a detail.
+
+How to read it, without over-reading n = 60:
+
+- The gap between training and held-out is the overfitting the split was meant to
+  expose: `governance_security` scored precision 0.75 and recall 1.00 on training
+  and 0.20 and 0.25 here. The rules are weak, not just under-measured.
+- The rules over-predict `other` (20 predicted against 8 gold): many posts the
+  reviewer judged on-topic fall through, and `cost` and `design_patterns` are
+  labelled but have no rule.
+- **This held-out set is now spent.** Any rule change made after reading this table
+  turns it into training data; the next round needs a fresh random sample.
+- The gold labeller is a model by the owner's choice. These numbers say how well the
+  rules agree with that labeller, not with a person.
 
 ## What the live parity check found (2026-11-06)
 
