@@ -3,12 +3,19 @@ import unittest
 from pathlib import Path
 
 from social_intelligence.topic_rules import (
+    ENTITY_PASSES,
+    HTML_ENTITIES,
+    MATCH_TEXT_LIMIT,
+    NON_ENGLISH_MIN_LETTERS,
+    NON_ENGLISH_SHARE,
     OTHER,
     TAXONOMY_V1_RULES,
     TAXONOMY_VERSION,
     PatternError,
     TopicRule,
+    looks_non_english,
     match_rules,
+    match_text,
     normalize_text,
     primary_topic,
     seed_tuples,
@@ -17,6 +24,7 @@ from social_intelligence.topic_rules import (
 )
 
 NOTEBOOK = Path(__file__).resolve().parents[1] / "notebooks" / "00_initialize_platform.py"
+SILVER_NOTEBOOK = Path(__file__).resolve().parents[1] / "notebooks" / "02_build_analytics.py"
 
 
 def rule(topic_id="evals", suffix="terms", priority=20, pattern=r"\bfoo\b", **kwargs):
@@ -171,6 +179,88 @@ class NotebookParityTests(unittest.TestCase):
         self.assertIn("target.tenant_id = '{tenant_id}'", clause)
         self.assertIn("enabled = false", clause)
         self.assertNotIn("DELETE", merge.upper())
+
+
+class MatchTextAndLanguageTests(unittest.TestCase):
+    def test_match_text_is_normalized_then_cut_to_the_limit(self):
+        self.assertEqual(len(match_text("A" * 1000)), MATCH_TEXT_LIMIT)
+        self.assertEqual(match_text("Don&#39;t &amp;amp; STOP"), "don't & stop")
+        self.assertEqual(match_text(None), "")
+
+    def test_only_the_listed_entities_are_replaced(self):
+        self.assertEqual(normalize_text("a &copy; b"), "a &copy; b")
+
+    def test_description_text_inside_the_limit_can_match(self):
+        title_only = primary_topic("Weekly update", TAXONOMY_V1_RULES)
+        with_description = primary_topic("Weekly update\nWe cover MCP server design in depth", TAXONOMY_V1_RULES)
+        self.assertEqual((title_only, with_description), (OTHER, "mcp"))
+        beyond = "Weekly update\n" + "x " * 200 + "mcp"
+        self.assertEqual(primary_topic(beyond, TAXONOMY_V1_RULES), OTHER)
+
+    def test_a_letter_of_any_script_next_to_a_keyword_is_not_a_boundary(self):
+        # Matches Spark's RLIKE on the Databricks runtime, found by the live parity
+        # check: a keyword followed directly by a Japanese letter has no boundary there.
+        self.assertEqual(primary_topic("éevals", TAXONOMY_V1_RULES), OTHER)
+        self.assertEqual(primary_topic("langgraphに学ぶ", TAXONOMY_V1_RULES), OTHER)
+        self.assertEqual(primary_topic("langgraph に学ぶ", TAXONOMY_V1_RULES), "framework")
+
+    def test_non_english_flag(self):
+        self.assertTrue(looks_non_english("人工知能エージェントの信頼性について"))
+        self.assertTrue(looks_non_english("Агенты ИИ в продакшене"))
+        self.assertFalse(looks_non_english("Agent evals in production"))
+        self.assertFalse(looks_non_english("Agentes de IA en producción"))   # accented Latin is not flagged
+        self.assertFalse(looks_non_english("ok 人"))                          # too few letters
+        self.assertFalse(looks_non_english(None))
+
+
+class SilverMatchingGuardTests(unittest.TestCase):
+    """Static guards on the Silver notebook; Spark is unavailable in unit tests."""
+
+    def setUp(self):
+        self.source = SILVER_NOTEBOOK.read_text(encoding="utf-8")
+        self.block = self.source[self.source.index("# Pilot topic matching."): self.source.index("# GitHub repository rows are adoption signals")]
+
+    def literal(self, name):
+        tree = ast.parse(self.source)
+        node = next(n for n in tree.body if isinstance(n, ast.Assign) and any(getattr(t, "id", "") == name for t in n.targets))
+        return ast.literal_eval(node.value)
+
+    def test_constants_equal_the_reference(self):
+        self.assertEqual([tuple(pair) for pair in self.literal("HTML_ENTITIES")], list(HTML_ENTITIES))
+        self.assertEqual(self.literal("ENTITY_PASSES"), ENTITY_PASSES)
+        self.assertEqual(self.literal("MATCH_TEXT_LIMIT"), MATCH_TEXT_LIMIT)
+        self.assertEqual(self.literal("NON_ENGLISH_MIN_LETTERS"), NON_ENGLISH_MIN_LETTERS)
+        self.assertEqual(self.literal("NON_ENGLISH_SHARE"), NON_ENGLISH_SHARE)
+
+    def test_every_rule_condition_is_pinned_to_its_tenant_and_the_active_version(self):
+        self.assertIn('(F.col("tenant_id") == rule.tenant_id)', self.block)
+        self.assertIn('F.col("taxonomy_version") == taxonomy_version', self.block)
+        self.assertIn("F.col(\"enabled\")", self.block)
+        self.assertIn("rule_tenants", self.block)  # tenants without rules get NULL, not 'other'
+
+    def test_demo_sources_are_excluded_and_posts_are_not_joined_to_rules(self):
+        self.assertIn('~F.col("source_id").like("demo-%")', self.block)
+        self.assertNotRegex(self.block, r"JOIN\s+\S*control_topic_rules")
+
+    def test_merge_key_and_grain_check(self):
+        merge = self.block[self.block.index("MERGE INTO {ns}.`silver_social_posts`"):]
+        merge = merge[: merge.index('"""')]
+        for predicate in ("target.tenant_id = incoming.tenant_id", "target.platform = incoming.platform", "target.post_id = incoming.post_id"):
+            self.assertIn(predicate, merge)
+        self.assertNotIn("INSERT", merge.upper())
+        self.assertNotIn("DELETE", merge.upper())
+        self.assertIn("changed the grain of silver_social_posts", self.block)
+
+    def test_bad_rules_are_skipped_not_fatal_and_empty_arrays_are_safe(self):
+        self.assertIn("skipping invalid topic rule", self.block)
+        self.assertIn('F.size("pilot_matches") > 0', self.block)
+
+    def test_legacy_topic_and_the_new_columns_are_both_present(self):
+        silver = self.source[self.source.index("CREATE OR REPLACE TABLE {ns}.`silver_social_posts`"): self.source.index("# Pilot topic matching.")]
+        self.assertIn("END AS topic,", silver)
+        for column in ("pilot_topic_primary", "pilot_topic_rule_ids", "pilot_taxonomy_version", "language_unsupported"):
+            self.assertIn(f"AS {column}", silver)
+        self.assertIn("silver_post_topics", self.block)
 
 
 if __name__ == "__main__":

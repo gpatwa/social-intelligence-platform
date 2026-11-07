@@ -12,7 +12,6 @@ Patterns use a deliberately small regex subset that Python ``re`` and Java regex
 
 from __future__ import annotations
 
-import html
 import re
 from dataclasses import dataclass
 from typing import Iterable, Sequence
@@ -20,6 +19,24 @@ from typing import Iterable, Sequence
 TAXONOMY_VERSION = "pilot-topics-v1"
 OTHER = "other"
 PATTERN_LIMIT = 300
+# Matching reads the first N characters of the normalized ``content_text``: the
+# title plus the start of the description for YouTube, the start of the post for X.
+# On the 73 on-topic training posts 150, 300 and 600 characters and title-only all
+# scored within three posts of each other (57 to 62 percent), so 300 is a
+# robustness choice, not a tuned one.
+MATCH_TEXT_LIMIT = 300
+# Non-English posts are flagged, not translated: a post is unsupported when at
+# least this many letters are present and more than this share are non-ASCII.
+NON_ENGLISH_MIN_LETTERS = 5
+NON_ENGLISH_SHARE = 0.3
+# Spark has no HTML unescape, so the notebook replaces exactly this table, in this
+# order, three passes, to undo single and double escaping. The notebook carries the
+# same literal and a test keeps the two equal.
+HTML_ENTITIES = (
+    ("&#39;", "'"), ("&#x27;", "'"), ("&apos;", "'"), ("&quot;", '"'),
+    ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " "), ("&amp;", "&"),
+)
+ENTITY_PASSES = 3
 
 # Literals, alternation, groups, character classes, \b, \s, optional/repeat marks.
 # No lookaround, back-references, inline flags, \p{..} classes or {m,n} counts.
@@ -85,31 +102,50 @@ class TopicRule:
             validate_pattern(self.exclude_pattern)
 
     def matches(self, normalized_text: str) -> bool:
+        # \b is Unicode-aware in Python and in the Databricks runtime's Java regex
+        # (checked live: a keyword followed directly by a Japanese or Korean letter
+        # has no boundary in Spark). Rules avoid \s and \w, where the two differ.
         if not self.enabled or re.search(self.pattern, normalized_text) is None:
             return False
         return not (self.exclude_pattern and re.search(self.exclude_pattern, normalized_text))
 
 
-_WHITESPACE = re.compile(r"\s+")
+# ASCII whitespace only, the same set as Java's \s.
+_WHITESPACE = re.compile(r"[ \t\r\n\f\x0b]+")
 
 
 def normalize_text(text: str | None) -> str:
-    """Unescape HTML (also when double-escaped), lowercase, collapse whitespace.
+    """Undo HTML escaping (also when double-escaped), lowercase, collapse whitespace.
 
     Landed YouTube titles carry ``&#39;``, ``&amp;`` and sometimes ``&amp;amp;``.
+    Only the entities in ``HTML_ENTITIES`` are replaced.
     """
     value = text or ""
-    for _ in range(3):
-        unescaped = html.unescape(value)
-        if unescaped == value:
-            break
-        value = unescaped
+    for _ in range(ENTITY_PASSES):
+        for entity, char in HTML_ENTITIES:
+            value = value.replace(entity, char)
     return _WHITESPACE.sub(" ", value.lower()).strip()
 
 
+def match_text(content_text: str | None) -> str:
+    """The normalized text rules are matched against."""
+    return normalize_text(content_text)[:MATCH_TEXT_LIMIT]
+
+
+def looks_non_english(text: str | None) -> bool:
+    """True when the text is mostly non-ASCII letters (non-Latin scripts)."""
+    letters = [char for char in (text or "") if char.isalpha()]
+    if len(letters) < NON_ENGLISH_MIN_LETTERS:
+        return False
+    return sum(ord(char) > 127 for char in letters) / len(letters) > NON_ENGLISH_SHARE
+
+
 def match_rules(text: str | None, rules: Iterable[TopicRule]) -> list[TopicRule]:
-    """Every enabled rule that matches, ordered by (priority, rule_id)."""
-    normalized = normalize_text(text)
+    """Every enabled rule that matches, ordered by (priority, rule_id).
+
+    ``text`` is the raw ``content_text``; it is normalized and cut to the match limit.
+    """
+    normalized = match_text(text)
     return sorted((rule for rule in rules if rule.matches(normalized)), key=lambda rule: (rule.priority, rule.rule_id))
 
 
