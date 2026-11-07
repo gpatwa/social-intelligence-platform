@@ -588,5 +588,44 @@ spark.sql(
     """
 )
 
+# Model labellers the pilot owner accepts as gold for the quality report. Human
+# labels are always accepted and need no row here; a model labeller counts only
+# while it is listed. The seed is the source of truth: removing a row revokes the
+# acceptance on the next run.
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS {ns}.`control_gold_labellers` (
+      tenant_id STRING NOT NULL,
+      labeller_id STRING NOT NULL,
+      accepted_on DATE NOT NULL,
+      note STRING,
+      updated_at TIMESTAMP NOT NULL
+    )
+    USING DELTA
+    COMMENT 'Model labellers accepted as gold by the pilot owner; human labels are always accepted'
+    """
+)
+
+GOLD_LABELLER_SEED = [
+    ("agent_reviewer_01", "2026-11-06", "Model labeller accepted as gold by the pilot owner; not a human label"),
+]
+spark.createDataFrame(
+    [(tenant_id, labeller, accepted_on, note) for labeller, accepted_on, note in GOLD_LABELLER_SEED],
+    "tenant_id STRING, labeller_id STRING, accepted_on STRING, note STRING",
+).createOrReplaceTempView("incoming_gold_labellers")
+
+spark.sql(
+    f"""
+    MERGE INTO {ns}.`control_gold_labellers` AS target
+    USING (SELECT tenant_id, labeller_id, CAST(accepted_on AS DATE) AS accepted_on, note FROM incoming_gold_labellers) AS incoming
+    ON target.tenant_id = incoming.tenant_id AND target.labeller_id = incoming.labeller_id
+    WHEN MATCHED THEN UPDATE SET
+      accepted_on = incoming.accepted_on, note = incoming.note, updated_at = CURRENT_TIMESTAMP()
+    WHEN NOT MATCHED THEN INSERT (tenant_id, labeller_id, accepted_on, note, updated_at)
+      VALUES (incoming.tenant_id, incoming.labeller_id, incoming.accepted_on, incoming.note, CURRENT_TIMESTAMP())
+    WHEN NOT MATCHED BY SOURCE AND target.tenant_id = '{tenant_id}' THEN DELETE
+    """
+)
+
 print(f"Initialized control plane in {catalog}.{schema} for tenant {tenant_id}")
 print(f"Raw event landing root: /Volumes/{catalog}/{schema}/raw_social/events")

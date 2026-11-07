@@ -63,6 +63,15 @@ resources:
               catalog: ${var.catalog}
               schema: ${var.schema}
 
+        - task_key: build_topic_quality
+          depends_on:
+            - task_key: refresh_analytics
+          notebook_task:
+            notebook_path: ../notebooks/16_build_topic_quality.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
         - task_key: build_decision_workflow
           depends_on:
             - task_key: build_ranked_evidence
