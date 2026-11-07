@@ -1,14 +1,13 @@
 import { PipelineStatusPanel } from "./pipeline-status";
 import { AgentStackAdvisor } from "./agent-stack-advisor";
 import { InternalPilotWorkspace } from "./internal-pilot-workspace";
+import { evidenceSnapshot, formatSnapshotDate } from "./data/evidence-snapshot";
 
-const dashboardUrl =
-  "https://dbc-b8672746-8e43.cloud.databricks.com/dashboardsv3/01f17ce244971d80b97f3c0aa6b033ef/published?o=7474657828954669";
 const githubUrl = "https://github.com/gpatwa/social-intelligence-platform";
 const baQueryPackUrl =
   "https://github.com/gpatwa/social-intelligence-platform/blob/main/platform/sql/snowflake_ba_starter_queries.sql";
-const pipelineRunUrl =
-  "https://github.com/gpatwa/social-intelligence-platform/actions/runs/30737199706";
+const topicDesignUrl =
+  "https://github.com/gpatwa/social-intelligence-platform/blob/main/platform/docs/PILOT_TOPICS.md";
 
 const capabilities = [
   {
@@ -71,27 +70,27 @@ const decisionLoop = [
 const connectorRoadmap = [
   {
     name: "YouTube",
-    status: "Live",
-    tone: "live",
-    detail: "Hourly discovery collection lands governed, replayable events for the Databricks pipeline.",
+    status: "Implemented",
+    tone: "ready",
+    detail: "Hourly discovery collection lands governed, replayable events for the Databricks pipeline. Current state is in the live status panel.",
   },
   {
     name: "X",
-    status: "Live",
-    tone: "live",
+    status: "Implemented",
+    tone: "ready",
     detail: "Budget-capped recent search and curated account monitoring land governed events; trend snapshots are switched off.",
   },
   {
     name: "GitHub",
-    status: "Live",
-    tone: "live",
+    status: "Implemented",
+    tone: "ready",
     detail: "Daily repository snapshots and releases for a curated agent-framework watchlist, kept as an adoption signal separate from post scoring.",
   },
   {
     name: "Instagram",
-    status: "Ready to authorize",
+    status: "Needs authorization",
     tone: "ready",
-    detail: "Graph API collector, checkpoints, and governed source registration are ready pending Meta account linkage.",
+    detail: "Graph API collector, checkpoints, and governed source registration exist but are switched off until a Meta account is linked and authorized.",
   },
   {
     name: "Reddit",
@@ -157,8 +156,7 @@ export default function Home() {
       <section className="hero" id="top">
         <div className="hero-copy">
           <div className="eyebrow">
-            <span className="live-dot" />
-            Enterprise AI Builder Intelligence · Pilot-ready
+            Enterprise AI Builder Intelligence · Staging pilot
           </div>
           <h1>
             Find the signal.
@@ -177,101 +175,79 @@ export default function Home() {
             </a>
             <a
               className="button button-secondary"
-              href={dashboardUrl}
+              href={topicDesignUrl}
               target="_blank"
               rel="noreferrer"
             >
-              Open the analytics workspace <span aria-hidden="true">↗</span>
+              How results are measured <span aria-hidden="true">↗</span>
             </a>
           </div>
           <p className="access-note">
-            YouTube, X and GitHub collection are live. The curated serving layer is
+            Collectors for YouTube, X and GitHub are implemented; their current
+            state is in the live status panel below. The curated serving layer is
             available in Snowflake for authorized analysts.
           </p>
         </div>
 
-        <div className="signal-console" aria-label="Product signal preview">
+        <div className="signal-console evidence-card" aria-labelledby="evidence-card-title">
           <div className="console-topbar">
-            <span>Pipeline / latest validated run</span>
-            <span className="console-live">Operational</span>
+            <span>Evidence record</span>
+            <span className="snapshot-badge">
+              Static snapshot · {formatSnapshotDate(evidenceSnapshot.asOf)}
+            </span>
           </div>
-          <div className="console-main">
-            <div className="console-feature">
-              <div className="feature-label">
-                <span>Opportunity → recommendation</span>
-                <strong>Evidence retained</strong>
-              </div>
-              <h2>Turn momentum into a testable commercial decision.</h2>
-              <p>
-                Product fit, creative hypothesis, target audience, approval,
-                experiment design, and outcome stay connected from end to end.
-              </p>
-              <div className="trend-chart" aria-hidden="true">
-                {[24, 31, 28, 42, 49, 61, 73, 91].map((height, index) => (
-                  <span
-                    key={index}
-                    style={{ "--bar-height": `${height}%` } as React.CSSProperties}
-                  />
-                ))}
-              </div>
-              <div className="chart-axis">
-                <span>Discover</span>
-                <span>Learn</span>
-              </div>
-            </div>
-            <div className="score-stack">
-              <article className="score-card accent-green">
-                <span>Decision stages</span>
-                <strong>4</strong>
-                <small>one governed loop</small>
-              </article>
-              <article className="score-card accent-coral">
-                <span>Serving marts</span>
-                <strong>22</strong>
-                <small>published to ANALYTICS</small>
-              </article>
-            </div>
+          <div className="evidence-card-body">
+            <h2 id="evidence-card-title">Recent evidence, grouped by pilot topic.</h2>
+            <p>
+              Real items from the collectors, shown by platform, topic and date with a
+              direct link to the source. No post text, author or ranking score is
+              shown.
+            </p>
+            <ul className="evidence-list">
+              {evidenceSnapshot.items.map((item) => (
+                <li key={item.url}>
+                  <span className="evidence-platform">{item.platform}</span>
+                  <span className="evidence-topic">{item.topic}</span>
+                  <time dateTime={item.published}>{formatSnapshotDate(item.published)}</time>
+                  <a href={item.url} target="_blank" rel="noreferrer">
+                    Open source <span aria-hidden="true">↗</span>
+                    <span className="visually-hidden">
+                      ({item.platform} post from {formatSnapshotDate(item.published)}, opens in a new tab)
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <ol className="evidence-path" aria-label="Where this evidence goes next">
+              <li>
+                <b>Evidence</b>
+                <span>collected</span>
+              </li>
+              <li>
+                <b>Recommendation</b>
+                <span>none approved yet</span>
+              </li>
+              <li>
+                <b>Named reviewer</b>
+                <span>first review pending</span>
+              </li>
+              <li>
+                <b>Measured result</b>
+                <span>not started</span>
+              </li>
+            </ol>
           </div>
-          <div className="console-footer">
-            <div>
-              <span className="health-dot" />
-              Two sources · one evidence-to-outcome path
-            </div>
-            <div>Hourly publish</div>
-            <div>Gold-only access</div>
+          <div className="console-footer evidence-footer">
+            <p>{evidenceSnapshot.measurement}</p>
+            <p>
+              Taken by hand from {evidenceSnapshot.source}. It does not update; the
+              live status panel below does.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="proof-strip" aria-label="Validated MVP metrics">
-        <p>Latest verified delivery</p>
-        <div className="proof-metrics">
-          <span>
-            <b>22</b> BA-facing marts
-          </span>
-          <span>
-            <b>1</b> guarded hourly path
-          </span>
-          <span><b>111</b> automated checks</span>
-          <span>
-            <b>100%</b> verified end-to-end run
-          </span>
-        </div>
-      </section>
-
-      <aside className="operational-note" aria-label="Live data status">
-        <div>
-          <span className="health-dot" />
-          <strong>Discovery and serving are live</strong>
-        </div>
-        <p>
-          Approved provider events are validated in Databricks before curated
-          Gold marts refresh Snowflake ANALYTICS on the hourly schedule.
-        </p>
-        <a href="#serving">See the analyst serving layer ↓</a>
-      </aside>
-
-      <PipelineStatusPanel dashboardUrl={dashboardUrl} />
+      <PipelineStatusPanel />
 
       <section className="section decision-section" id="decision">
         <div className="section-heading decision-heading">
@@ -324,9 +300,6 @@ export default function Home() {
             <a className="button button-primary" href={baQueryPackUrl} target="_blank" rel="noreferrer">
               Open BA query pack <span aria-hidden="true">↗</span>
             </a>
-            <a className="text-link" href={dashboardUrl} target="_blank" rel="noreferrer">
-              Open governed metrics <span aria-hidden="true">↗</span>
-            </a>
           </div>
         </div>
         <div className="serving-stack" aria-label="Snowflake serving flow">
@@ -343,7 +316,7 @@ export default function Home() {
           <article>
             <span>03</span>
             <strong>Analyze</strong>
-            <p>BA users query 22 curated signal, evidence, decision, and aggregate campaign marts with a read-only role.</p>
+            <p>BA users query curated signal, evidence, decision, and aggregate campaign marts with a read-only role.</p>
           </article>
         </div>
       </section>
@@ -447,7 +420,7 @@ export default function Home() {
             </div>
             <ul>
               <li>Trend and challenge detection</li>
-              <li>Live YouTube, X and GitHub collection</li>
+              <li>YouTube, X and GitHub collectors (their current state is in the live status panel)</li>
               <li>Durable checkpoints and replayable events</li>
               <li>Quota controls, retries, and source health</li>
               <li>Scheduled Databricks analytics workflow</li>
@@ -475,11 +448,11 @@ export default function Home() {
 
       <section className="pilot-section" id="pilot">
         <div>
-          <p className="section-kicker">The operating path is proven</p>
+          <p className="section-kicker">One operating path</p>
           <h2>Start with approved sources. Expand behind one contract.</h2>
           <p>
-            The operating path is proven from external collection through
-            Databricks analytics through Snowflake serving. The next source can
+            The path runs from external collection through Databricks analytics
+            to Snowflake serving. The next source can
             reuse the same controls, checkpoints, event envelope, and delivery
             path.
           </p>
@@ -487,11 +460,11 @@ export default function Home() {
         <div className="pilot-actions">
           <a
             className="button button-light"
-            href={pipelineRunUrl}
+            href={githubUrl}
             target="_blank"
             rel="noreferrer"
           >
-            View the successful run <span aria-hidden="true">↗</span>
+            Read the source <span aria-hidden="true">↗</span>
           </a>
           <a className="text-link" href={baQueryPackUrl} target="_blank" rel="noreferrer">
             Use the BA query pack <span aria-hidden="true">↗</span>
@@ -509,7 +482,7 @@ export default function Home() {
           <b>Social Intelligence</b>
         </div>
         <p>
-          Live YouTube, X and GitHub collection, governed Databricks analytics, and
+          Collectors for YouTube, X and GitHub, governed Databricks analytics, and
           Snowflake BA serving—with an evidence-linked advisor for enterprise AI
           automation and agent architecture.
         </p>

@@ -57,10 +57,16 @@ test("server-renders the Social Intelligence landing page", async () => {
   );
   assert.match(html, /Find the signal\./);
   assert.match(html, /Shape what(?:’|&#x27;)s next\./);
-  assert.match(html, /<b>22<\/b> BA-facing marts/);
-  assert.match(html, /<b>1<\/b> guarded hourly path/);
-  assert.match(html, /<b>111<\/b> automated checks/);
-  assert.match(html, /Discovery and serving are live/);
+  // The hero shows real, dated evidence and says what has not happened yet.
+  assert.match(html, /Recent evidence, grouped by pilot topic\./);
+  assert.match(html, /Static snapshot/);
+  assert.match(html, /7 Nov 2026/);
+  assert.match(html, /none approved yet/);
+  assert.match(html, /first review pending/);
+  assert.match(html, /53% primary accuracy on 60 held-out posts/);
+  assert.match(html, /https:\/\/x\.com\/i\/web\/status\/2118559322745581582/);
+  assert.match(html, /https:\/\/www\.youtube\.com\/watch\?v=_Pv_Y078vd8/);
+  assert.match(html, /Staging pilot/);
   assert.match(html, /Pipeline status, without the guesswork/);
   assert.match(html, /Databricks · gold_connector_operations/);
   assert.match(html, /Google quota/);
@@ -86,6 +92,35 @@ test("server-renders the Social Intelligence landing page", async () => {
     html,
     /https:\/\/social-intelligence\.example\/og-agent-stack\.png/,
   );
+});
+
+test("makes no typed claim about live state, fixed metrics or the internal workspace", async () => {
+  const response = await render();
+  const html = await response.text();
+  // Status words come from the computed status panel, never from page copy.
+  for (const claim of [
+    /Operational/,
+    /Discovery and serving are live/,
+    /collection are live/,
+    /Live YouTube/,
+    /<b>22<\/b>/,
+    /<b>111<\/b>/,
+    /<b>100%<\/b>/,
+    /Latest verified delivery/,
+    /View the successful run/,
+    /Open the analytics workspace/,
+    /Open governed metrics/,
+  ]) {
+    assert.doesNotMatch(html, claim, String(claim));
+  }
+  assert.doesNotMatch(html, /Pilot-ready<\/div>/); // the hero eyebrow says "Staging pilot"
+  // No internal Databricks workspace host, dashboard id or old CI run link on a public page.
+  assert.doesNotMatch(html, /cloud\.databricks\.com/);
+  assert.doesNotMatch(html, /dashboardsv3/);
+  assert.doesNotMatch(html, /actions\/runs\/\d+/);
+  // The status panel is not one big live region; only its summary is announced.
+  assert.doesNotMatch(html, /<section[^>]*id="status"[^>]*aria-live/);
+  assert.match(html, /role="status"/);
 });
 
 test("removes the disposable starter preview", async () => {

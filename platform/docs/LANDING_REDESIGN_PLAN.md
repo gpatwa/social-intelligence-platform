@@ -30,10 +30,14 @@ Checked against the code, not only the screenshots:
 - **The proof strip is stale and unsourced:** 22 marts, "111 automated checks" (the
   real count is now over 230), "100% verified end-to-end run" with no date; the
   linked CI run is months old.
-- **Layout breaks.** Grid minimums of 480px and 560px (`globals.css:134, 584, 1489`)
-  are not overridden at 680px and below; the designer saw overflow at 390px and an
-  input overlapping the evidence list on desktop (inferred from screenshots, to be
-  reproduced in slice 1).
+- **Layout.** **Corrected in slice 1:** the designer reported overflow across the page
+  at 390px, but the screenshots came from headless Chrome, which will not render
+  narrower than about 500px, so a "390px" capture is a 500px layout cut off at 390.
+  Measured in a true 390px emulation, the only overflow was the pilot workspace: a
+  grid with a 560px minimum column (`globals.css`), two fixed-width form fields and a
+  non-wrapping tab row, about 612px wide in total. The desktop input overlap was not
+  reproduced. Check widths by measuring (`scrollWidth`) in an emulated viewport, not
+  from a headless screenshot.
 - **Legibility.** 29 declarations at 8 to 9px. The accent `#ff6b4a` is used as text
   on ivory at about 2.7:1, which fails WCAG AA even for large text (computed).
 - **The primary call to action dead-ends** at a Databricks login wall and puts an
@@ -121,7 +125,7 @@ main path.
 
 ## Phased plan (each slice its own PR; slice 1 is shippable alone and reversible)
 
-1. **Truth patch.** Delete the typed status lines and the proof strip; replace the
+1. **Truth patch (built, not published).** Delete the typed status lines and the proof strip; replace the
    fake hero console with a static, dated evidence card; remove the dashboard and old
    run links; fix the overflow minimums and the input overlap; raise 8 to 9px labels
    to 12px; fix the accent contrast. Verify: no `Live`, `Operational`, `111` or `100%`
@@ -142,6 +146,38 @@ main path.
 repeats the decision loop), the Databricks dashboard links and the old run link.
 **Defer:** campaign and ad-spend language, the unexplained "92 fit score", and the
 connector roadmap (it folds into the readiness ledger).
+
+## Slice 1 as built
+
+Built on branch `feat/landing-truth-patch`; **not deployed**. What changed:
+
+- Removed the typed status claims ("Operational", "Discovery and serving are live",
+  "collection are live"), the proof strip (22 marts, 111 checks, 100% run), the
+  operational-note banner, the fake hero console with invented chart bars, the
+  Databricks dashboard links and the old CI run link. Connector cards say
+  "Implemented", not "Live", and point at the live status panel.
+- The hero is now a static, dated evidence card: three real items (two X posts, one
+  YouTube video) shown by platform, pilot topic, date and a working source link, with
+  no text, author or score. Ranked-evidence scores are deliberately not shown: they are
+  still computed under the legacy `topic:lifestyle` decision key, and every row carries
+  the same six generic reasons, so displaying them would over-claim. The card states
+  that no recommendation is approved yet, that the first review is pending, and the
+  53% held-out accuracy. The data is in `app/data/evidence-snapshot.ts`.
+- Layout: the pilot workspace stacks on small screens, form fields shrink, tabs wrap.
+- Text: 8 to 11px labels raised to 12px; the accent used as text is now `#b3380a` (the
+  bright coral stays for fills and on dark panels); 16 muted-grey and accent rules
+  were darkened or lightened by context; white-on-coral button text is now ink.
+- The status panel no longer announces itself whole every 60 seconds: `aria-live`
+  moved from the section to a single summary line (`role="status"`).
+
+Verified: a text-contrast audit of every visible text element in a real browser (312
+elements, 0 below AA, from about 40 before; text over gradient backgrounds is not
+covered), no horizontal overflow at 320, 390, 768, 1024 and 1440px, lint,
+`npm audit --omit=dev` clean, and the site tests, which now also fail if typed live
+claims, fixed counts, the internal workspace host or a stale run link return. Not
+verified: screen readers, a keyboard-only walkthrough, and a third-party
+accessibility checker (loading axe-core into the page was blocked, so the audit is a
+custom script). Publishing is a separate step the owner decides.
 
 ## Decisions and recommendations (for the owner; defaults used if no objection)
 

@@ -26,7 +26,7 @@ const initialStatus: PipelineStatus = {
   message: "Connecting to the latest governed metric…",
 };
 
-export function PipelineStatusPanel({ dashboardUrl }: { dashboardUrl: string }) {
+export function PipelineStatusPanel() {
   const [snapshot, setSnapshot] = useState<PipelineStatus>(initialStatus);
   const [refreshing, setRefreshing] = useState(true);
 
@@ -77,7 +77,7 @@ export function PipelineStatusPanel({ dashboardUrl }: { dashboardUrl: string }) 
   const statusLabel = snapshot.operationalStatus.replaceAll("_", " ");
 
   return (
-    <section className="pipeline-status-section" id="status" aria-live="polite">
+    <section className="pipeline-status-section" id="status">
       <div className="pipeline-status-heading">
         <div>
           <p className="section-kicker">Live operations</p>
@@ -92,15 +92,12 @@ export function PipelineStatusPanel({ dashboardUrl }: { dashboardUrl: string }) 
       <div className="status-command-center">
         <div className="status-summary">
           <span className="status-source">{snapshot.source}</span>
-          <strong>{snapshot.available ? "Latest run received" : "Telemetry connection pending"}</strong>
+          <strong role="status">{snapshot.available ? "Latest run received" : "Telemetry connection pending"}</strong>
           <p>
             {snapshot.available
               ? `Completed ${completedLabel}. The public projection refreshes every minute.`
               : snapshot.message}
           </p>
-          <a href={dashboardUrl} target="_blank" rel="noreferrer">
-            Open governed metrics <span aria-hidden="true">↗</span>
-          </a>
         </div>
 
         <div className="status-metric-grid">
