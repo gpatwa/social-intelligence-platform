@@ -6,6 +6,8 @@
   --ivory: #f4f0e6;
   --paper: #fbfaf6;
   --coral: #ff6b4a;
+  /* Accent for text on light backgrounds: #ff6b4a is only about 2.7:1 on --paper. */
+  --coral-text: #b3380a;
   --green: #a7f36a;
   --steel: #7590a8;
   --line: rgba(8, 19, 31, 0.15);
@@ -69,7 +71,7 @@ a {
 .brand small {
   color: #65717b;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -162,19 +164,11 @@ nav a:hover {
   align-items: center;
   display: flex;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   gap: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.live-dot {
-  background: var(--green);
-  border: 4px solid rgba(167, 243, 106, 0.22);
-  border-radius: 50%;
-  height: 12px;
-  width: 12px;
 }
 
 .hero h1 {
@@ -187,7 +181,7 @@ nav a:hover {
 }
 
 .hero h1 span {
-  color: var(--coral);
+  color: var(--coral-text);
   display: block;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
@@ -249,9 +243,9 @@ nav a:hover {
 }
 
 .access-note {
-  color: #7b858d;
+  color: #566069;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
   margin-top: 16px;
 }
 
@@ -271,7 +265,7 @@ nav a:hover {
   color: #a9b4bd;
   display: flex;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
   justify-content: space-between;
   letter-spacing: 0.08em;
   min-height: 52px;
@@ -279,154 +273,12 @@ nav a:hover {
   text-transform: uppercase;
 }
 
-.console-live {
-  align-items: center;
-  display: flex;
-  gap: 7px;
-}
-
-.console-live::before {
-  background: var(--green);
-  border-radius: 50%;
-  content: "";
-  height: 6px;
-  width: 6px;
-}
-
-.console-main {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(0, 1fr) 160px;
-  padding: 22px;
-}
-
-.console-feature {
-  background: #0f1d2a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  min-height: 340px;
-  padding: 23px;
-}
-
-.feature-label {
-  align-items: center;
-  color: #8fa0ae;
-  display: flex;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
-  justify-content: space-between;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.feature-label strong {
-  color: var(--green);
-  font-size: 8px;
-  font-weight: 500;
-}
-
-.console-feature h2 {
-  font-size: 30px;
-  font-weight: 550;
-  letter-spacing: -0.045em;
-  margin: 42px 0 9px;
-}
-
-.console-feature p {
-  color: #a6b2bc;
-  font-size: 12px;
-  line-height: 1.55;
-  margin: 0;
-  max-width: 300px;
-}
-
-.trend-chart {
-  align-items: end;
-  display: flex;
-  gap: 9px;
-  height: 126px;
-  margin-top: 30px;
-}
-
-.trend-chart span {
-  background: #294155;
-  flex: 1;
-  height: var(--bar-height);
-  min-width: 9px;
-  position: relative;
-}
-
-.trend-chart span:nth-last-child(-n + 3) {
-  background: var(--coral);
-}
-
-.trend-chart span:last-child::after {
-  background: var(--coral);
-  border: 4px solid rgba(255, 107, 74, 0.25);
-  border-radius: 50%;
-  content: "";
-  height: 7px;
-  position: absolute;
-  right: -5px;
-  top: -6px;
-  width: 7px;
-}
-
-.chart-axis {
-  color: #657888;
-  display: flex;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
-  justify-content: space-between;
-  margin-top: 9px;
-}
-
-.score-stack {
-  display: grid;
-  gap: 16px;
-}
-
-.score-card {
-  align-content: space-between;
-  background: #122331;
-  border-top: 3px solid currentColor;
-  display: grid;
-  padding: 19px;
-}
-
-.score-card span,
-.score-card small {
-  color: #93a1ad;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.score-card strong {
-  color: white;
-  font-size: 34px;
-  font-weight: 520;
-  letter-spacing: -0.05em;
-}
-
-.score-card small {
-  color: currentColor;
-}
-
-.accent-green {
-  color: var(--green);
-}
-
-.accent-coral {
-  color: var(--coral);
-}
-
 .console-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: #8fa0ae;
   display: flex;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   gap: 25px;
   padding: 17px 22px;
   text-transform: uppercase;
@@ -437,80 +289,6 @@ nav a:hover {
   display: flex;
   gap: 7px;
   margin-right: auto;
-}
-
-.health-dot {
-  background: var(--green);
-  border-radius: 50%;
-  height: 6px;
-  width: 6px;
-}
-
-.proof-strip {
-  align-items: center;
-  background: var(--ivory);
-  border-bottom: 1px solid var(--line);
-  border-top: 1px solid var(--line);
-  display: grid;
-  gap: 35px;
-  grid-template-columns: 210px 1fr;
-  margin: 0 auto;
-  max-width: 1440px;
-  min-height: 106px;
-  padding: 22px 56px;
-}
-
-.proof-strip > p {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.proof-metrics {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.proof-metrics span {
-  color: #63707b;
-  font-size: 11px;
-}
-
-.proof-metrics b {
-  color: var(--ink);
-  display: block;
-  font-size: 22px;
-  font-weight: 560;
-  letter-spacing: -0.04em;
-  margin-bottom: 3px;
-}
-
-.operational-note {
-  align-items: center;
-  background: #edf7e6;
-  border-bottom: 1px solid rgba(83, 122, 54, 0.2);
-  display: grid;
-  gap: 28px;
-  grid-template-columns: 210px 1fr auto;
-  margin: 0 auto;
-  max-width: 1440px;
-  padding: 18px 56px;
-}
-
-.operational-note > div {
-  align-items: center;
-  display: flex;
-  gap: 9px;
-}
-
-.operational-note strong,
-.operational-note a {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .pipeline-status-section {
@@ -548,7 +326,7 @@ nav a:hover {
   display: flex;
   flex: 0 0 auto;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
   gap: 9px;
   letter-spacing: 0.08em;
   padding: 11px 13px;
@@ -597,7 +375,7 @@ nav a:hover {
 .status-metric-grid small,
 .status-stage small {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -643,7 +421,7 @@ nav a:hover {
 
 .status-metric-grid article:nth-child(3),
 .status-metric-grid article:nth-child(4) {
-  border-top-color: var(--coral);
+  border-top-color: var(--coral-text);
 }
 
 .status-metric-grid span,
@@ -673,7 +451,7 @@ nav a:hover {
 }
 
 .status-flow > i {
-  color: #546979;
+  color: #8fa4b5;
   font-style: normal;
 }
 
@@ -697,18 +475,6 @@ nav a:hover {
   color: #7d919f;
 }
 
-.operational-note p {
-  color: #52634a;
-  font-size: 11px;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.operational-note a {
-  font-weight: 650;
-  white-space: nowrap;
-}
-
 .section {
   margin: 0 auto;
   max-width: 1440px;
@@ -724,7 +490,7 @@ nav a:hover {
 
 .section-kicker {
   align-self: start;
-  color: var(--coral);
+  color: var(--coral-text);
   margin: 9px 0 0;
 }
 
@@ -741,7 +507,7 @@ nav a:hover {
 .section-heading > p:last-child,
 .architecture-intro > p,
 .pilot-section > div > p:last-child {
-  color: #5c6872;
+  color: rgba(8, 19, 31, 0.84);
   font-size: 15px;
   line-height: 1.65;
   margin: 8px 0 0;
@@ -795,13 +561,13 @@ nav a:hover {
 .decision-card-top small,
 .decision-proof span {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .decision-card-top span {
-  color: var(--coral);
+  color: var(--coral-text);
   font-weight: 700;
 }
 
@@ -810,7 +576,11 @@ nav a:hover {
 }
 
 .decision-card-top small {
-  color: #7a8790;
+  color: #566069;
+}
+
+.decision-card:nth-child(4) .decision-card-top small {
+  color: #a9b4bd;
 }
 
 .decision-card h3 {
@@ -856,7 +626,7 @@ nav a:hover {
 
 .decision-proof span {
   border-right: 1px solid var(--line);
-  color: #68747d;
+  color: #566069;
   padding: 18px 20px;
   text-align: center;
 }
@@ -884,9 +654,9 @@ nav a:hover {
 }
 
 .card-index {
-  color: #89939b;
+  color: #566069;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .capability-card h3 {
@@ -918,9 +688,9 @@ nav a:hover {
 }
 
 .card-metric span {
-  color: #7b858d;
+  color: #566069;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -980,9 +750,9 @@ nav a:hover {
 }
 
 .serving-stack span {
-  color: #658b48;
+  color: #3f6b27;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.08em;
 }
 
@@ -1029,7 +799,7 @@ nav a:hover {
 .architecture-note span {
   color: #798b99;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1062,7 +832,7 @@ nav a:hover {
 .plane-card > span {
   color: var(--coral);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .plane-card h3 {
@@ -1080,7 +850,7 @@ nav a:hover {
 }
 
 .plane-card > i {
-  color: #526575;
+  color: #8fa4b5;
   font-style: normal;
 }
 
@@ -1098,14 +868,14 @@ nav a:hover {
 .plane-foundation span {
   color: var(--green);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .plane-foundation strong {
   color: #bbc6ce;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 450;
 }
 
@@ -1159,7 +929,7 @@ nav a:hover {
   align-items: center;
   display: inline-flex;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 600;
   gap: 6px;
   letter-spacing: 0.08em;
@@ -1239,7 +1009,7 @@ nav a:hover {
 .advisor-form-note,
 .advisor-controls label {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1345,7 +1115,7 @@ nav a:hover {
 .advisor-result-top > div:first-child strong {
   color: white;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1359,7 +1129,7 @@ nav a:hover {
 }
 
 .advisor-fit b {
-  color: var(--coral);
+  color: var(--coral-text);
   font-size: 39px;
   font-weight: 520;
   letter-spacing: -0.06em;
@@ -1431,14 +1201,14 @@ nav a:hover {
 
 .advisor-result-bottom strong {
   color: #bec8cf;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.55;
 }
 
 .advisor-evidence {
   align-items: center;
-  color: #66747e;
+  color: #566069;
   display: flex;
   justify-content: space-between;
   padding-top: 22px;
@@ -1525,14 +1295,17 @@ nav a:hover {
 .scorecard-primary span,
 .pilot-guardrails {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.pilot-panel-title span,
-.pilot-output-top span {
+.pilot-panel-title span {
   color: var(--green);
+}
+
+.pilot-output-top span {
+  color: #3f6b27;
 }
 
 .pilot-panel-title strong {
@@ -1581,7 +1354,7 @@ nav a:hover {
 .pilot-number-field i {
   color: #8294a1;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   font-style: normal;
   padding-right: 12px;
   text-transform: uppercase;
@@ -1596,12 +1369,19 @@ nav a:hover {
 .pilot-split-fields {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.pilot-split-fields input,
+.pilot-split-fields select {
+  min-width: 0;
+  width: 100%;
 }
 
 .pilot-generate {
   background: var(--coral);
   border: 0;
+  color: var(--ink); /* white on #ff6b4a is only 2.8:1 */
   cursor: pointer;
   justify-content: space-between;
   margin-top: 5px;
@@ -1626,7 +1406,7 @@ nav a:hover {
 
 .pilot-output-top strong {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1669,9 +1449,9 @@ nav a:hover {
 }
 
 .pilot-economics span {
-  color: #73808a;
+  color: #566069;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1683,7 +1463,7 @@ nav a:hover {
 }
 
 .pilot-assumption {
-  color: #7a868e;
+  color: #566069;
   line-height: 1.5;
   margin: 12px 0 26px;
 }
@@ -1691,13 +1471,14 @@ nav a:hover {
 .pilot-tabs {
   border-bottom: 1px solid var(--line);
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
 .pilot-tabs button {
   background: transparent;
   border: 0;
-  color: #78848c;
+  color: #566069;
   cursor: pointer;
   padding: 13px 15px;
 }
@@ -1742,7 +1523,7 @@ nav a:hover {
 }
 
 .evidence-rank span {
-  color: var(--coral);
+  color: var(--coral-text);
   font: 650 9px var(--font-geist-mono), monospace;
 }
 
@@ -1759,17 +1540,17 @@ nav a:hover {
 
 .ranked-evidence-list article > div:nth-child(2) > span,
 .ranked-evidence-list p {
-  color: #71808a;
+  color: #566069;
 }
 
 .ranked-evidence-list article p {
-  font-size: 10px;
+  font-size: 12px;
   margin: 0;
 }
 
 .ranked-evidence-list article a {
   color: var(--ink);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -1798,9 +1579,9 @@ nav a:hover {
 }
 
 .pilot-workflow-list > article > b {
-  color: var(--coral);
+  color: var(--coral-text);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .pilot-workflow-list article > div {
@@ -1840,7 +1621,7 @@ nav a:hover {
 }
 
 .seven-day-list b {
-  color: var(--coral);
+  color: var(--coral-text);
   display: block;
   font: 650 9px var(--font-geist-mono), monospace;
 }
@@ -1853,7 +1634,7 @@ nav a:hover {
 
 .seven-day-list p {
   color: #687680;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.5;
   margin: 0;
 }
@@ -1880,7 +1661,7 @@ nav a:hover {
 }
 
 .scorecard-primary p {
-  font-size: 11px;
+  font-size: 12px;
   margin: 9px 0 0;
 }
 
@@ -1900,7 +1681,7 @@ nav a:hover {
 
 .pilot-scorecard li span {
   color: #687680;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .pilot-scorecard li strong {
@@ -1944,7 +1725,7 @@ nav a:hover {
 .review-demo-heading em {
   color: #55703e;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 12px;
   font-style: normal;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1973,9 +1754,9 @@ nav a:hover {
 }
 
 .review-candidates b {
-  color: var(--coral);
+  color: var(--coral-text);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .review-candidates label div {
@@ -2000,7 +1781,7 @@ nav a:hover {
   color: #65717b;
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   padding: 8px 10px;
   text-transform: capitalize;
 }
@@ -2035,12 +1816,12 @@ nav a:hover {
 }
 
 .pilot-guardrails span {
-  color: #587042;
+  color: #3f6b27;
   margin-right: auto;
 }
 
 .pilot-guardrails strong {
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 580;
 }
 
@@ -2096,7 +1877,7 @@ nav a:hover {
 .readiness-title b {
   background: var(--ivory);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.07em;
   padding: 8px 10px;
@@ -2150,7 +1931,7 @@ nav a:hover {
 }
 
 .pilot-section > div > p:last-child {
-  color: rgba(8, 19, 31, 0.72);
+  color: rgba(8, 19, 31, 0.92);
   max-width: 680px;
 }
 
@@ -2168,7 +1949,7 @@ nav a:hover {
 }
 
 .text-link {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -2190,16 +1971,16 @@ footer {
 }
 
 footer p {
-  color: #78838b;
+  color: #566069;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.03em;
   margin: 0;
   text-align: center;
 }
 
 footer > a {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   justify-self: end;
 }
@@ -2682,3 +2463,148 @@ footer > a {
 .policy-card ol { padding-left: 1.4rem; }
 .policy-footer { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,.12); font-size: .82rem; opacity: .8; }
 @media (max-width: 800px) { .policy-card { margin: 2rem 1rem; padding: 1.5rem; } }
+
+
+/* Evidence card in the hero: real, dated, static. */
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.evidence-card {
+  min-height: 0;
+  transform: none;
+}
+
+.snapshot-badge {
+  color: var(--green);
+}
+
+.evidence-card-body {
+  padding: 24px 22px 8px;
+}
+
+.evidence-card-body h2 {
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin: 0 0 12px;
+}
+
+.evidence-card-body > p {
+  color: #c4ced6;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 18px;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.evidence-list li {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: grid;
+  gap: 4px 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 12px 14px;
+}
+
+.evidence-platform {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+}
+
+.evidence-topic {
+  font-weight: 700;
+}
+
+.evidence-list time {
+  color: #a9b4bd;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  grid-column: 2;
+}
+
+.evidence-list a {
+  color: var(--green);
+  font-weight: 700;
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  text-underline-offset: 3px;
+}
+
+.evidence-path {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.evidence-path li {
+  border-left: 2px solid rgba(255, 255, 255, 0.25);
+  display: grid;
+  gap: 2px;
+  padding-left: 10px;
+}
+
+.evidence-path li:first-child {
+  border-left-color: var(--green);
+}
+
+.evidence-path b {
+  font-size: 14px;
+}
+
+.evidence-path span {
+  color: #a9b4bd;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+}
+
+.evidence-footer {
+  display: grid;
+  gap: 6px;
+  text-transform: none;
+}
+
+.evidence-footer p {
+  color: #a9b4bd;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+
+/* Grids with a fixed minimum column overflowed small screens (pilot workspace
+   needed 590px). Stack them and let grid children shrink below their content. */
+@media (max-width: 1050px) {
+  .pilot-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .pilot-discovery,
+  .pilot-output {
+    min-width: 0;
+  }
+}
