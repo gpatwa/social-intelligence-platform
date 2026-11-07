@@ -9,9 +9,13 @@ from pyspark.sql import types as T
 
 dbutils.widgets.text("catalog", "main")
 dbutils.widgets.text("schema", "social_intelligence_dev")
+dbutils.widgets.text("taxonomy_version", "pilot-topics-v1")
 catalog = dbutils.widgets.get("catalog")
 schema = dbutils.widgets.get("schema")
+taxonomy_version = dbutils.widgets.get("taxonomy_version")
 
+if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", taxonomy_version):
+    raise ValueError(f"Unsafe taxonomy_version: {taxonomy_version!r}")
 for identifier in (catalog, schema):
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", identifier):
         raise ValueError(f"Unsafe Unity Catalog identifier: {identifier!r}")
@@ -328,11 +332,150 @@ spark.sql(
       'rules-v1' AS enrichment_model_version,
       source_payload,
       raw_event_payload,
-      ingested_at
+      ingested_at,
+      -- Pilot topics (additive, filled by the matching step below; NULL for tenants
+      -- without rules and for demo sources). The legacy topic above is unchanged.
+      CAST(NULL AS STRING) AS pilot_topic_primary,
+      CAST(NULL AS ARRAY<STRING>) AS pilot_topic_rule_ids,
+      CAST(NULL AS STRING) AS pilot_taxonomy_version,
+      CAST(NULL AS BOOLEAN) AS language_unsupported
     FROM deduplicated
     WHERE row_num = 1
     """
 )
+
+# Pilot topic matching. Rules are tenant-scoped data (control_topic_rules); the
+# expression is built here, once, from the enabled rules of the active taxonomy
+# version, so there is no posts x rules join and no fan-out: silver_social_posts
+# stays one row per post. social_intelligence/topic_rules.py is the reference
+# implementation; the constants below must equal its (a unit test checks).
+HTML_ENTITIES = [
+    ("&#39;", "'"), ("&#x27;", "'"), ("&apos;", "'"), ("&quot;", '"'),
+    ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " "), ("&amp;", "&"),
+]
+ENTITY_PASSES = 3
+MATCH_TEXT_LIMIT = 300
+NON_ENGLISH_MIN_LETTERS = 5
+NON_ENGLISH_SHARE = 0.3
+
+
+def normalized_text(column):
+    for _ in range(ENTITY_PASSES):
+        for entity, char in HTML_ENTITIES:
+            column = F.regexp_replace(column, entity, char)
+    return F.trim(F.regexp_replace(F.lower(column), r"[ \t\r\n\f\x0B]+", " "))
+
+
+silver_rows_before = spark.table(f"{ns}.`silver_social_posts`").count()
+rules = (
+    spark.table(f"{ns}.`control_topic_rules`")
+    .where(F.col("enabled") & (F.col("taxonomy_version") == taxonomy_version))
+    .collect()
+)
+
+usable_rules = []
+for rule in rules:
+    try:
+        # Spark's own regex engine is the arbiter: a bad pattern is skipped loudly
+        # instead of aborting every table built after Silver.
+        for candidate in (rule.pattern, rule.exclude_pattern):
+            if candidate:
+                spark.sql("SELECT 'x' RLIKE :pattern", args={"pattern": candidate}).collect()
+        usable_rules.append(rule)
+    except Exception as error:  # noqa: BLE001
+        print(f"WARNING: skipping invalid topic rule {rule.tenant_id}/{rule.rule_id}: {str(error)[:160]}")
+
+rule_tenants = sorted({rule.tenant_id for rule in usable_rules})
+match_text = F.substring(normalized_text(F.col("content_text")), 1, MATCH_TEXT_LIMIT)
+hit_columns = [
+    F.when(
+        (F.col("tenant_id") == rule.tenant_id)
+        & match_text.rlike(rule.pattern)
+        & (~match_text.rlike(rule.exclude_pattern) if rule.exclude_pattern else F.lit(True)),
+        F.struct(
+            F.lit(rule.priority).alias("priority"),
+            F.lit(rule.rule_id).alias("rule_id"),
+            F.lit(rule.topic_id).alias("topic_id"),
+        ),
+    )
+    # one global (priority, rule_id) order; each condition also pins the tenant
+    for rule in sorted(usable_rules, key=lambda r: (r.priority, r.rule_id))
+]
+letters = F.length(F.regexp_replace(match_text, r"[^\p{L}]", ""))
+non_ascii_letters = F.length(F.regexp_replace(match_text, r"[^\p{L}]|[a-z]", ""))
+
+if usable_rules:
+    matched = F.filter(F.array(*hit_columns), lambda hit: hit.isNotNull())
+    has_rules = F.col("tenant_id").isin(rule_tenants)
+    (
+        spark.table(f"{ns}.`silver_social_posts`")
+        .where(~F.col("source_id").like("demo-%"))
+        .select(
+            "tenant_id", "platform", "post_id",
+            matched.alias("pilot_matches"),
+            has_rules.alias("has_rules"),
+            F.when(letters >= NON_ENGLISH_MIN_LETTERS, non_ascii_letters / letters > NON_ENGLISH_SHARE)
+            .otherwise(F.lit(False)).alias("language_unsupported"),
+        )
+        # CASE short-circuits, so an empty match array never reaches element_at (an error under ANSI mode)
+        .withColumn(
+            "pilot_topic_primary",
+            F.when(
+                F.col("has_rules"),
+                F.when(F.size("pilot_matches") > 0, F.element_at("pilot_matches", 1)["topic_id"]).otherwise(F.lit("other")),
+            ),
+        )
+        .withColumn("pilot_topic_rule_ids", F.when(F.col("has_rules"), F.transform("pilot_matches", lambda hit: hit["rule_id"])))
+        .withColumn("pilot_taxonomy_version", F.when(F.col("has_rules"), F.lit(taxonomy_version)))
+        .createOrReplaceTempView("pilot_topic_results")
+    )
+    spark.sql(
+        f"""
+        MERGE INTO {ns}.`silver_social_posts` AS target
+        USING pilot_topic_results AS incoming
+        ON target.tenant_id = incoming.tenant_id
+           AND target.platform = incoming.platform
+           AND target.post_id = incoming.post_id
+        WHEN MATCHED THEN UPDATE SET
+          pilot_topic_primary = incoming.pilot_topic_primary,
+          pilot_topic_rule_ids = incoming.pilot_topic_rule_ids,
+          pilot_taxonomy_version = incoming.pilot_taxonomy_version,
+          language_unsupported = incoming.language_unsupported
+        """
+    )
+    spark.sql(
+        f"""
+        CREATE OR REPLACE TABLE {ns}.`silver_post_topics`
+        COMMENT 'One row per post and matched pilot rule; use this, not arrays, to count multi-label topics'
+        AS
+        SELECT
+          tenant_id, platform, post_id,
+          hit.topic_id AS topic_id,
+          hit.rule_id AS rule_id,
+          '{taxonomy_version}' AS taxonomy_version
+        FROM pilot_topic_results
+        LATERAL VIEW EXPLODE(pilot_matches) matches AS hit
+        WHERE has_rules
+        """
+    )
+else:
+    print("No enabled topic rules for this taxonomy version; pilot topic columns stay NULL.")
+    spark.sql(
+        f"""
+        CREATE OR REPLACE TABLE {ns}.`silver_post_topics`
+        COMMENT 'One row per post and matched pilot rule; use this, not arrays, to count multi-label topics'
+        AS
+        SELECT
+          CAST(NULL AS STRING) AS tenant_id, CAST(NULL AS STRING) AS platform, CAST(NULL AS STRING) AS post_id,
+          CAST(NULL AS STRING) AS topic_id, CAST(NULL AS STRING) AS rule_id, CAST(NULL AS STRING) AS taxonomy_version
+        WHERE false
+        """
+    )
+
+# Silver's grain must not change: one row per tenant, platform and post.
+silver_after = spark.table(f"{ns}.`silver_social_posts`")
+if silver_after.count() != silver_rows_before or silver_after.select("tenant_id", "platform", "post_id").distinct().count() != silver_rows_before:
+    raise RuntimeError("Pilot topic matching changed the grain of silver_social_posts")
 
 # GitHub repository rows are adoption signals, not posts: they have no views, so
 # the post score, sentiment and topic rules do not apply. They are kept out of

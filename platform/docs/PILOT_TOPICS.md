@@ -240,9 +240,18 @@ depends on a trustworthy taxonomy first.
    primary topic). The notebook cannot import the package, so a test parses the
    notebook's seed literal and requires it to equal the reference rules. Tested on
    hand-written fixtures, not on the sampled titles. Matching in Silver is slice 3.
-3. **Normalization and matching in Silver.** Added columns and the long table.
-   Acceptance: Silver row count and `topic` unchanged, with a guard that
-   `COUNT(*)` equals `COUNT(DISTINCT post_id)`.
+3. **Normalization and matching in Silver (built).** `02_build_analytics.py` adds
+   `pilot_topic_primary`, `pilot_topic_rule_ids`, `pilot_taxonomy_version` and
+   `language_unsupported` to `silver_social_posts` and writes `silver_post_topics`
+   (one row per post and matched rule). The match expression is built at notebook
+   time from the enabled rules of the active taxonomy version (widget
+   `taxonomy_version`); there is no posts x rules join. Demo sources
+   (`source_id LIKE 'demo-%'`) and tenants without rules get NULL, not `other`.
+   A pattern Spark rejects is skipped with a warning instead of aborting the build,
+   and the notebook raises if Silver's grain changes. Acceptance, checked live on
+   dev: Silver row count and distinct posts equal (1,583), legacy `topic`
+   unchanged, and Spark's output equals the Python reference on all 640 live posts
+   (primary topic, matched rule ids and the non-English flag) with 0 mismatches.
 4. **Quality report and rule yield.** Read-only, Wilson bounds, held-out split.
    Acceptance: runs cleanly when there are no labels.
 5. **Evidence key behind the gate.** `rankable`, `taxonomy_version`, consumer list.
@@ -354,6 +363,23 @@ beginner, off-focus or noise.
 - `audience_fit` has no rule for beginner tutorials on on-topic subjects; the
   labellers rated them `low`. Make that explicit.
 
+## What the live parity check found (2026-11-06)
+
+Comparing Spark's Silver output with the Python reference on every live post
+caught one real difference that no unit test could have: **`\b` in Spark's regex
+on the Databricks runtime is Unicode-aware**, so `langgraphに学ぶ` has no word
+boundary after `langgraph` there. The first reference used ASCII-only boundaries
+and disagreed on 3 of 640 posts. The reference now uses Python's default (Unicode)
+`\b`, and rules avoid `\s` and `\w`, which differ between the engines. The
+runtime's JDK version can change this, so the live check is worth rerunning after
+any runtime upgrade.
+
+First live distribution of the primary topic on 640 live posts: `other` 219 (34%),
+`framework` 155 (24%), `governance_security` 116 (18%), `mcp` 59, `reliability` 44,
+`evals` 44, `build_vs_buy` 3. The old rules put 576 of the same posts in
+`lifestyle`. These are rule outputs, not a quality measurement: the quality report
+(slice 4) scores them against the accepted gold labels.
+
 ## Decisions (accepted by the pilot owner, 2026-11-05)
 
 1. **Multi-label plus primary:** yes. A long table with explicit `priority`; rank on
@@ -370,8 +396,11 @@ beginner, off-focus or noise.
    no translated rules in v1.
 5. **Legacy rules for pilot-tenant rows:** stop applying the demo `problem|issue`
    rule to them; the demo rules stay for demo data.
-6. **Matching text:** the description length N and title-only versus title plus
-   description are settled by scoring both on the training set, not by argument.
+6. **Matching text (settled 2026-11-06):** the first 300 characters of the normalized
+   `content_text` (title plus the start of the description for YouTube, the start of
+   the post for X). On the 73 on-topic training posts title-only and 100, 150, 300,
+   600 and 1000 characters scored 56 to 62%, within three posts of each other, so 300
+   is a robustness choice, not a tuned one. The held-out set was not used.
 
 7. **Tenant (2026-11-06):** keep `demo` for collectors, labels and rules until the first
    real review record is stored; then revisit.
