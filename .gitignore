@@ -38,6 +38,7 @@ yarn-error.log*
 next-env.d.ts
 /dist/
 /.wrangler/
+/deploy/cloudflare/wrangler.rendered.jsonc
 /outputs/
 /work/
 /.bootstrap-venv/

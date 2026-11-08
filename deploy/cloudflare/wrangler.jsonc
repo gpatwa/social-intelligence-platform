@@ -1,0 +1,44 @@
+// Deploy config for the product site on a Cloudflare account you own.
+//
+// This is NOT the file the Vite build reads (that one is generated into
+// dist/server/wrangler.json with a placeholder D1 id and is for local dev only).
+// Use this one explicitly:
+//   npx wrangler deploy --config deploy/cloudflare/wrangler.jsonc
+// Paths below are relative to this file. Run `npm run build` first.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "social-intelligence-landing",
+  "main": "../../dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // `vinext build` already emits a bundled worker; wrangler only uploads it.
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }],
+
+  // worker/index.ts reads env.ASSETS and env.IMAGES by these names.
+  "assets": { "directory": "../../dist/client", "binding": "ASSETS" },
+  "images": { "binding": "IMAGES" },
+
+  // The binding name must stay `DB` (db/index.ts and worker/index.ts).
+  // Replace the placeholder with the id printed by `wrangler d1 create`.
+  // The deploy workflow substitutes it from the repo variable
+  // CLOUDFLARE_D1_DATABASE_ID, so you do not need to commit the real id.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "social-intelligence-landing",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      // drizzle-kit output; 0000_*.sql matches wrangler's migration naming.
+      "migrations_dir": "../../drizzle"
+    }
+  ],
+
+  "observability": { "enabled": true }
+
+  // Custom domain (optional). The zone must already be on this account.
+  // "routes": [{ "pattern": "signals.example.com", "custom_domain": true }]
+  //
+  // Secret (set by the workflow, never in this file):
+  //   PIPELINE_STATUS_INGEST_KEY
+}
