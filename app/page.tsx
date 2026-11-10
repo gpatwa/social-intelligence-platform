@@ -2,6 +2,7 @@ import { PipelineStatusPanel } from "./pipeline-status";
 import { AgentStackAdvisor } from "./agent-stack-advisor";
 import { InternalPilotWorkspace } from "./internal-pilot-workspace";
 import { evidenceSnapshot, formatSnapshotDate } from "./data/evidence-snapshot";
+import { topicSignals } from "./data/topic-signals";
 
 const githubUrl = "https://github.com/gpatwa/social-intelligence-platform";
 const baQueryPackUrl =
@@ -140,6 +141,7 @@ export default function Home() {
           </span>
         </a>
         <nav aria-label="Primary navigation">
+          <a href="#topics">Topics</a>
           <a href="#decision">Decision engine</a>
           <a href="#workspace">Pilot workspace</a>
           <a href="#advisor">Stack advisor</a>
@@ -245,6 +247,68 @@ export default function Home() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="section topics-section" id="topics" aria-labelledby="topics-title">
+        <div className="section-heading">
+          <p className="section-kicker">Signals by topic and channel</p>
+          <h2 id="topics-title">Which topics to listen to first.</h2>
+          <p>
+            An early read of what the collected conversation is about, where it
+            is happening, and what to do next. It is a starting point, not a
+            ranking.
+          </p>
+        </div>
+
+        <ul className="topic-channels" aria-label="Channels">
+          {topicSignals.channels.map((channel) => (
+            <li key={channel.name} data-state={channel.state === "Collecting" ? "on" : "off"}>
+              <b>{channel.name}</b>
+              <span>{channel.state}</span>
+              <small>{channel.detail}</small>
+            </li>
+          ))}
+        </ul>
+
+        <p className="topic-start">
+          <b>Early read.</b> {topicSignals.startHere}
+        </p>
+
+        <ol className="topic-grid" aria-label="Topics, in order of videos in the sample">
+          {topicSignals.topics.map((topic) => (
+            <li className="topic-card" key={topic.id}>
+              <h3>{topic.name}</h3>
+              <p>{topic.why}</p>
+              <dl>
+                <div>
+                  <dt>YouTube sample</dt>
+                  <dd>{`${topic.youtubePosts} of ${topicSignals.youtubeSampleSize} videos`}</dd>
+                </div>
+                {topic.github ? (
+                  <div>
+                    <dt>GitHub</dt>
+                    <dd>{topic.github}</dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt>X</dt>
+                  <dd>Topic labels pending</dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ol>
+
+        <div className="topic-next">
+          <h3>What happens next</h3>
+          <ol>
+            {topicSignals.next.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+        </div>
+
+        <p className="topic-caveat">{topicSignals.caveat}</p>
       </section>
 
       <PipelineStatusPanel />
