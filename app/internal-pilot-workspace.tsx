@@ -64,7 +64,6 @@ const workflows: Record<Workflow, Array<{ name: string; mode: string; gate: stri
 const evidence = [
   {
     rank: 1,
-    score: 91,
     platform: "YouTube",
     title: "Build, sell, deploy, and retain AI agent clients",
     source: "Andrew Warner with Nick Vasilescu",
@@ -73,7 +72,6 @@ const evidence = [
   },
   {
     rank: 2,
-    score: 86,
     platform: "YouTube",
     title: "The five most valuable AI automations to sell in 2026",
     source: "Reference supplied for the pilot",
@@ -82,7 +80,6 @@ const evidence = [
   },
   {
     rank: 3,
-    score: 82,
     platform: "Build evidence",
     title: "Managed authentication and tool execution for agents",
     source: "Composio documentation",
@@ -105,16 +102,14 @@ const rerankCandidates = [
   {
     id: "proof-winner",
     rank: 1,
-    score: 91,
     title: "Lead with observed delivery proof",
-    evidence: "YouTube · ranked evidence 01",
+    evidence: "YouTube · sample evidence 01",
   },
   {
     id: "workshop-winner",
     rank: 2,
-    score: 84,
     title: "Invite the right team to a scoped workshop",
-    evidence: "YouTube · ranked evidence 01–02",
+    evidence: "YouTube · sample evidence 01–02",
   },
 ];
 
@@ -244,9 +239,10 @@ export function InternalPilotWorkspace() {
           <div className="pilot-tab-panel" role="tabpanel" aria-live="polite">
             {view === "evidence" ? (
               <div className="ranked-evidence-list">
+                <p className="evidence-live-note">Illustrative examples from the pilot brief, not scored. Real, dated evidence is in the snapshot at the top of the page.</p>
                 {evidence.map((item) => (
                   <article key={item.rank}>
-                    <div className="evidence-rank"><b>{item.rank}</b><span>{item.score}</span></div>
+                    <div className="evidence-rank"><b>{item.rank}</b><span>sample</span></div>
                     <div>
                       <span>{item.platform} · {item.source}</span>
                       <h3>{item.title}</h3>
@@ -303,7 +299,7 @@ export function InternalPilotWorkspace() {
                       />
                       <b>#{candidate.rank}</b>
                       <div><strong>{candidate.title}</strong><span>{candidate.evidence}</span></div>
-                      <em>{candidate.score}</em>
+                      <em>sample</em>
                     </label>
                   ))}
                 </div>
@@ -355,14 +351,14 @@ export function InternalPilotWorkspace() {
             {view === "scorecard" ? (
               <div className="pilot-scorecard">
                 <div className="scorecard-primary">
-                  <span>Primary outcome</span>
+                  <span>Primary outcome target (no pilot has run)</span>
                   <strong>{baseline}% → {target}%</strong>
                   <p>{economics.gain} point target improvement in success rate.</p>
                 </div>
                 <ul>
-                  <li><span>Cycle time</span><strong>−35%</strong></li>
-                  <li><span>Evidence coverage</span><strong>100%</strong></li>
-                  <li><span>Unauthorized actions</span><strong>0</strong></li>
+                  <li><span>Cycle time target</span><strong>−35%</strong></li>
+                  <li><span>Evidence coverage target</span><strong>100%</strong></li>
+                  <li><span>Unauthorized actions allowed</span><strong>0</strong></li>
                   <li><span>Decision</span><strong>GO · ITERATE · STOP</strong></li>
                 </ul>
               </div>

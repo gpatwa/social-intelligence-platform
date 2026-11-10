@@ -2745,3 +2745,10 @@ footer > a {
   .topics-section { padding: 72px 20px; }
   .topic-channels, .topic-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.status-scope {
+  color: #5e6a73;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
