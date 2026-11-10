@@ -20,6 +20,14 @@ deploy/cloudflare/bootstrap.sh --dry-run   # print the plan, contact nothing
 deploy/cloudflare/bootstrap.sh             # create D1, the environment, variables and the token secret
 ```
 
+**No per-repo token:** create one bootstrap token per account whose only
+permission is Account API Tokens: Edit (with an expiry), export it as
+`CLOUDFLARE_BOOTSTRAP_TOKEN`, and run `deploy/cloudflare/bootstrap.sh
+--mint-token`. The script mints a narrow deploy token for the repo (Workers
+Scripts Write, D1 Write, Account Settings Read; 90 days by default, set with
+`--expires-days`) through Cloudflare's token API and stores it as the GitHub
+secret without printing it. The minting path is untested against a real account.
+
 It reuses the D1 database if it exists, sends the token from your shell to
 `gh` without printing it, and works for any repo (`--repo`, `--db`, `--env`).
 Creating the token itself stays a dashboard step. `PIPELINE_STATUS_INGEST_KEY`
