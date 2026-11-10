@@ -23,7 +23,7 @@ const initialStatus: PipelineStatus = {
   source: "Databricks · gold_connector_operations",
   status: "PENDING",
   operationalStatus: "LOADING",
-  message: "Connecting to the latest governed metric…",
+  message: "Loading the latest collector report…",
 };
 
 export function PipelineStatusPanel() {
@@ -92,7 +92,7 @@ export function PipelineStatusPanel() {
       <div className="status-command-center">
         <div className="status-summary">
           <span className="status-source">{snapshot.source}</span>
-          <strong role="status">{snapshot.available ? "Latest run received" : "Telemetry connection pending"}</strong>
+          <strong role="status">{snapshot.available ? "Latest run received" : refreshing ? "Loading…" : "No collector report yet"}</strong>
           <p>
             {snapshot.available
               ? `Completed ${completedLabel}. The public projection refreshes every minute.`
@@ -123,6 +123,10 @@ export function PipelineStatusPanel() {
           </article>
         </div>
       </div>
+
+      <p className="status-scope">
+        Only the YouTube collector reports here today. X and GitHub runs are not part of this panel.
+      </p>
 
       <div className="status-flow" aria-label="Pipeline stage health">
         <StatusStage label="Collect" detail="YouTube API" state={snapshot.status} />

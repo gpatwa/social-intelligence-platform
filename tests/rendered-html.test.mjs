@@ -67,6 +67,11 @@ test("server-renders the Social Intelligence landing page", async () => {
   assert.match(html, /https:\/\/x\.com\/i\/web\/status\/2118559322745581582/);
   assert.match(html, /https:\/\/www\.youtube\.com\/watch\?v=_Pv_Y078vd8/);
   assert.match(html, /Staging pilot/);
+  // Sample workspace items carry no scores, and the status panel says what it covers.
+  assert.match(html, /Illustrative examples from the pilot brief, not scored\./);
+  assert.doesNotMatch(html, /<span>(91|86|82|84)<\/span>/);
+  assert.match(html, /Only the YouTube collector reports here today\./);
+  assert.doesNotMatch(html, /Telemetry connection pending/);
   // Early read per topic and channel: labelled as a static, model-labelled sample.
   assert.match(html, /Which topics to listen to first\./);
   assert.match(html, /14 of 27 videos were about governance and security or about reliability/);
