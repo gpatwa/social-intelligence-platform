@@ -9,6 +9,23 @@ a Cloudflare account you own instead. Nothing here runs automatically.
 | `wrangler.jsonc` | Deploy config: Worker, static assets, Images, D1 `DB`, migrations |
 | `../../.github/workflows/site-deploy-cloudflare.yml` | Manual build, validate and deploy |
 
+## Fast path: one script
+
+If your shell has `CLOUDFLARE_API_TOKEN` (Account / Workers Scripts / Edit,
+D1 / Edit, Account Settings / Read, with an expiry) and `CLOUDFLARE_ACCOUNT_ID`
+(not secret), one command does steps 2 and 4 below:
+
+```bash
+deploy/cloudflare/bootstrap.sh --dry-run   # print the plan, contact nothing
+deploy/cloudflare/bootstrap.sh             # create D1, the environment, variables and the token secret
+```
+
+It reuses the D1 database if it exists, sends the token from your shell to
+`gh` without printing it, and works for any repo (`--repo`, `--db`, `--env`).
+Creating the token itself stays a dashboard step. `PIPELINE_STATUS_INGEST_KEY`
+needs no environment secret: the deploy job reads the repo-level one. The
+script was only checked in dry-run mode; the real run is untested.
+
 ## One-time setup (you do these; they change your Cloudflare account)
 
 1. **Create or choose a Cloudflare account** and note its Account ID
