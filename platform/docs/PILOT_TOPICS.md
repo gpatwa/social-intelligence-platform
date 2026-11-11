@@ -426,6 +426,74 @@ First live distribution of the primary topic on 640 live posts: `other` 219 (34%
 `lifestyle`. These are rule outputs, not a quality measurement: the quality report
 (slice 4) scores them against the accepted gold labels.
 
+## Second labelling round and rule revision (2026-11-10)
+
+**Result: a larger gold set was built, but revising the keyword rules did not help on
+sealed data. Nothing was adopted.** No topic can be ranked.
+
+**Sample.** The Databricks SQL warehouse would not start (the platform answered
+"Cannot create the resource"), so posts were drawn from the raw landed event files:
+733 unique posts (384 X, 349 YouTube). After excluding the 137 already labelled, 596
+were left (364 X, 232 YouTube). A seeded random sample of 240 (120 per platform, seed
+20261111, SHA-256 prefix `210062da`) was frozen before any rule change.
+
+**Labels.** Four Opus-class model agents labelled 60 posts each from the text alone,
+with the rubric and the six tie-breaks below applied; a fifth labelled a hash-selected
+40-post subset independently. Both are models following one rubric, so their errors
+are correlated; no human labelled anything and the human-only gate is still unmet.
+The tie-breaks were applied as a working rubric and are **not yet confirmed by the
+owner**. Agreement on the 40 shared posts: topic 92% (kappa 0.91), on-topic versus
+off-topic 98%, audience fit 92%. The labellers marked 98 of 240 posts (41%) unsure.
+Gold counts: `framework` 51, `other` 40, `governance_security` 37, `off_topic` 28,
+`evals` 22, `reliability` 18, `mcp` 18, `design_patterns` 14, `build_vs_buy` 8, `cost` 4.
+Only `framework` reaches the 40-example size requirement. About 22% of X posts (26 of
+120) were off-topic, against 2 of 120 YouTube posts; 38 of 240 (16%) were rated high
+audience fit.
+
+**Split.** Within each platform the 240 were ordered by SHA-256 of `split` plus the post
+id: the first 60 per platform are `dev` (120, used to author rules) and the rest are
+the sealed `test` (120, SHA-256 prefix `e5d7ad72`). Rules were authored from `dev` plus
+the 77 earlier training labels. The 60 earlier held-out labels exist only in
+Databricks, which could not be reached, so they were not used.
+
+**Revision (v3).** Changes were derived from `dev` and the earlier training errors:
+framework tutorials count as `framework` (the tie-break), distinctive framework names
+match without a word boundary so they work next to CJK text, `evals` ahead of
+`governance_security`, `build_vs_buy` ahead of `reliability`, and new narrow `cost` and
+`design_patterns` rules. A first draft (v2) used broad terms such as bare "production",
+"harness" and "planning" and fired on more off-topic posts, so v3 narrowed them.
+
+| Set | v1 accuracy | v3 accuracy |
+|---|---|---|
+| Earlier training labels (77) | 59% | 60% |
+| `dev` (120, used to author v3) | 64% | 76% |
+| **Sealed `test` (120, 110 on-topic), scored once after v3 was locked** | **53%** | **55%** |
+
+On the sealed test the only visible change was `framework` recall (0.67 to 0.81, 18 to
+22 correct) at precision 0.63; `governance_security`, `mcp`, `evals` and `reliability`
+did not move, `design_patterns` and `cost` stayed near zero, and rules fired on 4 of
+10 off-topic posts, as before. A 2-point difference on 110 posts is noise. The 12-point
+gain on `dev` did not generalise, which is the overfitting this split exists to expose.
+No topic passes the gate: the largest sealed-test gold count is 27 (`framework`; the
+gate needs 40) and the best precision lower bound is 0.49 (needs 0.70).
+
+**Caveats.** The earlier training labels (`model_run_01`) predate the tie-breaks and
+call beginner framework tutorials `other`, so they disagree with the current rubric on
+exactly the case v3 changed. The `test` half is now spent: using its errors would turn
+it into training data. These numbers measure agreement with a model labeller, not with
+a person.
+
+**What this says.** Keyword rules plateau near 55% primary accuracy on this data.
+Raising the gold set will not change that by itself; it only tightens the estimate.
+Options, for the owner to choose: (1) keep the rules as a weak first pass and add a
+model classifier with a human audit sample; (2) keep ranking off and show only
+volume-by-topic labelled as unvalidated, as the landing page already does; (3) collect
+targeted examples for the rare topics so each can be measured. The six tie-breaks still
+need confirmation before more labelling.
+
+Gold labels (ids and labels only, no text) are kept untracked in `pilot_gold_round2.csv`
+at the repository root; they have not been loaded into `reviewed_pilot_topic`.
+
 ## Decisions (accepted by the pilot owner, 2026-11-05)
 
 1. **Multi-label plus primary:** yes. A long table with explicit `priority`; rank on
